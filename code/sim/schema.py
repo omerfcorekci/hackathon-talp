@@ -10,6 +10,8 @@ HEARD_FROM = ("bank", "friend", "rival", "news", "social media", "none")
 CHANNELS = ("social", "whatsapp", "direct", "phone")
 # Saying you posted or told people is only real if a message goes out through the simulation.
 TALK_ACTIONS = ("post on social media", "tell friends or family")
+# An App Store rating is a review the persona wrote, not a way of saying it is satisfied.
+REVIEW_ACTION = "post a review (App Store / Google / Trustpilot)"
 
 TURN_SCHEMA = {
     "type": "object",
@@ -96,6 +98,10 @@ def parse_turn(raw: str, *, contacts: set[str], groups: set[str], previous=None,
     if any(a in TALK_ACTIONS for a in result["actions"]) and not result["messages"]:
         raise ValueError("You listed posting or telling people in actions but sent no messages; either include "
                          "what you said in messages or remove that action")
+    if (result["app_rating"] is not None and allowed_actions and REVIEW_ACTION in allowed_actions
+            and REVIEW_ACTION not in result["actions"] + (previous["actions"] if previous else [])):
+        raise ValueError(f"app_rating is a rating you submitted this week: either list \"{REVIEW_ACTION}\" in actions "
+                         "or set app_rating to null")
     for field, limit in (("reason", 600), ("memory", 1200)):
         if not isinstance(result[field], str) or len(result[field]) > limit:
             raise ValueError(f"Invalid {field}")

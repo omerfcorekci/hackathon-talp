@@ -107,7 +107,12 @@ class FakeTransport:
         data["active_in_last_30_days"] = status in ("main bank", "second bank")
         data["actions"] = rng.sample(self.SAFE_ACTIONS, 0 if status == "left" else rng.randint(1, 2))
         data["heard_from"] = [rng.choice(("bank", "news", "none"))]
-        data["app_rating"] = rng.randint(3, 5) if rng.random() < 0.7 else rng.randint(1, 2)
+        # A rating needs the review action. A retry always rates, so it never erases a round-one rating.
+        if retried or (status != "left" and rng.random() < 0.3):
+            data["actions"].append("post a review (App Store / Google / Trustpilot)")
+            data["app_rating"] = rng.randint(3, 5) if rng.random() < 0.7 else rng.randint(1, 2)
+        else:
+            data["app_rating"] = None
         # A retry after a round-two rejection takes the highest complaint, which is never refused.
         data["complaint"] = "cfpb" if retried else rng.choices(("none", "bank", "cfpb"), (90, 8, 2))[0]
         data["messages"] = []
