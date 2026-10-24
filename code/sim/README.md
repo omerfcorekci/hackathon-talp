@@ -136,7 +136,9 @@ week 7 still shapes week 6. With `--no-surprises` the effects vanish with the te
 Supported keys: `migration_overrun_hours` (integer; the migration-week and following-week
 lines use it), `support_wait_by_week` (week → minutes, before the extra-staff factor), and
 `experience` (lines added to that week; an optional `if` requires persona attributes to equal
-the given values). Transcribe the organizers' text verbatim; the effects are our reading of
+the given values, an optional `probability` hits a seeded share of personas, and an optional
+`went_wrong` says whether the line belongs in the persona's "what went wrong" history; by default a
+line with `if` or `probability` does and a line for everyone does not). Transcribe the organizers' text verbatim; the effects are our reading of
 it and belong in `docs/crisis-log.md`.
 
 **World:** `code/config/world.json` contains dossier facts, the known migration,
@@ -210,6 +212,14 @@ weekend card tickets above the offline limit, a single large purchase, settlemen
 The world resolves it against the offline card limit and any overrun into plain facts:
 "your rent autopay ran at Sunday 20:00, after the payee's cutoff, so a $50 late fee was
 charged"; "5 of your weekend tickets were above $100: about $1,400 you could not charge".
+
+Every weekly prompt also carries **"What went wrong for you since Nov 2"**: each earlier week's facts
+that actually went wrong for that persona (a failed, late or declined payment, lost card sales, a
+settlement delay, an overrun, a personal surprise line, a support wait longer than usual that the
+persona reported), with week and dates. It is recomputed from the same rules as the weekly experience,
+so it differs between plan and no-decision runs only through the decisions, and a grievance does not
+vanish when the persona's one-week memory moves on. The end check-in (week 11) gets the same list for
+the weeks the run covered, as `what_went_wrong_for_you_since_nov_2`.
 Validation also enforces: `heard_from` uses only bank / friend / rival / news / social
 media / none; `actions` uses the persona's listed wording; a persona that lists "post on
 social media" or "tell friends or family" must put what it said in `messages` (otherwise

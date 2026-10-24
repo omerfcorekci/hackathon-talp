@@ -58,7 +58,8 @@ def require_profiles(personas):
 
 
 def build_probe_prompt(person, when, *, world, ledger=(), state=None, include_memory=True):
-    """Narrative and voice only, plus (at the end) the persona's own record. No weights, ties or KPIs."""
+    """Narrative and voice only, plus (at the end) the persona's own record and what went wrong for it in
+    the weeks it lived through. No weights, ties or KPIs."""
     if when not in WEEK:
         raise ValueError("when must be 'start' or 'end'")
     about = {"narrative": person["narrative"]}
@@ -69,6 +70,9 @@ def build_probe_prompt(person, when, *, world, ledger=(), state=None, include_me
         payload["your_weekly_record"] = [
             {"week": row["week"], "status": row["status"], "money": row["money"], "actions": row["actions"]}
             for row in ledger]
+        last = max((row["week"] for row in ledger), default=0)
+        payload["what_went_wrong_for_you_since_nov_2"] = [
+            {"week": week, "what": text} for week, text in world.went_wrong_before(person["id"], last + 1, ledger)]
         if include_memory and isinstance(state, dict):
             payload["your_latest_memory"] = state.get("memory")
             payload["your_latest_reason"] = state.get("reason")

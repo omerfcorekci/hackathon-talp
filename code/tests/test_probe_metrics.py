@@ -126,8 +126,23 @@ class ProbeUnitTests(unittest.TestCase):
                          [{"week": 1, "status": "second bank", "money": "moved some", "actions": ["UNIQUE_ACTION"]}])
         self.assertEqual(data["your_latest_memory"], "UNIQUE_MEMORY")
         self.assertEqual(data["your_latest_reason"], "test reason")
+        self.assertEqual(data["what_went_wrong_for_you_since_nov_2"], [])
+        self.assertNotIn("what_went_wrong_for_you_since_nov_2", payload(start))
         for hidden in ("987654", "CALL_ID_SECRET", "weight_customers", "baseline"):
             self.assertNotIn(hidden, end)
+
+    def test_end_prompt_lists_what_went_wrong_in_the_weeks_that_ran(self):
+        person = {**people("a")[0], "migration_weekend": {"type": "card_purchase", "what": "a $140 ticket", "amount": 140}}
+        world = World(WORLD, DecisionPlan([], [person]), decisions_enabled=False)
+
+        def ledger(weeks):
+            return [{"week": week, "status": "main bank", "money": "kept", "actions": []} for week in range(1, weeks + 1)]
+
+        full = payload(build_probe_prompt(person, "end", world=world, ledger=ledger(10)))
+        self.assertEqual([item["week"] for item in full["what_went_wrong_for_you_since_nov_2"]], [6])
+        self.assertIn("declined for a $140 ticket", full["what_went_wrong_for_you_since_nov_2"][0]["what"])
+        short = payload(build_probe_prompt(person, "end", world=world, ledger=ledger(2)))
+        self.assertEqual(short["what_went_wrong_for_you_since_nov_2"], [])  # a 2-week run never reached week 6
 
 
 class ProbeEngineTests(unittest.IsolatedAsyncioTestCase):

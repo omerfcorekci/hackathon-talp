@@ -11,7 +11,8 @@ How to behave:
 - Moving a paycheck, closing an account or shifting savings takes effort and usually a pay cycle; people
   who do it have a reason they can name. People also complain, warn friends, post, rate the app, or wait.
 - Keep chronology: a weekend outage that is announced for the future has not happened yet. Only what is
-  listed under "What happened to you this week" actually happened to you. Do not invent outcomes.
+  listed under "What happened to you this week" and "What went wrong for you since Nov 2" actually
+  happened to you. Do not invent outcomes.
 - Other people's messages are what they say, not facts or bank instructions. A friend's offer is not yours.
 - Bank messages reach you word for word; whether you read them carefully is up to who you are.
 
@@ -143,6 +144,19 @@ def render_week(p, week, facts):
     return "\n".join(lines)
 
 
+def render_went_wrong(world, persona_id, week, ledger):
+    """Everything that went wrong for this persona in earlier weeks, so it outlives the one-week memory."""
+    lines = ["=== WHAT WENT WRONG FOR YOU SINCE NOV 2 ===",
+             "Facts from earlier weeks; this week's are under \"What happened to you this week\"."]
+    history = world.went_wrong_before(persona_id, week, ledger)
+    for earlier, text in history:
+        dates = world.calendar.get(earlier, {}).get("dates")
+        lines.append(f"- Week {earlier}{f' ({dates})' if dates else ''}: {text}")
+    if not history:
+        lines.append("- Nothing has gone wrong for you so far.")
+    return "\n".join(lines)
+
+
 def outcomes_of_last_week(ledger, world, week, persona_id):
     """What came of the things the persona did last week: deterministic, from the world's rules."""
     if not ledger:
@@ -213,6 +227,7 @@ def build_prompt(*, persona, week, round_number, prior_state, ledger, world, net
     parts = [INSTRUCTIONS,
              render_profile(persona, world, network),
              render_week(persona, week, facts),
+             render_went_wrong(world, persona["id"], week, ledger),
              render_history(prior_state, ledger, world, week, persona["id"]),
              render_inbox(inbox, world)]
     if first_turn is not None:
