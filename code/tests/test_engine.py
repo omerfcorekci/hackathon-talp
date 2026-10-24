@@ -319,6 +319,15 @@ class SchemaTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     parse_turn(json.dumps(answer(money=money)), contacts=set(), groups=set(), money_so_far=so_far)
 
+    def test_round_two_may_keep_a_round_one_post_without_a_new_message(self):
+        first = answer(actions=["post on social media"], messages=[{"channel": "social", "target": None, "text": "x"}])
+        kept = self.parse(answer(actions=["post on social media"]), first)
+        self.assertEqual(kept["actions"], ["post on social media"])
+        with self.assertRaises(ValueError):  # a talk action new in round two still needs its words
+            self.parse(answer(actions=["post on social media", "tell friends or family"]), first)
+        with self.assertRaises(ValueError):  # and so does one in round one
+            self.parse(answer(actions=["post on social media"]))
+
     def test_second_round_cannot_erase_completed_actions(self):
         previous = answer(actions=["called_support"], complaint="bank", app_rating=2)
         with self.assertRaises(ValueError):  # the complaint already filed cannot be taken back

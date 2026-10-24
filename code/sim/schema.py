@@ -104,7 +104,10 @@ def parse_turn(raw: str, *, contacts: set[str], groups: set[str], previous=None,
         unknown_actions = [a for a in result["actions"] if a not in allowed_actions]
         if unknown_actions:
             raise ValueError(f"actions must use the exact wording from 'What you can do' (not {unknown_actions})")
-    if any(a in TALK_ACTIONS for a in result["actions"]) and not result["messages"]:
+    # In round two the persona keeps the actions it already took, so a talk action carried over from round one
+    # needs no new message; only a talk action new in this round does.
+    talked_before = set(previous["actions"]) if previous is not None else set()
+    if any(a in TALK_ACTIONS and a not in talked_before for a in result["actions"]) and not result["messages"]:
         raise ValueError("You listed posting or telling people in actions but sent no messages; either include "
                          "what you said in messages or remove that action")
     for field, limit in (("reason", 600), ("memory", 1200)):
