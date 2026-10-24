@@ -45,7 +45,7 @@
   .bars button.on i { background: var(--accent); }
   .bars button.on i.cur { box-shadow: 0 0 0 1.5px var(--accent-text); }
   .timeline input { width: 100%; margin: 4px 0 0; accent-color: var(--accent); }
-  .counts { display: flex; gap: 6px; flex-wrap: wrap; font-size: 12px; }
+  .counts { flex: 0 0 330px; min-width: 0; display: flex; justify-content: flex-end; gap: 6px; font-size: 12px; font-variant-numeric: tabular-nums; }
   .cnt { padding: 3px 8px; border-radius: 999px; background: var(--hover); color: var(--muted); white-space: nowrap; }
   .cnt b { color: var(--text); }
   .cnt.ok { background: var(--good-bg); } .cnt.ok b { color: var(--good); }
@@ -101,7 +101,7 @@
   .muted { color: var(--muted); font-size: 12px; }
 
   /* feed */
-  #feed { border-left: 1px solid var(--line-soft); max-height: 640px; overflow: auto; min-width: 0; }
+  #feed { border-left: 1px solid var(--line-soft); overflow: auto; min-width: 0; contain: size; }
   .fhd { position: sticky; top: 0; background: var(--panel); padding: 12px 14px 8px; font-weight: 600; font-size: 13px; border-bottom: 1px solid var(--line-soft); z-index: 1; }
   .fhd span { color: var(--muted); font-weight: 400; }
   .msg { padding: 10px 14px; border-bottom: 1px solid var(--line-soft); cursor: pointer; }
@@ -134,7 +134,7 @@
   @media (max-width: 980px) {
     .chans { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .body { grid-template-columns: minmax(0, 1fr); }
-    #feed { border-left: 0; border-top: 1px solid var(--line); max-height: none; }
+    #feed { border-left: 0; border-top: 1px solid var(--line); contain: none; height: 420px; }
   }
   @media (max-width: 560px) {
     .wrap { padding: 16px 16px 40px; }
@@ -149,6 +149,7 @@
     .chan .odds { margin-top: 7px; }
     #card { position: fixed; top: auto; left: 8px; right: 8px; bottom: 8px; width: auto; max-height: 62vh; z-index: 60; }
     .bar { padding: 10px; }
+    .counts { flex-basis: 100%; justify-content: flex-start; }
   }
   @media (prefers-reduced-motion: reduce) {
     #g .pulse { animation: none; opacity: 0; }
@@ -694,7 +695,7 @@ if (typeof module !== "undefined") module.exports = NET;
     const list = M ? NET.stepOf(M, S.week, S.round) : [];
     const t = NET.tally(list);
     $("#counts").innerHTML = has
-      ? `<span class="cnt"><b>${t.sent}</b> mesaj</span><span class="cnt ok"><b>${t.delivered}</b> ulaştı</span><span class="cnt"><b>${t.not_seen}</b> görülmedi</span>${t.inbox_limit ? `<span class="cnt lim"><b>${t.inbox_limit}</b> kota dolu</span>` : ""}${t.bank_message_quote ? `<span class="cnt" style="background:var(--bad-bg)"><b style="color:var(--bad)">${t.bank_message_quote}</b> engellendi</span>` : ""}`
+      ? `<span class="cnt"><b>${t.sent}</b> mesaj</span><span class="cnt ok"><b>${t.delivered}</b> ulaştı</span><span class="cnt"><b>${t.not_seen}</b> görülmedi</span><span class="cnt lim"><b>${t.inbox_limit}</b> kota dolu</span>${t.bank_message_quote ? `<span class="cnt" style="background:var(--bad-bg)"><b style="color:var(--bad)">${t.bank_message_quote}</b> engellendi</span>` : ""}`
       : "";
   }
 
@@ -779,10 +780,6 @@ if (typeof module !== "undefined") module.exports = NET;
     for (const k in calls) delete calls[k];
     const first = Object.keys(M.steps).map((k) => k.split(":").map(Number)).sort((a, b) => a[0] - b[0] || a[1] - b[1])[0];
     S.week = first ? first[0] : 1; S.round = first ? first[1] : 1; S.msg = null;
-    const t = M.totals;
-    $("#sub").innerHTML = M.hasMessages
-      ? `Bu run'da <b>${t.sent}</b> mesaj yazıldı. Bir mesaj birden çok kişiye gidebildiği için alıcı başına <b>${t.delivered + t.not_seen + t.inbox_limit + t.bank_message_quote}</b> deneme oldu.<br>Okunan: <b>${t.delivered}</b> · görülmeyen: <b>${t.not_seen}</b>${t.inbox_limit ? ` · alıcının haftalık kotası dolu olduğu için okunmayan: <b>${t.inbox_limit}</b>` : ""}${t.bank_message_quote ? ` · banka mesajını aktardığı için engellenen: <b>${t.bank_message_quote}</b>` : ""}`
-      : `Bu run'da mesaj kaydı yok. Aşağıda yalnız kimin kimi duyabileceği görünüyor.`;
     renderChannels(); renderGraph(); renderLegend(); renderBar(); renderFeed();
     const empty = $("#gwrap .empty"); if (empty) empty.remove();
     if (!M.nodes.length) $("#gwrap").insertAdjacentHTML("beforeend", `<div class="empty">Persona bulunamadı</div>`);
