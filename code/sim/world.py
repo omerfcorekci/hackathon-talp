@@ -45,6 +45,9 @@ def validate_effects(effects):
             raise ValueError("Each experience effect needs text")
         if "if" in item and not isinstance(item["if"], dict):
             raise ValueError("An experience effect's 'if' must map persona attributes to required values")
+        prob = item.get("probability", 1.0)
+        if isinstance(prob, bool) or not isinstance(prob, (int, float)) or not 0 <= prob <= 1:
+            raise ValueError("An experience effect's 'probability' must be between 0 and 1")
 
 
 def expand_surprises(events):
@@ -160,13 +163,22 @@ class World:
         return hours
 
     def _surprise_experience(self, p, week):
+        """Lines a surprise adds to this persona's week. `probability` makes it hit a seeded share of
+        personas; items sharing a `key` hit the same personas (so a week-3 charge is still there in week 4)."""
         lines = []
-        for eff in self._surprise_effects():
+        for event in (self.surprises if self.surprises_enabled else []):
+            eff = event.get("effects")
+            if not isinstance(eff, dict):
+                continue
             for item in eff.get("experience", []):
                 if item["week"] != week:
                     continue
-                if all(p.get(key) == value for key, value in item.get("if", {}).items()):
-                    lines.append(item["text"])
+                if not all(p.get(key) == value for key, value in item.get("if", {}).items()):
+                    continue
+                prob = item.get("probability", 1.0)
+                if prob < 1.0 and draw(self.seed, "experience", event["id"], item.get("key", item["text"]), p.get("id")) >= prob:
+                    continue
+                lines.append(item["text"])
         return lines
 
     # ------------------------------------------------------------------ deterministic consequences
@@ -263,6 +275,10 @@ class World:
         lines += self._surprise_experience(p, week)
         wait = self.support_wait(week, effects)
         lines.append(f"If you contacted Cobalt support this week, the typical wait was about {wait} minutes.")
+        if not any("instant_dispute_credit_cap" in item["effect"] for item in effects):
+            base = self.config["baseline"]
+            lines.append(f"A disputed card charge gets provisional credit within {base.get('dispute_provisional_credit_business_days', 10)} "
+                         f"business days; the investigation can take up to {base.get('dispute_investigation_max_days', 45)} days.")
         for item in effects:
             eff = item["effect"]
             if "rate_boost_points" in eff:

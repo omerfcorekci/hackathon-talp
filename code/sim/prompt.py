@@ -143,13 +143,48 @@ def render_week(p, week, facts):
     return "\n".join(lines)
 
 
-def render_history(prior_state, ledger):
+def outcomes_of_last_week(ledger, world, week, persona_id):
+    """What came of the things the persona did last week: deterministic, from the world's rules."""
+    if not ledger:
+        return []
+    done = set(ledger[-1].get("actions", []))
+    last = world.context(persona_id, week - 1) if week > 1 else {}
+    effects = last.get("active_action_effects", [])
+    instant = any("instant_dispute_credit_cap" in e["effect"] for e in effects)
+    base = world.config.get("baseline", {})
+    lines = []
+    if "call or chat with support" in done:
+        lines.append(f"You contacted support last week; the wait was about {last.get('support_wait_minutes', base.get('support_wait_minutes', 4))} "
+                     "minutes and the agent could only follow the standard process and repeat what Cobalt has announced.")
+    if "complain in the app" in done:
+        lines.append("Cobalt acknowledged your in-app complaint with a standard reply within two business days.")
+    if "dispute a card charge" in done:
+        lines.append("Your disputed charge was credited immediately." if instant else
+                     f"Your dispute was opened; provisional credit is due within {base.get('dispute_provisional_credit_business_days', 10)} "
+                     f"business days and the investigation can take up to {base.get('dispute_investigation_max_days', 45)} days.")
+    if "file a complaint with the CFPB or BBB" in done:
+        lines.append("Your complaint was logged with the regulator; Cobalt must respond in writing within 15 days.")
+    if "post a review (App Store / Google / Trustpilot)" in done:
+        lines.append("Your review is live where you posted it.")
+    if "move direct deposit to another bank" in done:
+        lines.append("Your direct deposit change takes effect from your next pay cycle.")
+    if "ask Cobalt for a refund or a credit" in done:
+        lines.append("Cobalt replied that refunds and credits follow the standard dispute process unless a special offer applies.")
+    return lines
+
+
+def render_history(prior_state, ledger, world=None, week=None, persona_id=None):
     lines = ["=== YOUR OWN HISTORY ==="]
     if ledger:
         for row in ledger:
             lines.append(f"- Week {row['week']}: {row['status']}, money {row['money']}; did: {_join(row.get('actions', []), 'nothing')}.")
         if isinstance(ledger[-1].get("balance"), (int, float)):
             lines.append(f"Your Cobalt balance now: about {ledger[-1]['balance']:,} dollars.")
+        if world is not None and week is not None:
+            outcomes = outcomes_of_last_week(ledger, world, week, persona_id)
+            if outcomes:
+                lines.append("What came of what you did last week:")
+                lines += [f"- {o}" for o in outcomes]
     else:
         lines.append("- This is your first week in the simulation (Nov 2). Your starting relationship is as described above.")
     if prior_state:
@@ -178,16 +213,19 @@ def build_prompt(*, persona, week, round_number, prior_state, ledger, world, net
     parts = [INSTRUCTIONS,
              render_profile(persona, world, network),
              render_week(persona, week, facts),
-             render_history(prior_state, ledger),
+             render_history(prior_state, ledger, world, week, persona["id"]),
              render_inbox(inbox, world)]
     if first_turn is not None:
         parts.append("=== EARLIER THIS SAME WEEK ===\nYou already answered once this week; this is the same week, not a new one. "
                      "Reconsider only in light of the new messages above. Keep every action you already took, every complaint "
                      "or review already filed and their consequences. Your earlier answer:\n"
                      + _dump(first_turn))
+    channel_words = {"push": "as a push notification", "email": "by email", "in-app": "as a message inside the app",
+                     "sms": "as a text message to your phone", "ceo video": "as a video message from the CEO, Elena Ruiz, in person"}
     for message in official:
-        parts.append(f"OFFICIAL BANK MESSAGE {message['id']} (sent to you in week {message['starts_week']} by "
-                     f"{', '.join(message['channels'])}; still in your inbox):\n{message['text']}\nEND OFFICIAL MESSAGE")
+        how = ", ".join(channel_words.get(str(c).lower(), str(c)) for c in message["channels"])
+        parts.append(f"OFFICIAL BANK MESSAGE {message['id']} (sent to you in week {message['starts_week']} {how}; "
+                     f"still in your inbox):\n{message['text']}\nEND OFFICIAL MESSAGE")
     parts.append(f"Round {round_number} of this week. Reply with the JSON only.")
     prompt = "\n\n".join(parts)
     world.guard_prompt(prompt, persona["id"], week)

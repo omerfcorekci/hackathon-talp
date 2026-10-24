@@ -29,8 +29,9 @@ GROUP_CUSTOMERS = {
 ACTIONS = ["log in and check balance", "try a transfer or P2P payment", "call or chat with support",
            "complain in the app", "post on social media", "tell friends or family",
            "post a review (App Store / Google / Trustpilot)", "file a complaint with the CFPB or BBB",
-           "dispute a card charge", "move some money to another bank", "move most money to another bank",
-           "move direct deposit to another bank", "open an account at a rival", "use Cobalt less",
+           "dispute a card charge", "ask Cobalt for a refund or a credit", "move some money to another bank",
+           "move most money to another bank", "move direct deposit to another bank", "open an account at a rival",
+           "use Cobalt less", "pause using Cobalt for now", "take Cobalt to small claims court",
            "wait and see", "recommend Cobalt", "do nothing"]
 
 
