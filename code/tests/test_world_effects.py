@@ -59,6 +59,14 @@ class SurpriseEffectTests(unittest.TestCase):
         self.assertIn("it went through at Sunday 16:10. That was after the payee's cutoff", week6)
         self.assertIn("4 hours and 10 minutes late, at Sunday Dec 13 16:10", week7)
 
+    def test_weekend_transfers_are_queued_not_failed(self):
+        person = {"id": "a", "group": "g", "migration_weekend": {"type": "p2p", "what": "the babysitter's pay", "amount": 120,
+                                                                 "scheduled": "Saturday 10:00"}}
+        week6 = " ".join(World(WORLD, DecisionPlan([], [person]), decisions_enabled=False).context("a", 6)["experience"])
+        self.assertIn("The babysitter's pay ($120), sent Saturday 10:00, was queued while the app was read-only and went "
+                      "through only after the system came back at Sunday 12:00: 26 hours late.", week6)
+        self.assertNotIn("service unavailable", week6)
+
     def test_no_surprise_means_on_schedule(self):
         self.assertIn("on schedule", " ".join(world([]).context("a", 7)["experience"]))
 
