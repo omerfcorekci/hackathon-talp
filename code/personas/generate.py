@@ -567,6 +567,39 @@ PAY_RULE = {
     "E4": "biweekly_friday_dec11", "E5": "monthly_20th", "E6": "irregular",
 }
 
+# What each persona had riding on the migration weekend (Sat Dec 12 00:00 - Sun Dec 13 12:00 CT).
+# The world turns these into what actually happened, given the offline card limit and any overrun.
+# Types: autopay (scheduled payment; late fee if processed after a cutoff hour), p2p / transfer
+# (fails during the window, goes out when the system returns), card_sales (tickets above the offline
+# limit cannot be charged), card_purchase (one purchase above the limit is declined), settlement_delay.
+MIGRATION_WEEKEND = {
+    "P1": {"type": "autopay", "what": "rent", "amount": 1350, "scheduled": "Sunday 08:00", "late_after_hour": 18, "late_fee": 50},
+    "P2": {"type": "p2p", "what": "the babysitter's pay", "amount": 120, "scheduled": "Sunday 09:00"},
+    "P3": {"type": "none"},
+    "P4": {"type": "autopay", "what": "car insurance", "amount": 210, "scheduled": "Sunday 06:00", "late_after_hour": 48, "late_fee": 0},
+    "P5": {"type": "card_purchase", "what": "a $180 Christmas gift order at the mall on Saturday", "amount": 180},
+    "P6": {"type": "none"},
+    "S1": {"type": "none"},
+    "S2": {"type": "none"},
+    "S3": {"type": "transfer", "what": "a $2,400 payment to the furnace contractor", "amount": 2400, "scheduled": "Saturday 10:00"},
+    "S4": {"type": "none"},
+    "S5": {"type": "none"},
+    "S6": {"type": "p2p", "what": "your share of a climbing-trip rental", "amount": 45, "scheduled": "Saturday 11:00"},
+    "B1": {"type": "card_sales", "avg_ticket": 12, "tickets_over_100": 0, "tickets_over_250": 0,
+           "then": {"type": "transfer", "what": "the Sunday restock payment to suppliers", "amount": 1800, "scheduled": "Sunday 09:00"}},
+    "B2": {"type": "card_sales", "avg_ticket": 45, "tickets_over_100": 4, "over_100_avg": 140, "tickets_over_250": 0},
+    "B3": {"type": "card_sales", "avg_ticket": 280, "tickets_over_100": 5, "over_100_avg": 280, "tickets_over_250": 2, "over_250_avg": 350},
+    "B4": {"type": "p2p", "what": "the Sunday payouts to your four stylists", "amount": 1600, "scheduled": "Sunday 09:00"},
+    "B5": {"type": "settlement_delay"},
+    "B6": {"type": "none"},
+    "E1": {"type": "card_purchase", "what": "a $140 lift ticket on Saturday", "amount": 140},
+    "E2": {"type": "none"},
+    "E3": {"type": "card_purchase", "what": "a $130 grocery run on Saturday", "amount": 130},
+    "E4": {"type": "p2p", "what": "your rent share to your roommate", "amount": 650, "scheduled": "Sunday 10:00"},
+    "E5": {"type": "none"},
+    "E6": {"type": "transfer", "what": "moving a late client payment across to cover Monday's rent", "amount": 1400, "scheduled": "Sunday 11:00"},
+}
+
 # Engine network (code/sim/network.py format), derived from the same edges.
 WHATSAPP_GROUPS = {
     "friends-chat": ["P1", "P5", "E4"],
@@ -646,6 +679,7 @@ def finalize(personas):
         rule = PAY_RULE[q["id"]]
         q["pay_rule"] = rule
         q["pay_weeks"], q["pay_schedule"] = PAY_RULES[rule]
+        q["migration_weekend"] = MIGRATION_WEEKEND[q["id"]]
         out.append(q)
     return out
 
