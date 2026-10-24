@@ -20,3 +20,6 @@ experiments/*
 
 # Built submission
 team-*_submission.zip
+
+# Local logs (live persona interviews)
+logs/
