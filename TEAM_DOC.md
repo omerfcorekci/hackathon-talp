@@ -226,6 +226,31 @@ What we learned so far:
 - **A test broke silently:** the offline end-to-end test failed after the money rule. Fix: the fake
   model follows the rule, and every change now runs that test before it is merged.
 
+## Live interview (board Q&A)
+
+The board picks any of the 24 personas (P1–P6 paycheck, S1–S6 savers, B1–B6 card-reader businesses,
+E1–E6 everyday) and asks it a question. We type the question word for word:
+
+```bash
+python3 code/scripts/interview.py --run runs/plan_1 --persona P1                     # interactive
+python3 code/scripts/interview.py --run runs/plan_1 --persona P1 "What happened on Dec 12?"
+python3 code/scripts/interview.py --run runs/plan_1 --persona P1 --print-prompt "..."  # show the prompt, no call
+```
+
+- **What the persona knows:** its profile exactly as the engine rendered it each week (with its
+  contacts from the run's network), then its own record from that run, week by week: status, money,
+  what happened to it (read back from its own weekly prompt in `calls.jsonl`), what it did, its
+  complaints and app rating, what friends told it and what it said, its reason and memory, and its
+  check-in scores before week 1 and after week 10.
+- **What it does not know:** other personas' private state, our metrics, anything after Jan 10. It is
+  told to stay consistent with its record and not to invent events; if it does not know, it says so.
+- **Same model, same seed** as the run (`run.json`), one call, about 1–3 s. Any answer can be checked
+  live against that persona's rows in `weekly.jsonl` or in the viewer.
+- **Not part of the run:** interviews are not written to `calls.jsonl`, so they cannot change a run or
+  its checks; each one is logged to `logs/interviews.jsonl` (git-ignored), and the key is never written.
+- **If the network fails on stage**, we show answers already logged in `logs/interviews.jsonl` from
+  the rehearsal on the final `plan_1`. `--fake` gives a canned answer for testing only, never on stage.
+
 ## Our own ideas
 
 - **Commitments, not moods:** each persona has a concrete thing that must happen on the migration
