@@ -246,11 +246,20 @@ class World:
             lines += self.weekend_outcome(item["then"], limit, overrun)
         return lines
 
-    def experience(self, p, week, effects):
+    def experience(self, p, week, effects, ledger=()):
         """What happened to this persona this week, as plain facts. No feelings, no decisions."""
-        return [text for text, _ in self.experience_items(p, week, effects)]
+        return [text for text, _ in self.experience_items(p, week, effects, ledger)]
 
-    def experience_items(self, p, week, effects):
+    @staticmethod
+    def pay_elsewhere(ledger, week):
+        """True when the persona's own earlier choices send its pay to another bank this week: it left, or it
+        moved its direct deposit in an earlier week (effective from the next pay cycle)."""
+        earlier = [row for row in ledger if row["week"] < week]
+        if earlier and earlier[-1].get("status") == "left":
+            return True
+        return any("move direct deposit to another bank" in row.get("actions", []) for row in earlier)
+
+    def experience_items(self, p, week, effects, ledger=()):
         """This week's facts as (fact, went_wrong) pairs. went_wrong marks what actually went wrong for this
         persona (a failed or late payment, a declined card, lost sales, an overrun); news, hypotheticals
         ("if you contacted support...") and the bank's own offers are not marked."""
@@ -264,7 +273,11 @@ class World:
         early = any(item["effect"].get("early_pay_days") for item in effects)
         migration_week = self.migration.get("week", 6)
         overrun = self.overrun_hours()
-        if week in pay_weeks:
+        elsewhere = self.pay_elsewhere(ledger, week)
+        if week in pay_weeks and elsewhere:
+            add(f"Money that used to land at Cobalt ({p.get('pay_schedule', 'your usual schedule')}) now goes to "
+                "your other bank; none of it landed in your Cobalt account this week.")
+        elif week in pay_weeks:
             if week == migration_week and p.get("paid_fri_dec11"):
                 if early:
                     add("Your pay showed in your Cobalt account on Wednesday Dec 9, two days early (early pay).")
@@ -272,7 +285,7 @@ class World:
                     add("Your pay landed in your Cobalt account on Friday Dec 11, the day before the migration window.")
             else:
                 add(f"Money landed in your Cobalt account this week ({p.get('pay_schedule', 'your usual schedule')}).")
-        elif early and p.get("paycheck_into_cobalt"):
+        elif early and p.get("paycheck_into_cobalt") and not elsewhere:
             add("Early pay is on: paychecks now show in your account up to two days early.")
         if week == migration_week:
             limit = self.offline_limit(effects)
@@ -333,7 +346,8 @@ class World:
         history = []
         for earlier in range(1, min(week, 11)):
             effects = self.plan.for_person(person, earlier)[1] if self.decisions_enabled else []
-            history += [(earlier, text) for text, went_wrong in self.experience_items(p, earlier, effects) if went_wrong]
+            history += [(earlier, text) for text, went_wrong in self.experience_items(p, earlier, effects, ledger)
+                        if went_wrong]
             wait = self.support_wait(earlier, effects)
             if earlier in contacted and wait > usual:
                 history.append((earlier, f"You contacted Cobalt support; the wait was about {wait} minutes "
@@ -341,7 +355,7 @@ class World:
         return history
 
     # ------------------------------------------------------------------ the information set
-    def context(self, person, week):
+    def context(self, person, week, ledger=()):
         p = self.person(person)
         messages, effects = self.plan.for_person(person, week) if self.decisions_enabled else ([], [])
         incidents = []
@@ -370,7 +384,7 @@ class World:
             "announcements_so_far": incidents,
             "bau_notices_so_far": [e for e in self.config["bau_notices"] if e["week"] <= week] + holding,
             "rival_offers_seen": rivals,
-            "experience": self.experience(p, week, effects),
+            "experience": self.experience(p, week, effects, ledger),
             "support_wait_minutes": self.support_wait(week, effects),
             "active_action_effects": effects,
             "official_messages": messages,

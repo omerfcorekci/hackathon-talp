@@ -236,7 +236,7 @@ def render_inbox(inbox, world):
 
 
 def build_prompt(*, persona, week, round_number, prior_state, ledger, world, network, inbox, first_turn=None):
-    facts = dict(world.context(persona["id"], week))
+    facts = dict(world.context(persona["id"], week, ledger))
     official = facts.pop("official_messages")
     parts = [INSTRUCTIONS,
              render_profile(persona, world, network),
