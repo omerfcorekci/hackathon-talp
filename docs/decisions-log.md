@@ -105,7 +105,7 @@ Copy the exact text locked on the dashboard into `code/config/decisions/plan.jso
 | Decision | Week | Actions | Cost | Locked at (clock time) | Replaced? |
 |---|---|---|---|---|---|
 | 1 | 5 | Security pack (on) + Instant dispute credit (on) + Extra support staff (+50), everyone, push/email/in-app | $0.95M | locked 15:00 (last saved 14:57:44, confirmed on the dashboard) | yes: added +50 support staff (weeks 5–8, covers the migration week) |
-| 2 | 8 | Zero-interest advance up to $500 (on), paycheck customers who work for the federal government or its contractors, push/email/in-app | $0.40M | saved 16:26:42 for week 8, locked 16:30; final (the 16:26:47 export predates the lock; `dashboard-export.json` records it locked) | no (revision 1) |
+| 2 | 8 | Zero-interest advance up to $500 (on), paycheck customers who work for the federal government or its contractors, push/email/in-app | $0.40M | saved 16:26:42 for week 8, locked 16:30; final (`dashboard-export.json` is the 16:41 export, which shows it locked) | no (revision 1) |
 
 Decision 1 in `plan.json` is the dashboard export's `run_decisions` entry, unchanged (`dashboard-export.json`, exported 15:36, shows it locked at 15:00). Reasons and
 simulation evidence: `docs/decision-1-lock.md` (sweep `c1_plans`). Decision 2: sweep `d2_week8`
