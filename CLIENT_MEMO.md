@@ -22,10 +22,10 @@ move, no layoffs, no product closed.
 
 | Board goal (Jan 10) | Target | With our plan (2 runs) | Without decisions (2 runs) |
 |---|---|---|---|
-| Active customers | ≥ 98% | 100.0% · 99.95% ✓ | 99.6% · 99.95% ✓ |
+| Active customers | ≥ 98% | 99.95% · 99.95% ✓ | 99.95% · 99.95% ✓ |
 | Deposits | ≥ 97% | 93.7% · 95.6% ✗ | 94.4% · 94.0% ✗ |
 | App Store rating | ≥ 4.3 | 4.58 · 4.58 ✓ | 4.58 · 4.58 ✓ |
-| CFPB complaints / month | ≤ 240 | 175 · 143 ✓ | 133 · 138 ✓ |
+| CFPB complaints / month | ≤ 240 | 170 · 143 ✓ | 133 · 138 ✓ |
 
 - **Three goals hold with or without us.** A migration that ends four hours late, with an honest
   notice, is survivable; the card charges at their real scale do not break ratings or complaints.
@@ -34,16 +34,16 @@ move, no layoffs, no product closed.
   keeping a house down payment "safe". Neither decision speaks to them, and no lever we tested (a
   rate boost covers only balances up to $50k) reliably beat doing nothing.
 - **Our plan's clearest effect is trust.** Week-10 trust is higher with the plan in both runs
-  (3.67 and 3.71 vs 3.58 and 3.58 out of 5). At the end check-in, with the plan vs without: trust
-  3.21 vs 2.96, would recommend 3.04 vs 2.79, thinking about leaving 1.92 vs 2.17.
-- **The migration week is the low point in every run** (customers' app rating falls to about 3.2–3.4 that
+  (3.62 and 3.75 vs 3.58 and 3.58 out of 5). At the end check-in, with the plan vs without: trust
+  3.12 vs 3.00, would recommend 2.83 vs 2.67, thinking about leaving 2.00 vs 2.17.
+- **The migration week is the low point in every run** (customers' app rating falls to about 3.3–3.4 that
   week). In earlier tests a $250 offline card limit softened it; it is not in our final plan.
 - **The store rating hides the drop.** It stays at 4.58 because it averages about 210,000 earlier
   ratings; the ratings customers give during these ten weeks average about 3.9. At that pace the
   store score would take years to reach 4.3; a wave of 1-star reviews would move it much faster.
 - **The advance reaches who it is meant for, and is not enough on its own.** Our customer sent home
   by the shutdown asks for it in both plan runs and it lands, but his trust stays low, and in one run
-  he moves most of his money to his credit union: one persona, so a story, not a measurement.
+  he moves some of his money out: one persona, so a story, not a measurement.
 - **Rumors travel.** With the network switched off, far fewer customers who never saw the
   announcement talk about the charges, and deposits end 1–2 points higher.
 
