@@ -79,9 +79,9 @@ cd code && PYTHONPATH=. python3 -m sim --personas personas/personas.jsonl \
 Engine-checked totals (`--show-plan`): A $0.80M, B $2.10M, C $3.00M, D $1.05M. In C2 the $10 goodwill credit
 reaches 32% of the paycheck group (100k-customer cap), i.e. one of the six paycheck personas.
 
-`--show-plan` on `plan.json` (15:40) prints decision 1 at $300,000 + $400,000 + $250,000 = $950,000,
-matching the CFO menu. Its total line ($1,050,000) also counts the week-5 PLACEHOLDER in slot 2, which
-is not locked and is left out below.
+`--show-plan` on `plan.json` with `targets.json` (16:28) prints decision 1 at $300,000 + $400,000 +
+$250,000 = $950,000 and decision 2 at $400,000, total $1,350,000 of $4,000,000, matching the CFO menu
+and the dashboard's own `total_cost_usd`.
 
 | Item | Decision | Cost |
 |---|---|---|
@@ -90,20 +90,25 @@ is not locked and is left out below.
 | Extra support staff (+50), 4 weeks | 1 | $0.25M |
 | Messages: push, email, in-app (no SMS, no CEO video) | 1 | $0 |
 | **Decision 1 subtotal** | 1 | **$0.95M** |
-| ⟨Decision 2 actions and paid messages⟩ | 2 (week 8, pending) | ⟨…⟩ (≤ $3.05M) |
-| **Total** | 1 + 2 | **$0.95M + ⟨…⟩ of $4.0M; $3.05M left for decision 2** |
+| Zero-interest advance up to $500, up to 20,000 customers (on) | 2 (week 8, federal and contractor paycheck customers) | $0.40M |
+| Messages: push, email, in-app (no SMS, no CEO video) | 2 | $0 |
+| **Total** | 1 + 2 | **$1.35M of $4.0M ($2.65M unspent)** |
 
 ## Locked on the dashboard
 
 Copy the exact text locked on the dashboard into `code/config/decisions/plan.json`.
-`plan.json` holds decision 1 as locked. Decision 2 is not locked: until it is, `plan.json` carries
-D2 (migration notice, week 5) as a PLACEHOLDER so plan runs have two decisions; its `why` starts with
-"PLACEHOLDER". Replace it word for word when decision 2 is locked.
+`plan.json` is the dashboard export's `run_decisions`, unchanged (`dashboard-export.json`, exported
+16:26:47). Decision 2's target is a description, not a persona group, so `targets.json` maps it to P2
+(the one persona the shutdown hits) and gives the real group's size, 12,000 customers, so the
+20,000-customer cap reaches him in every seed. `run_all.sh` reads `targets.json` by default.
 
 | Decision | Week | Actions | Cost | Locked at (clock time) | Replaced? |
 |---|---|---|---|---|---|
 | 1 | 5 | Security pack (on) + Instant dispute credit (on) + Extra support staff (+50), everyone, push/email/in-app | $0.95M | locked 15:00 (last saved 14:57:44, confirmed on the dashboard) | yes: added +50 support staff (weeks 5–8, covers the migration week) |
-| 2 | 8 (planned) | pending: answer to the week-7 announcement; options in `docs/decision-2-timing.md` | ≤ $3.05M | pending: lock for week 8 before 16:30 (fallback week 9 before 17:00) | |
+| 2 | 8 | Zero-interest advance up to $500 (on), paycheck customers who work for the federal government or its contractors, push/email/in-app | $0.40M | saved 16:26:42 for week 8, locks at 16:30 (export at 16:26:47 still shows `locked: false`) | no (revision 1) |
 
 Decision 1 in `plan.json` is the dashboard export's `run_decisions` entry, unchanged (`dashboard-export.json`, exported 15:36, shows it locked at 15:00). Reasons and
-simulation evidence: `docs/decision-1-lock.md` (sweep `c1_plans`).
+simulation evidence: `docs/decision-1-lock.md` (sweep `c1_plans`). Decision 2: sweep `d2_week8`
+(16:06) had the advance and a new-money rate boost tie on every board goal; the advance answers the
+week-7 shutdown directly for half the cost, and the rate boost does not reach S1, whose reason to move
+is the FDIC limit.
