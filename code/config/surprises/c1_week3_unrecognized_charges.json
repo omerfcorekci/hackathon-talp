@@ -13,10 +13,6 @@
     "experience": [
       {
         "week": 3,
-        "text": "Cobalt posted a holding statement on social media within 24 hours: it is aware of reports of small card charges customers do not recognize and is investigating with its card processor; customers who see a charge they do not recognize can dispute it in the app."
-      },
-      {
-        "week": 3,
         "if": {
           "id": "B5"
         },

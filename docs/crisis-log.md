@@ -95,7 +95,10 @@ refunded, and whether the stolen cards get replaced.
 **Simulation input:** `code/config/surprises/c1_week3_unrecognized_charges.json`, text word for word.
 Who hears the text is the engine's seeded reach draw (app-daily users, social-media users, others).
 `effects` hold our reading of what really happened, and vanish in `plan_nosurprises`:
-- the business-as-usual holding statement on social media in week 3 (everyone sees it);
+- no holding statement of our own: the engine's business-as-usual holding statement on social media
+  reaches the personas who hear the announcement in week 3, by the same reach draw. An earlier version
+  of this file put a holding statement into every persona's week-3 experience, which told all 24 about
+  the charges although the reach draw had only 15 of them hearing about it (seed 1);
 - support waits of 9 minutes in week 3 and 7 in week 4 (dispute calls; BAU is 4);
 - one persona finds a charge himself in week 3: B5 Diego Alvarez, a $4.50 payment on his business
   card shows up twice, and a market customer asks whether his card reader is safe. Before the update we
