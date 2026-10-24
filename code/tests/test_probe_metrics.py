@@ -291,23 +291,25 @@ class MetricsTests(unittest.TestCase):
 
     def test_goals_follow_the_stated_formulas(self):
         result = metrics.compute_metrics(self.personas, self.scenario())
-        self.assertEqual(result["goal_1"], 4.76)  # 100k of 2.1M still active and banking with Cobalt
-        self.assertEqual(result["goal_2"], 40.0)  # (1000 × 1.0 + 1000 × 0.6 + 2000 × 0) / 4000
-        self.assertEqual(result["goal_3"], 4.0)   # (966,000 + 2,000 + 120,000) / (210,000 + 2,000 + 60,000)
-        self.assertEqual(result["goal_3b"], 462.9)  # worst window holds c once: 120 × (1 + 4 × 1.5/2.1)
+        # No profile fields: every persona has the neutral follow share 0.25.
+        self.assertEqual(result["follow_share"], {"a": 0.25, "b": 0.25, "c": 0.25})
+        self.assertEqual(result["goal_1"], 76.19)  # (2.1M - 0.25 × 500k - 0.25 × 1.5M) / 2.1M
+        self.assertEqual(result["goal_2"], 85.0)   # (4000 - 0.25 × 1000 × 0.4 - 0.25 × 2000) / 4000
+        self.assertEqual(result["goal_3"], 4.42)   # (966,000 + 500 + 30,000) / (210,000 + 500 + 15,000)
+        self.assertEqual(result["goal_3b"], 205.7)  # worst window holds c once: 120 × (1 + 4 × 0.25 × 1.5/2.1)
         self.assertEqual(result["weeks_completed"], 10)
         self.assertEqual(list(result["series"]["cfpb_share_by_window"]),
                          ["1-4", "2-5", "3-6", "4-7", "5-8", "6-9", "7-10"])
-        self.assertEqual(result["by_group"]["g1"]["goal_1"], 16.67)
-        self.assertEqual(result["by_group"]["g1"]["goal_2"], 80.0)
-        self.assertEqual(result["by_group"]["g2"]["goal_2"], 0.0)
-        self.assertEqual(result["by_group"]["g1"]["goal_3b"], round(120 * (1 + 4 * 500_000 / 2_100_000), 1))
+        self.assertEqual(result["by_group"]["g1"]["goal_1"], 79.17)
+        self.assertEqual(result["by_group"]["g1"]["goal_2"], 95.0)
+        self.assertEqual(result["by_group"]["g2"]["goal_2"], 75.0)
+        self.assertEqual(result["by_group"]["g1"]["goal_3b"], round(120 * (1 + 4 * 0.25 * 500_000 / 2_100_000), 1))
         self.assertEqual(result["units"], metrics.UNITS)
         json.dumps(result, allow_nan=False)
 
     def test_balance_is_ignored(self):
         weekly = [dict(row, balance=0) for row in self.scenario()]
-        self.assertEqual(metrics.compute_metrics(self.personas, weekly)["goal_2"], 40.0)
+        self.assertEqual(metrics.compute_metrics(self.personas, weekly)["goal_2"], 85.0)
 
     def test_incomplete_and_empty_runs_still_give_finite_goals(self):
         weekly = [row for row in self.scenario() if row["week"] <= 3]
@@ -324,10 +326,11 @@ class MetricsTests(unittest.TestCase):
     def test_zero_baseline_and_missing_weights_are_noted(self):
         weekly = [dict(row, active_in_last_30_days=False) for row in self.scenario()]
         result = metrics.compute_metrics(self.personas, weekly)
-        self.assertEqual(result["goal_1"], 0.0)
-        self.assertTrue(any("A_1 = 0" in note for note in result["notes"]))
+        self.assertEqual(result["goal_1"], 75.0)  # all inactive: only the followers (f = 0.25) go
         bare = [{"id": p["id"], "group": p["group"]} for p in self.personas]
         result = metrics.compute_metrics(bare, self.scenario())
+        self.assertEqual(result["goal_1"], 0.0)
+        self.assertTrue(any("B = 0" in note for note in result["notes"]))
         self.assertTrue(any("no valid weight_customers" in note for note in result["notes"]))
         json.dumps(result, allow_nan=False)
 
@@ -344,8 +347,56 @@ class MetricsTests(unittest.TestCase):
             (run / "weekly.jsonl").write_text("".join(json.dumps(r) + "\n" for r in self.scenario()))
             with redirect_stdout(io.StringIO()) as printed:
                 self.assertEqual(metrics.main(["metrics", str(run)]), 0)
-            self.assertIn('"goal_2": 40.0', printed.getvalue())
-            self.assertEqual(json.loads((run / "metrics.json").read_text())["goal_2"], 40.0)
+            self.assertIn('"goal_2": 85.0', printed.getvalue())
+            self.assertEqual(json.loads((run / "metrics.json").read_text())["goal_2"], 85.0)
+
+
+    def real_personas(self):
+        return [json.loads(line) for line in (ROOT / "personas/personas.jsonl").read_text().splitlines() if line.strip()]
+
+    def test_follow_share_maps_the_persona_fields(self):
+        self.assertEqual(metrics.follow_share({}), 0.25)
+        second = {"cobalt_role": "second bank", "paycheck_into_cobalt": False,
+                  "moves_money_for_rate": True, "baseline_anxiety": "high"}
+        self.assertEqual(metrics.follow_share(second), 0.44)  # 0.25 + 0.10 + 0.06 + 0.03
+        paycheck = {"cobalt_role": "main bank", "paycheck_into_cobalt": True,
+                    "moves_money_for_rate": False, "baseline_anxiety": "low"}
+        self.assertEqual(metrics.follow_share(paycheck), 0.09)  # 0.25 - 0.10 - 0.03 - 0.03
+        for person in self.real_personas():
+            self.assertTrue(0.05 <= metrics.follow_share(person) <= 0.5)
+
+    def test_nothing_happens_gives_the_baseline_exactly(self):
+        personas = self.real_personas()
+        weekly = [row for p in personas for row in week_rows(p["id"])]
+        result = metrics.compute_metrics(personas, weekly)
+        self.assertEqual((result["goal_1"], result["goal_2"], result["goal_3"], result["goal_3b"]),
+                         (100.0, 100.0, 4.6, 120.0))
+
+    def test_one_persona_moving_most_moves_goal_2_by_at_most_five_points(self):
+        personas = self.real_personas()
+        for person in personas:
+            for change in ({"money": "moved most"}, {"status": "left"}):
+                weekly = [row for p in personas for row in week_rows(p["id"])]
+                for row in weekly:
+                    if row["persona"] == person["id"] and row["week"] == 10:
+                        row.update(change)
+                result = metrics.compute_metrics(personas, weekly)
+                self.assertGreaterEqual(result["goal_2"], 95.0, (person["id"], change))
+                self.assertGreaterEqual(result["goal_1"], 94.0, (person["id"], change))  # E2 leaving: -5.3
+
+    def test_goal_1_never_exceeds_100(self):
+        personas = self.real_personas()
+        weekly = [row for p in personas for row in week_rows(p["id"], range(2, 11))]
+        weekly += [{"persona": p["id"], "week": 1, **answer(status="dormant", active_in_last_30_days=False)}
+                   for p in personas]  # a bad week 1 must not become the baseline
+        result = metrics.compute_metrics(personas, weekly)
+        self.assertEqual(result["goal_1"], 100.0)
+        self.assertTrue(all(value <= 100 for value in result["series"]["goal_1_by_week"].values()))
+
+    def test_new_money_adds_growth_through_the_follow_share(self):
+        weekly = [row for pid in "abc" for row in week_rows(pid, new_money="a lot")]
+        result = metrics.compute_metrics(self.personas, weekly)
+        self.assertEqual(result["goal_2"], 107.5)  # 100 × (4000 + 0.25 × 4000 × 0.3) / 4000
 
 
 class CliTests(unittest.TestCase):
