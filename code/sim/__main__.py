@@ -27,6 +27,9 @@ def parser():
     result.add_argument("--surprises", type=Path, help="One JSON file or directory of dashboard announcements")
     result.add_argument("--world", type=Path, default=DEFAULT_WORLD)
     result.add_argument("--no-surprises", action="store_true")
+    result.add_argument("--probe", action="store_true",
+                        help="Ask the eight check-in questions before week 1 and after the last week "
+                             "(official runs plan_1 and nodecision_1 only)")
     result.add_argument("--out", type=Path, help="New empty output directory, e.g. experiments/network-a")
     result.add_argument("--settings", type=Path, help="JSON object of Settings overrides")
     result.add_argument("--seed", type=int)
@@ -64,7 +67,8 @@ async def execute(args):
                         targets=load_json(args.targets) if args.targets else {},
                         action_aliases=load_json(args.action_aliases) if args.action_aliases else {})
     world = World(load_json(args.world), plan, surprises=read_surprises(args.surprises),
-                  decisions_enabled=bool(decisions), surprises_enabled=not args.no_surprises)
+                  decisions_enabled=bool(decisions), surprises_enabled=not args.no_surprises,
+                  seed=settings.seed)
     # Preflight every information set without consuming a model call or touching source files.
     from .prompt import build_prompt
 
@@ -73,9 +77,16 @@ async def execute(args):
             build_prompt(persona=person, week=week, round_number=1,
                          prior_state=person.get("initial_state"), ledger=[], world=world,
                          network=network, inbox=[])
+    if args.probe:
+        from .probe import build_probe_prompt, require_profiles
+
+        require_profiles(people)
+        for person in people:
+            build_probe_prompt(person, "start", world=world)
     if args.validate_only:
         print(f"Inputs valid: {len(people)} external personas, {settings.weeks} weeks, "
-              f"{len(decisions)} decisions, ${plan.total_cost:,} menu cost. No model calls made.")
+              f"{len(decisions)} decisions, ${plan.total_cost:,} menu cost"
+              f"{', check-in probe on' if args.probe else ''}. No model calls made.")
         return
     if args.out.exists() and any(args.out.iterdir()):
         raise ValueError("Output directory must be empty")
@@ -83,7 +94,7 @@ async def execute(args):
     try:
         engine = SimulationEngine(personas=people, network=network, world=world,
                                   settings=settings, transport=transport)
-        await engine.run(args.out, persona_source=args.personas,
+        await engine.run(args.out, persona_source=args.personas, probe=args.probe,
                          on_week=lambda week, first, second: print(
                              f"Week {week}: {first} first-round, {second} second-round calls", file=sys.stderr))
         print(f"Engine run complete: {args.out}")

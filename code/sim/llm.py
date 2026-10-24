@@ -58,7 +58,8 @@ class LoggedModel:
         self.settings = settings
         self.semaphore = asyncio.Semaphore(settings.concurrency)
 
-    async def turn(self, *, persona, week, round_number, prompt, validate):
+    async def turn(self, *, persona, week, round_number, prompt, validate, schema=TURN_SCHEMA):
+        rejection = None
         for attempt in range(1, self.settings.attempts + 1):
             model = self.settings.model
             if attempt == self.settings.attempts and attempt > 1 and self.settings.fallback_model:
@@ -67,6 +68,9 @@ class LoggedModel:
             if attempt > 1:
                 actual_prompt += "\n\nReturn valid JSON matching the response schema and permitted contacts. "
                 actual_prompt += "Preserve actions already taken this week. Do not add extra fields."
+                if rejection:
+                    # Only our own validation messages are echoed; SDK errors may carry URLs or keys.
+                    actual_prompt += f"\nYour previous answer was rejected for this reason: {rejection} Fix exactly that."
             record = {"id": uuid.uuid4().hex, "persona": persona, "week": week,
                       "round": round_number, "prompt": actual_prompt, "response": "",
                       "model": model, "seed": self.settings.seed, "attempt": attempt}
@@ -78,7 +82,7 @@ class LoggedModel:
                     raw = await asyncio.wait_for(
                         self.transport.generate(prompt=actual_prompt, model=model,
                                                 seed=self.settings.seed,
-                                                temperature=self.settings.temperature, schema=TURN_SCHEMA),
+                                                temperature=self.settings.temperature, schema=schema),
                         timeout=self.settings.timeout_seconds,
                     )
                     if not isinstance(raw, str):
@@ -97,6 +101,7 @@ class LoggedModel:
                     record["valid"] = False
                     record["error_type"] = type(error).__name__
                     record["error_stage"] = stage
+                    rejection = str(error)[:300] if stage == "validation" else None
                 finally:
                     record["elapsed_seconds"] = round(time.monotonic() - started, 4)
                     self.writer.append("calls.jsonl", record)

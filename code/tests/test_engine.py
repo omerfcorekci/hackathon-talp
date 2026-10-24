@@ -58,7 +58,16 @@ def rows(path, name):
 
 
 def prompt_data(prompt):
-    return json.JSONDecoder().raw_decode(prompt.split("\n\n", 1)[1].lstrip())[0]
+    """Recover persona, week, round and the first-turn answer from the rendered prompt text."""
+    import re
+
+    data = {"persona": {"id": re.search(r"Your ID in this simulation is (\S+)\.", prompt).group(1)},
+            "week": int(re.search(r"=== THIS WEEK: week (\d+) of", prompt).group(1)),
+            "round": int(re.search(r"Round (\d+) of this week", prompt).group(1))}
+    marker = "Your earlier answer:\n"
+    if marker in prompt:
+        data["already_taken_this_week"] = json.JSONDecoder().raw_decode(prompt.split(marker, 1)[1])[0]
+    return data
 
 
 class TestTransport:

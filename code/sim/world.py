@@ -1,6 +1,17 @@
-"""Deterministic facts, BAU, targeted decisions and time-filtered announcements."""
+"""Deterministic facts, BAU, targeted decisions, time-filtered announcements and per-persona consequences.
+
+The world never decides what a persona feels or does. It states, deterministically, what happened
+to that persona this week (pay landed, the app was read-only, a $300 ticket could not be charged,
+support took 25 minutes) and what each active bank action means for them as a customer. The model
+reacts. Who hears an announcement is a seeded draw per persona, identical across run types for the
+same seed, so plan and no-decision runs differ only through the decisions.
+"""
 
 from copy import deepcopy
+
+from .settings import draw
+
+SOCIAL_SOURCES_DEFAULT = ["Instagram", "X", "TikTok", "Reddit", "Facebook", "YouTube", "LinkedIn"]
 
 
 def validate_event(event):
@@ -36,10 +47,15 @@ def expand_surprises(events):
     return sorted(result, key=lambda e: (e["week"], e["id"]))
 
 
+def _money(amount):
+    return f"${amount:,.0f}" if isinstance(amount, (int, float)) else str(amount)
+
+
 class World:
-    def __init__(self, config, plan, *, surprises=(), decisions_enabled=True, surprises_enabled=True):
+    def __init__(self, config, plan, *, surprises=(), decisions_enabled=True, surprises_enabled=True, seed=0):
         self.config = deepcopy(config)
         self.plan = plan
+        self.seed = seed
         self.decisions_enabled = decisions_enabled
         self.surprises_enabled = surprises_enabled
         self.surprises = expand_surprises(list(surprises))
@@ -50,26 +66,163 @@ class World:
                 raise ValueError(f"World configuration requires a {name} list")
             for event in config[name]:
                 validate_event(event)
+        for event in config.get("rival_offers", []):
+            validate_event(event)
         # Avoid BAU accidentally making a no-decision run contain a locked message.
         for notice in config["bau_notices"]:
             plan.guard_prompt(notice["text"], "", notice["week"], enabled=False)
+        self.calendar = {int(k): v for k, v in config.get("calendar", {}).items()}
+        self.migration = config.get("migration", {})
+        self.support = config.get("support_wait", {})
+        self.reach = config.get("announcement_reach", {})
 
+    # ------------------------------------------------------------------ persona-level helpers
+    def person(self, pid):
+        return self.plan.people.get(pid, {"id": pid})
+
+    def _uses_social(self, p):
+        sources = set(p.get("news_sources", []))
+        social = set(self.reach.get("social_sources", SOCIAL_SOURCES_DEFAULT))
+        return bool(sources & social)
+
+    def _media_unknown(self, p):
+        # A record without media attributes cannot be modelled: assume the announcement reaches it.
+        return "checks_app_daily" not in p and "news_sources" not in p
+
+    def _first_seen_week(self, event_id, event_week, p):
+        """First week in which this persona hears a dashboard announcement (seeded, stateless)."""
+        if self._media_unknown(p):
+            return event_week
+        if p.get("checks_app_daily"):
+            probability = self.reach.get("checks_app_daily", 0.9)
+        elif self._uses_social(p):
+            probability = self.reach.get("social_news", 0.6)
+        else:
+            probability = self.reach.get("other", 0.35)
+        for week in range(event_week, 11):
+            if draw(self.seed, "announce", event_id, p.get("id"), week) < probability:
+                return week
+        return None
+
+    def _rival_seen_week(self, offer, p):
+        if any(p.get(flag) for flag in offer.get("certain_if_any", [])):
+            return offer["week"]
+        banks = p.get("banks_count")
+        if isinstance(banks, int) and banks >= offer.get("certain_if_banks_at_least", 99):
+            return offer["week"]
+        if self._media_unknown(p):
+            return offer["week"]
+        probability = offer.get("probability_social", 0.45) if self._uses_social(p) else offer.get("probability_other", 0.2)
+        for week in range(offer["week"], 11):
+            if draw(self.seed, "rival", offer["id"], p.get("id"), week) < probability:
+                return week
+        return None
+
+    # ------------------------------------------------------------------ deterministic consequences
+    def support_wait(self, week, effects):
+        base = self.support.get("by_week", {}).get(str(week), self.support.get("base_minutes", 4))
+        staff = 0
+        for item in effects:
+            staff = max(staff, item["effect"].get("extra_support_staff", 0))
+        factor = self.support.get("extra_staff_factor", {}).get(str(staff), 1.0) if staff else 1.0
+        return max(self.support.get("floor_minutes", 2), round(base * factor))
+
+    def offline_limit(self, effects):
+        limit = self.migration.get("offline_card_limit_default", 100)
+        for item in effects:
+            limit = max(limit, item["effect"].get("migration_offline_card_limit", limit))
+        return limit
+
+    def experience(self, p, week, effects):
+        """What happened to this persona this week, as plain facts. No feelings, no decisions."""
+        lines = []
+        cal = self.calendar.get(week, {})
+        pay_weeks = p.get("pay_weeks") or []
+        early = any(item["effect"].get("early_pay_days") for item in effects)
+        migration_week = self.migration.get("week", 6)
+        overrun = self.migration.get("overrun_hours", 0) or 0
+        if week in pay_weeks:
+            if week == migration_week and p.get("paid_fri_dec11"):
+                if early:
+                    lines.append("Your pay showed in your Cobalt account on Wednesday Dec 9, two days early (early pay).")
+                else:
+                    lines.append("Your pay landed in your Cobalt account on Friday Dec 11, the day before the migration window.")
+            else:
+                lines.append(f"Money landed in your Cobalt account this week ({p.get('pay_schedule', 'your usual schedule')}).")
+        elif early and p.get("paycheck_into_cobalt"):
+            lines.append("Early pay is on: paychecks now show in your account up to two days early.")
+        if week == migration_week:
+            limit = self.offline_limit(effects)
+            end = "Sunday Dec 13 12:00"
+            if overrun:
+                end = f"Sunday Dec 13 {12 + overrun:02d}:00, {overrun} hours later than announced"
+            lines.append(f"From Saturday Dec 12 00:00 until {end} Central Time the Cobalt app was read-only: you could see "
+                         f"balances but could not send transfers or P2P payments or get a new card. "
+                         f"Card payments worked offline up to {_money(limit)} per payment.")
+            if p.get("uses_p2p"):
+                lines.append("Any P2P payment or transfer you tried during that window failed with 'service unavailable'; it could only go out after the system returned.")
+            if "card reader" in str(p.get("group", "")):
+                lines.append(f"Your Cobalt card reader accepted payments up to {_money(limit)} each during the window; a larger ticket could not be charged to a card.")
+            lines.append(self.migration.get("scheduled_payments", "Payments due during the window were processed once the system returned."))
+        if week == migration_week + 1:
+            finish = "on schedule at Sunday Dec 13 12:00" if not overrun else f"{overrun} hours late"
+            lines.append(f"The migration finished {finish}. Transfers, P2P and new cards are available again on the new system.")
+        wait = self.support_wait(week, effects)
+        lines.append(f"If you contacted Cobalt support this week, the typical wait was about {wait} minutes.")
+        for item in effects:
+            eff = item["effect"]
+            if "rate_boost_points" in eff:
+                scope = " on new money only" if eff.get("new_money_only") else ""
+                lines.append(f"Your Cobalt savings rate is {eff['rate_boost_points']} points higher for four weeks from week "
+                             f"{item['starts_week']}, on balances up to {_money(eff.get('balance_cap', 50000))}{scope}.")
+            if "instant_dispute_credit_cap" in eff:
+                lines.append(f"If you dispute a card charge, Cobalt credits it immediately, up to {_money(eff['instant_dispute_credit_cap'])}, for eight weeks.")
+            if "instant_transfer_fee" in eff:
+                lines.append("Instant transfers to other banks are free right now (normally 1.5%, up to $15).")
+            if "cash_back_percent" in eff:
+                lines.append(f"You get {eff['cash_back_percent']}% cash back on debit card purchases, up to {_money(eff.get('cash_back_cap', 0))}, for four weeks.")
+            if "goodwill_credit" in eff and week == item["starts_week"]:
+                lines.append(f"A {_money(eff['goodwill_credit'])} goodwill credit from Cobalt landed in your account this week.")
+            if "advance_cap" in eff and week == item["starts_week"]:
+                lines.append(f"Cobalt offered you a zero-interest advance of up to {_money(eff['advance_cap'])}, repaid from your next deposit.")
+            if eff.get("free_replacement_card"):
+                lines.append("You can request a free replacement card and receive an alert for every card payment.")
+        if cal.get("note"):
+            lines.insert(0, cal["note"])
+        return lines
+
+    # ------------------------------------------------------------------ the information set
     def context(self, person, week):
+        p = self.person(person)
         messages, effects = self.plan.for_person(person, week) if self.decisions_enabled else ([], [])
-        incidents = [event for event in self.surprises if event["week"] <= week] if self.surprises_enabled else []
+        incidents = []
+        if self.surprises_enabled:
+            for event in self.surprises:
+                seen = self._first_seen_week(event["id"], event["week"], p)
+                if seen is not None and seen <= week:
+                    incidents.append({**event, "heard_in_week": seen})
         holding = [
             {"id": f"bau-holding-{event['id']}", "week": week, "channel": "social",
-             "text": "Cobalt has issued its normal holding statement within 24 hours of this week's incident. "
-                     "Only the supplied announcement establishes what is known; no extra remedy is promised."}
-            for event in incidents if event["week"] == week
+             "text": "Cobalt posted its usual short holding statement on social media within 24 hours of the incident. "
+                     "It repeats what is known and promises an update; no remedy is mentioned."}
+            for event in incidents if event["week"] == week and event["heard_in_week"] == week
         ]
+        rivals = []
+        for offer in self.config.get("rival_offers", []):
+            seen = self._rival_seen_week(offer, p)
+            if seen is not None and seen <= week:
+                rivals.append({"id": offer["id"], "week": seen, "text": offer["text"]})
         return {
             "week": week,
+            "calendar": self.calendar.get(week, {}),
             "baseline": self.config["baseline"],
             "known_schedule": [e for e in self.config["known_schedule"] if e["week"] <= week],
             "events_this_week": [e for e in self.config["weekly_events"] if e["week"] == week],
             "announcements_so_far": incidents,
             "bau_notices_so_far": [e for e in self.config["bau_notices"] if e["week"] <= week] + holding,
+            "rival_offers_seen": rivals,
+            "experience": self.experience(p, week, effects),
+            "support_wait_minutes": self.support_wait(week, effects),
             "active_action_effects": effects,
             "official_messages": messages,
         }

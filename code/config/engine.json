@@ -2,7 +2,7 @@
   "weeks": 10,
   "concurrency": 24,
   "temperature": 0.8,
-  "attempts": 3,
+  "attempts": 4,
   "timeout_seconds": 60,
   "max_peer_messages": 2,
   "stranger_probability": 0.05,

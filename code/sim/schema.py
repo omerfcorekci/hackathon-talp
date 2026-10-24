@@ -29,7 +29,7 @@ TURN_SCHEMA = {
                     "channel": {"type": "string", "enum": list(CHANNELS)},
                     "target": {"type": ["string", "null"],
                                "description": "null for social; group ID for whatsapp; contact ID for direct/phone."},
-                    "text": {"type": "string", "minLength": 1, "maxLength": 140},
+                    "text": {"type": "string", "minLength": 1, "maxLength": 200},
                 },
                 "required": ["channel", "target", "text"],
                 "additionalProperties": False,
@@ -75,8 +75,10 @@ def parse_turn(raw: str, *, contacts: set[str], groups: set[str], previous=None)
         if not isinstance(message, dict) or set(message) != {"channel", "target", "text"}:
             raise ValueError("Invalid message fields")
         channel, target, text = message["channel"], message["target"], message["text"]
-        if channel not in CHANNELS or not isinstance(text, str) or not 1 <= len(text) <= 140:
-            raise ValueError("Invalid message channel or text")
+        if channel not in CHANNELS:
+            raise ValueError(f"Invalid message channel {channel!r}; use one of {', '.join(CHANNELS)}")
+        if not isinstance(text, str) or not 1 <= len(text) <= 200:
+            raise ValueError("Each message text must be 1 to 200 characters")
         if channel == "social" and target is not None:
             raise ValueError("Social posts must have a null target")
         if channel == "whatsapp" and (not isinstance(target, str) or target not in groups):
