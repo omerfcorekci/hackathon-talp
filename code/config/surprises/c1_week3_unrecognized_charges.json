@@ -1,0 +1,17 @@
+{
+  "id": "c1_week3_unrecognized_charges",
+  "week": 3,
+  "title": "Company update — week 3",
+  "text": "**Small charges nobody recognizes.** Since Monday, some customers have seen small card charges they do not recognize, mostly between $0.50 and $5. Screenshots are on X and Reddit; one post with many shares says \"Cobalt got hacked\".\n\nKnown: the charges are real; the security team is investigating with the card processor.\nNot known: how many customers; what caused it; whether customer data was exposed.",
+  "dashboard_id": "35d73c101e9a5520732b76a5d4d2281d",
+  "published_at": "2026-10-24T14:00:00+03:00",
+  "effects": {
+    "support_wait_by_week": {"3": 9, "4": 7},
+    "experience": [
+      {"week": 3, "text": "Cobalt posted a holding statement on social media within 24 hours: it is aware of reports of small card charges customers do not recognize and is investigating with its card processor; customers who see a charge they do not recognize can dispute it in the app."},
+      {"week": 3, "if": {"id": "P5"}, "text": "You found a $1.99 card charge on your Cobalt card that you do not recognize."},
+      {"week": 3, "if": {"id": "E4"}, "text": "You found two card charges of $0.89 and $3.49 on your Cobalt card that you do not recognize."},
+      {"week": 3, "if": {"id": "B5"}, "text": "You found a $4.50 charge on your Cobalt business card that you do not recognize, and a market customer asked you whether paying on your Cobalt card reader is safe."}
+    ]
+  }
+}
