@@ -40,15 +40,26 @@ ASSUMPTIONS = [
     "new_money is \"some\" and 0.3 when it is \"a lot\" (money brought into Cobalt from elsewhere, as a "
     "share of the persona's Nov 2 deposits), and m + n = 0 when status is \"left\". The model-reported "
     "balance is not used. Rounded to 2 decimals.",
-    "goal_3 (App Store rating) = (4.6 × 210,000 + Σ 0.02 × f × weight_customers × app_rating) / "
-    "(210,000 + Σ 0.02 × f × weight_customers), summed over every persona-week (weeks 1-10) whose "
-    "app_rating is not null. The existing review mass equals 10% of customers (210,000 reviews) at "
-    "4.6; when a persona reviews, 2% of the customers who follow it (f × weight_customers) leave that "
-    "rating. Rounded to 2 decimals.",
-    "goal_3b (CFPB complaints per month, worst month) = 120 × (1 + 4 × S), where S is the maximum "
-    "over the sliding 4-week windows (weeks 1-4, 2-5, ..., 7-10) of Σ f × weight_customers of personas "
-    "with complaint == \"cfpb\" in any week of that window / 2,100,000. 25% of all customers escalating "
-    "to the CFPB in a month doubles the baseline of 120 a month. Rounded to 1 decimal. Board limit 240.",
+    "Act share: complaining and rating the app are rare, deliberate acts, so the follow share f (made "
+    "for staying, leaving and moving money) is not used for them. Personas do not complain or rate in "
+    "quiet weeks (none did in weeks 1-2 of 44 ten-week test runs), so each persona complaint or rating "
+    "is counted on top of the dossier's baseline (4.6 from the existing ratings; 1,800 complaints and "
+    "120 CFPB complaints a month). When a persona complains or rates in a week, an act share a = 1% of "
+    "the customers it stands for (weight_customers) do the same that month: roughly the rate TSB saw "
+    "after its failed 2018 core banking migration (95,613 complaints in about six weeks from about 5 "
+    "million customers). a is a modelling judgement anchored on that one case, not fitted to Cobalt.",
+    "goal_3 (App Store rating) = (4.6 × 210,000 + Σ a × weight_customers × app_rating) / "
+    "(210,000 + Σ a × weight_customers), summed over every persona-week (weeks 1-10) whose "
+    "app_rating is not null. The existing ratings are taken as 10% of customers (210,000) at 4.6. "
+    "One everyday persona's 1-star rating lowers goal_3 by 0.02-0.07; every persona giving 1 star once "
+    "brings it to 4.27. Rounded to 2 decimals.",
+    "goal_3b (CFPB complaints in the worst month) = 120 + the maximum over the sliding 4-week windows "
+    "(weeks 1-4, 2-5, ..., 7-10) of Σ a × weight_customers × e over the personas that complained in "
+    "that window, where e = 120 / 1,800 (the dossier's share of complaints that reach the CFPB) when "
+    "the persona's highest step in the window is \"bank\" and e = 1 when it is \"cfpb\". Each persona "
+    "counts once per window. A complaint to Cobalt by the persona standing for 400,000 everyday "
+    "customers adds about 267 a month; by a business owner standing for 7,000 customers about 5. "
+    "Rounded to 1 decimal. Board limit 240.",
     "Weights are the personas' own weight_customers (2.1 million in total) and weight_deposits_usd. "
     "A missing or invalid weight counts as 0 and is listed under notes.",
     "An incomplete run uses its last completed week in place of week 10 and only windows inside the "
@@ -56,7 +67,7 @@ ASSUMPTIONS = [
     "A run with no completed weeks writes goal_1 and goal_2 as 0 with a note.",
     "by_group applies the same formulas to one dossier group's personas. goal_1 and goal_2 use the "
     "group's own Nov 2 customers and deposits as the baseline; goal_3 and goal_3b keep the bank-wide "
-    "constants (210,000 reviews at 4.6; 2,100,000 customers; 120 a month), so they show the bank-wide "
+    "constants (210,000 ratings at 4.6; 120 CFPB complaints a month), so they show the bank-wide "
     "number if only that group's personas had rated or escalated.",
 ]
 
@@ -82,11 +93,12 @@ BOARD_TARGETS = {"goal_1": ">= 98", "goal_2": ">= 97", "goal_3": ">= 4.3", "goal
 ACTIVE_STATUSES = ("main bank", "second bank")
 MONEY_FACTOR = {"kept": 1.0, "moved some": 0.6, "moved most": 0.1}
 NEW_MONEY_FACTOR = {"none": 0.0, "some": 0.1, "a lot": 0.3}  # money brought into Cobalt, as a share of Nov 2 deposits
-CUSTOMERS = 2_100_000
 REVIEW_MASS = 210_000
 BASE_RATING = 4.6
-REVIEW_SHARE = 0.02
+ACT_SHARE = 0.01                 # share of a persona's customers who also complain / rate that month
+COMPLAINTS_PER_MONTH = 1_800
 CFPB_BASELINE = 120
+ESCALATION = {"bank": CFPB_BASELINE / COMPLAINTS_PER_MONTH, "cfpb": 1.0}  # share that reaches the CFPB
 WINDOW = 4
 
 
@@ -181,17 +193,20 @@ def _goals(ids, rows, last, customers, deposits, follow, start_ids, notes, label
 
     rated = [(pid, row["app_rating"]) for (pid, week), row in rows.items()
              if pid in ids and 1 <= week <= last and row.get("app_rating") is not None]
-    mass = sum(REVIEW_SHARE * follow[pid] * customers[pid] for pid, _ in rated)
-    score = sum(REVIEW_SHARE * follow[pid] * customers[pid] * rating for pid, rating in rated)
+    mass = sum(ACT_SHARE * customers[pid] for pid, _ in rated)
+    score = sum(ACT_SHARE * customers[pid] * rating for pid, rating in rated)
     goal_3 = round((BASE_RATING * REVIEW_MASS + score) / (REVIEW_MASS + mass), 2)
 
-    shares = {}
+    extra = {}
     for start, end in _windows(last):
-        escalated = [pid for pid in ids
-                     if any(rows.get((pid, week), {}).get("complaint") == "cfpb" for week in range(start, end + 1))]
-        shares[f"{start}-{end}"] = sum(follow[pid] * customers[pid] for pid in escalated) / CUSTOMERS
-    worst = max(shares.values(), default=0.0)
-    goal_3b = round(CFPB_BASELINE * (1 + 4 * worst), 1)
+        total = 0.0
+        for pid in ids:
+            steps = {rows.get((pid, week), {}).get("complaint") for week in range(start, end + 1)}
+            step = "cfpb" if "cfpb" in steps else "bank" if "bank" in steps else None
+            if step:  # once per window, at the highest step
+                total += ACT_SHARE * customers[pid] * ESCALATION[step]
+        extra[f"{start}-{end}"] = total
+    goal_3b = round(CFPB_BASELINE + max(extra.values(), default=0.0), 1)
 
     goals = {"goal_1": goal_1, "goal_2": goal_2, "goal_3": goal_3, "goal_3b": goal_3b}
     detail = {"active_customers_weighted": {str(week): round(value, 1) for week, value in series.items()},
@@ -200,7 +215,7 @@ def _goals(ids, rows, last, customers, deposits, follow, start_ids, notes, label
                                  for week, value in series.items()},
               "goal_2_by_week": {str(week): round(100 * value / base_deposits, 2) if base_deposits else 0.0
                                  for week, value in deposit_series.items()},
-              "cfpb_share_by_window": {key: round(value, 6) for key, value in shares.items()},
+              "cfpb_extra_by_window": {key: round(value, 1) for key, value in extra.items()},
               "rated_persona_weeks": len(rated)}
     return goals, detail
 
