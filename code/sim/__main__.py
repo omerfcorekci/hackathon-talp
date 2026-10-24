@@ -37,6 +37,7 @@ def parser():
     result.add_argument("--concurrency", type=int)
     result.add_argument("--model")
     result.add_argument("--validate-only", action="store_true", help="Check inputs without API calls or outputs")
+    result.add_argument("--show-plan", action="store_true", help="Print how the engine read the decisions, then exit")
     result.add_argument("--print-menu", action="store_true", help="Print supported action/level identifiers and exit")
     return result
 
@@ -84,6 +85,9 @@ async def execute(args):
         require_profiles(people)
         for person in people:
             build_probe_prompt(person, "start", world=world)
+    if args.show_plan:
+        print(plan.describe() if decisions else "No decisions supplied (business as usual).")
+        return
     if args.validate_only:
         print(f"Inputs valid: {len(people)} external personas, {settings.weeks} weeks, "
               f"{len(decisions)} decisions, ${plan.total_cost:,} menu cost"
@@ -109,7 +113,7 @@ def main():
     if args.print_menu:
         print(json.dumps({action: list(levels) for action, levels in MENU.items()}, indent=2))
         return 0
-    if args.personas is None or (not args.validate_only and args.out is None):
+    if args.personas is None or (not args.validate_only and not args.show_plan and args.out is None):
         command.error("--personas is required; --out is required unless --validate-only is set")
     try:
         asyncio.run(execute(args))

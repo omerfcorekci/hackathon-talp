@@ -59,6 +59,89 @@ MENU = {
 }
 
 
+# Dashboard wording -> engine identifier. Matching is on normalized text: every keyword group listed
+# must appear. Order matters: the first match wins, so the more specific rows come first.
+ACTION_KEYWORDS = [
+    ("savings_rate_boost_new_money", [["new money"]]),
+    ("savings_rate_boost", [["savings"], ["rate"]]),
+    ("savings_rate_boost", [["rate boost"]]),
+    ("instant_dispute_credit", [["dispute"]]),
+    ("free_instant_transfers", [["instant transfer"]]),
+    ("free_instant_transfers", [["free"], ["transfer"]]),
+    ("debit_cash_back", [["cash back"]]),
+    ("debit_cash_back", [["cashback"]]),
+    ("goodwill_credit", [["goodwill"]]),
+    ("early_pay", [["early pay"]]),
+    ("early_pay", [["early"], ["paycheck"]]),
+    ("zero_interest_advance", [["advance"]]),
+    ("extra_support_staff", [["support"]]),
+    ("security_pack", [["security"]]),
+    ("higher_offline_card_limit", [["offline"]]),
+    ("higher_offline_card_limit", [["card limit"]]),
+]
+CHANNEL_KEYWORDS = [("in-app", ["in-app", "in app", "inapp", "app message"]), ("sms", ["sms", "text"]),
+                    ("ceo video", ["video", "ceo"]), ("push", ["push"]), ("email", ["email", "e-mail", "mail"])]
+
+
+def resolve_action(text, aliases=None):
+    """Engine action id for a dashboard label: explicit alias, exact id, else keyword match."""
+    if aliases and text in aliases:
+        return aliases[text]
+    if text in MENU:
+        return text
+    plain = normalize(text).replace("-", " ")
+    for ident, groups in ACTION_KEYWORDS:
+        if all(any(k in plain for k in group) for group in groups):
+            return ident
+    raise ValueError(f"Cannot map action {text!r} to the menu; add it to --action-aliases")
+
+
+def resolve_level(ident, level):
+    """Menu level string for a dashboard level: '+0.25', '0.25 pt', '1 percent', '$5 each', '2w', 'yes'…"""
+    levels = list(MENU[ident])
+    if level in levels:
+        return level
+    plain = normalize("" if level is None else str(level)).replace("+", "").replace(",", "")
+    if levels == ["on"]:
+        if plain in ("", "on", "yes", "true", "1", "enabled", "active"):
+            return "on"
+        raise ValueError(f"Action {ident} has no levels; use \"on\"")
+    numbers = re.findall(r"\d+(?:\.\d+)?", plain)
+    if not numbers:
+        raise ValueError(f"Level {level!r} for {ident} has no number; menu levels are {levels}")
+    wanted = float(numbers[0])
+    for candidate in levels:
+        if float(re.findall(r"\d+(?:\.\d+)?", candidate)[0]) == wanted:
+            return candidate
+    raise ValueError(f"Level {level!r} is not a menu level for {ident}; use one of {levels}")
+
+
+def resolve_channel(text):
+    plain = normalize(text)
+    for ident, keys in CHANNEL_KEYWORDS:
+        if any(k in plain for k in keys):
+            return ident
+    raise ValueError(f"Unknown channel {text!r}; use push, email, in-app, SMS or CEO video")
+
+
+def select_by_filter(personas, spec):
+    """Persona IDs whose attributes equal the given values (a list means any of them)."""
+    if not isinstance(spec, dict) or not spec:
+        raise ValueError("target_filter must be a nonempty object of attribute -> value(s)")
+    chosen = set()
+    for p in personas:
+        ok = True
+        for key, value in spec.items():
+            have = p.get(key)
+            if isinstance(value, list):
+                ok = ok and have in value
+            else:
+                ok = ok and have == value
+        if ok:
+            chosen.add(p["id"])
+    return chosen
+
+
 class DecisionPlan:
     def __init__(self, decisions, personas, targets=None, action_aliases=None, seed=0):
         if not isinstance(decisions, list) or len(decisions) not in (0, 2):
@@ -68,6 +151,8 @@ class DecisionPlan:
         self.targets = {}
         self.actions = {}
         self.reach = {}  # (decision key, action id) -> share of the target that a capped offer reaches
+        self.resolved = {}  # decision key -> [(action id, menu level, cost)] as the engine understood them
+        self.channels = {}
         self.seed = seed
         self.total_cost = 0
         targets = {} if targets is None else targets
@@ -100,22 +185,31 @@ class DecisionPlan:
                     raise ValueError("Target mapping has duplicate persona IDs")
                 if target == "everyone" and selected != set(self.people):
                     raise ValueError("An everyone target cannot exclude personas")
-            elif target == "everyone":
+            elif normalize(target) in ("everyone", "all customers", "all", "everybody"):
                 selected = set(self.people)
+            elif isinstance(decision.get("target_ids"), list):
+                selected = set(decision["target_ids"])
+                if not selected <= set(self.people):
+                    raise ValueError(f"{key}: target_ids contains an unknown persona")
+            elif decision.get("target_filter") is not None:
+                selected = select_by_filter(personas, decision["target_filter"])
             else:
-                selected = {p["id"] for p in personas if p["group"] == target}
+                groups = {normalize(p["group"]): p["group"] for p in personas}
+                selected = {p["id"] for p in personas if normalize(p["group"]) == normalize(target)}
                 if not selected:
-                    raise ValueError(f"{key}: supply an explicit --targets mapping for this target description")
+                    raise ValueError(f"{key}: target {target!r} is not a persona group ({', '.join(groups.values())}); "
+                                     "add target_filter / target_ids to the decision or supply --targets")
             if not selected:
                 raise ValueError(f"{key} does not target any supplied persona")
             self.targets[key] = selected
             channels = decision.get("channels")
-            allowed = {"push", "email", "in-app", "sms", "ceo video"}
-            if not isinstance(channels, list) or not channels or not all(isinstance(c, str) and c.lower() in allowed for c in channels):
+            if not isinstance(channels, list) or not channels or not all(isinstance(c, str) for c in channels):
                 raise ValueError("Use menu channels: push, email, in-app, SMS, CEO video")
-            if len({c.lower() for c in channels}) != len(channels):
+            resolved_channels = [resolve_channel(c) for c in channels]
+            if len(set(resolved_channels)) != len(resolved_channels):
                 raise ValueError("Decision channels must not contain duplicates")
-            self.total_cost += 25_000 * sum(c.lower() == "sms" for c in channels)
+            self.channels[key] = resolved_channels
+            self.total_cost += 25_000 * resolved_channels.count("sms")
             actions = decision.get("actions")
             if not isinstance(actions, list) or not 1 <= len(actions) <= 3:
                 raise ValueError("Each decision needs 1-3 menu actions")
@@ -124,10 +218,8 @@ class DecisionPlan:
             for action in actions:
                 if not isinstance(action, dict) or not isinstance(action.get("action"), str):
                     raise ValueError("Invalid action")
-                name = aliases.get(action["action"], action["action"])
-                level = action.get("level")
-                if not isinstance(name, str) or name not in MENU or not isinstance(level, str) or level not in MENU[name]:
-                    raise ValueError("Unknown menu action/level; use --action-aliases to map dashboard action names")
+                name = resolve_action(action["action"], aliases)
+                level = resolve_level(name, action.get("level"))
                 if name in seen:
                     raise ValueError("An action cannot be repeated in one decision")
                 seen.add(name)
@@ -142,6 +234,7 @@ class DecisionPlan:
                     # seeded, so the expected reach matches the cap and plan runs on one seed agree.
                     self.reach[(key, name)] = min(1.0, spec.effect["recipient_cap"] / sum(weights))
                 self.actions[key].append((action, spec))
+                self.resolved.setdefault(key, []).append((name, level, spec.cost))
         if self.total_cost > 4_000_000:
             raise ValueError("Both decisions, including SMS sends, must cost at most $4M")
 
@@ -168,6 +261,23 @@ class DecisionPlan:
         """Persona IDs a capped action actually reaches (all targeted personas when uncapped)."""
         share = self.reach.get((key, name), 1.0)
         return {p for p in self.targets[key] if share >= 1.0 or draw(self.seed, "reach", key, name, p) < share}
+
+    def describe(self):
+        """Human-readable preflight: how the engine read each locked decision. Check this before locking."""
+        lines = [f"Total cost (incl. SMS sends): ${self.total_cost:,} of $4,000,000"]
+        for index, decision in enumerate(self.raw, 1):
+            key = f"decision-{index}"
+            names = sorted(self.targets[key])
+            lines.append(f"\n{key}: week {decision['week']}, target {decision['target']!r} -> {len(names)} personas "
+                         f"({', '.join(self.people[p].get('name', p) for p in names)})")
+            lines.append(f"  channels: {', '.join(self.channels[key])}   message: {len(decision['message'])} chars")
+            for name, level, cost in self.resolved.get(key, []):
+                extra = ""
+                if (key, name) in self.reach and self.reach[(key, name)] < 1.0:
+                    got = sorted(self.recipients(key, name))
+                    extra = f"  reach {self.reach[(key, name)]:.0%} -> {', '.join(got) or 'nobody'}"
+                lines.append(f"  action: {name} @ {level}  ${cost:,}{extra}")
+        return "\n".join(lines)
 
     def guard_prompt(self, text, person, week, *, enabled):
         normalized = normalize(text)
