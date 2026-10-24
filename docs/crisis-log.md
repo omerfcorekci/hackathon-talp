@@ -24,6 +24,14 @@ with an optional persona condition). Who hears the text is decided by the engine
 
 ## C0: Core banking migration (known, week 6)
 
+**Dashboard reminder (15:30, id `31babc699d2107749b3810e55662bd60`):** "Known crisis reminder — already
+included in your company dossier. Include this event in every simulation run, including
+plan_nosurprises." The text repeats the dossier facts below word for word. It is not a surprise, so it
+has no file in `code/config/surprises/` (that folder is switched off in `plan_nosurprises`); the
+migration lives in `code/config/world.json` and is in all five runs. Checked at 15:31 with a fake
+`plan_nosurprises` run: the week-5/6 prompts carry the date, the read-only app, the $100 offline limit,
+the Friday Dec 11 payday and the rival offer, and no C1 text.
+
 **From the dossier:** Saturday, December 12, 00:00 to Sunday, December 13, 12:00 (Central Time).
 - For 36 hours the app is read-only: balances visible, no transfers, no peer-to-peer payments, no new cards.
 - Card payments work offline up to $100 per payment.
