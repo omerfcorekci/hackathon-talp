@@ -543,6 +543,56 @@ WAVE = {  # 1 = leaders post first, 2 = independents, 3 = easily swayed
     "leader": 1, "independent": 2, "follower": 3,
 }
 
+# When money lands in the persona's Cobalt account, by simulation week (week 1 = Nov 2-8, 2026).
+# Fri Dec 11 is in week 6. Biweekly Fridays from Dec 11: Nov 13 (w2), Nov 27 (w4), Dec 25 (w8), Jan 8 (w10).
+PAY_RULES = {
+    "biweekly_friday_dec11": ([2, 4, 6, 8, 10], "paid every other Friday: Nov 13, Nov 27, Dec 11, Dec 25, Jan 8"),
+    "semimonthly_15_last": ([2, 5, 7, 9], "paid on the 15th and the last day of the month: Nov 15, Nov 30, Dec 15, Dec 31"),
+    "monthly_1st": ([5, 9], "paid on the 1st: Dec 1, Jan 1"),
+    "monthly_20th": ([3, 7], "paid on the 20th: Nov 20, Dec 20"),
+    "biweekly_thursday": ([1, 3, 5, 7, 9], "paid every other Thursday: Nov 5, Nov 19, Dec 3, Dec 17, Dec 31"),
+    "rent_1st": ([5, 9], "rent from tenants lands on the 1st: Dec 1, Jan 1; commissions irregular"),
+    "daily_sales": ([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], "card-reader sales settle into Cobalt every business day"),
+    "irregular": ([], "client invoices land irregularly; nothing scheduled"),
+    "none_into_cobalt": ([], "no income is paid into Cobalt; money arrives at another bank"),
+}
+PAY_RULE = {
+    "P1": "biweekly_friday_dec11", "P2": "biweekly_friday_dec11", "P3": "semimonthly_15_last",
+    "P4": "biweekly_friday_dec11", "P5": "biweekly_friday_dec11", "P6": "monthly_1st",
+    "S1": "none_into_cobalt", "S2": "none_into_cobalt", "S3": "rent_1st", "S4": "semimonthly_15_last",
+    "S5": "none_into_cobalt", "S6": "biweekly_friday_dec11",
+    "B1": "daily_sales", "B2": "daily_sales", "B3": "daily_sales", "B4": "daily_sales",
+    "B5": "daily_sales", "B6": "daily_sales",
+    "E1": "semimonthly_15_last", "E2": "none_into_cobalt", "E3": "biweekly_thursday",
+    "E4": "biweekly_friday_dec11", "E5": "monthly_20th", "E6": "irregular",
+}
+
+# Engine network (code/sim/network.py format), derived from the same edges.
+WHATSAPP_GROUPS = {
+    "friends-chat": ["P1", "P5", "E4"],
+    "vendors-chat": ["B1", "B5", "B3"],
+    "tech-coworkers-chat": ["S2", "E1", "S6"],
+    "parents-group-chat": ["S4", "E3", "P2"],
+}
+NO_SOCIAL = ["S1", "S5", "P6"]  # newsletters / TV / email people: they neither post nor read social feeds
+
+
+def export_network(personas):
+    """follows = in-group ties both ways; close_friends = the explicit bridges; groups = WhatsApp chats."""
+    group_of = {p["id"]: p["group"] for p in personas}
+    bridges = {tuple(sorted(b)) for b in BRIDGES}
+    follows, friends = [], []
+    for p in personas:
+        for n in p["neighbors"]:
+            pair = tuple(sorted((p["id"], n)))
+            if pair in bridges:
+                if pair[0] == p["id"]:
+                    friends.append(list(pair))
+            elif group_of[n] == p["group"] or p["influence"] == "follower":
+                follows.append([p["id"], n])  # p sees n's posts
+    return {"follows": sorted(follows), "close_friends": sorted(friends),
+            "groups": WHATSAPP_GROUPS, "disabled_channels": {pid: ["social"] for pid in NO_SOCIAL}}
+
 
 def build_network(personas, seed=SEED):
     rng = random.Random(seed)
@@ -593,6 +643,9 @@ def finalize(personas):
         q["neighbors"] = neighbors[q["id"]]
         q["wave"] = WAVE[q["influence"]]
         q["actions_available"] = ACTIONS
+        rule = PAY_RULE[q["id"]]
+        q["pay_rule"] = rule
+        q["pay_weeks"], q["pay_schedule"] = PAY_RULES[rule]
         out.append(q)
     return out
 
@@ -659,6 +712,11 @@ def main():
             for p in personas:
                 f.write(json.dumps(p, ensure_ascii=False) + "\n")
         print(f"wrote {OUT} ({len(personas)} personas)")
+        network = export_network(personas)
+        net_path = OUT.with_name("network.json")
+        net_path.write_text(json.dumps(network, indent=1) + "\n", encoding="utf-8")
+        print(f"wrote {net_path} ({len(network['follows'])} follows, {len(network['close_friends'])} close friends, "
+              f"{len(network['groups'])} groups)")
     return 0
 
 
