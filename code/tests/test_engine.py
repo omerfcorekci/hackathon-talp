@@ -30,7 +30,7 @@ def people(*ids):
 
 
 def answer(**changes):
-    value = {"status": "main bank", "money": "kept", "balance": None,
+    value = {"status": "main bank", "money": "kept", "new_money": "none", "balance": None,
              "active_in_last_30_days": False, "actions": [], "heard_from": [],
              "app_rating": None, "complaint": "none", "reason": "test response",
              "memory": "test memory", "messages": []}
@@ -290,7 +290,10 @@ class SchemaTests(unittest.TestCase):
         merged = self.parse(answer(actions=["asked_friend"], complaint="bank", app_rating=2), previous)
         self.assertEqual(merged["actions"], ["called_support", "asked_friend"])
         final = answer(actions=["called_support", "asked_friend"], complaint="cfpb", app_rating=3)
-        self.assertEqual(self.parse(final, previous), final)
+        parsed = self.parse(final, previous)
+        # The raw round-two list is preserved next to the merged week record.
+        self.assertEqual(parsed.pop("actions_reported"), ["called_support", "asked_friend"])
+        self.assertEqual(parsed, final)
 
 
 class EngineTests(unittest.IsolatedAsyncioTestCase):

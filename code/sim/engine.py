@@ -14,6 +14,7 @@ from .schema import parse_turn
 APP_ACTIONS = ("log in and check balance", "try a transfer or P2P payment", "complain in the app",
                "dispute a card charge", "use Cobalt less")
 MONEY_FACTOR = {"kept": 1.0, "moved some": 0.6, "moved most": 0.1}
+NEW_MONEY_FACTOR = {"none": 0.0, "some": 0.1, "a lot": 0.3}
 
 
 def derive_bookkeeping(person, data, ledger):
@@ -21,15 +22,16 @@ def derive_bookkeeping(person, data, ledger):
 
     active_derived: an app action in this or the previous three weeks (a 30-day window) and not
     `left`; with fewer than four weeks of history a daily app user counts as active.
-    balance_derived: the persona's Nov 2 balance times the money factor (kept 1.0, moved some 0.6,
-    moved most 0.1, left 0), so the ledger does not drift with model arithmetic."""
+    balance_derived: the persona's Nov 2 balance times (money factor + new-money factor): kept 1.0,
+    moved some 0.6, moved most 0.1, left 0; plus 0.1 for "some" new money brought in, 0.3 for
+    "a lot". The ledger therefore does not drift with model arithmetic."""
     recent = [data["actions"]] + [row["actions"] for row in ledger[-3:]]
     used_app = any(action in APP_ACTIONS for actions in recent for action in actions)
     if len(recent) < 4 and person.get("checks_app_daily"):
         used_app = True
     active = used_app and data["status"] != "left"
     start = person.get("balance_usd")
-    factor = 0.0 if data["status"] == "left" else MONEY_FACTOR[data["money"]]
+    factor = 0.0 if data["status"] == "left" else MONEY_FACTOR[data["money"]] + NEW_MONEY_FACTOR.get(data.get("new_money", "none"), 0.0)
     balance = round(start * factor) if isinstance(start, (int, float)) else None
     return {"active_derived": active, "balance_derived": balance}
 
@@ -56,14 +58,17 @@ class SimulationEngine:
         if not all(isinstance(p.get("group"), str) and p["group"] for p in self.personas):
             raise ValueError("Each supplied persona must have a group")
         self.personas.sort(key=lambda p: p["id"])
+        self.by_id = {p["id"]: p for p in self.personas}
         self.network = network
         self.world = world
         self.settings = settings
         self.transport = transport
 
     def _validate(self, raw, persona, previous):
+        allowed = self.by_id[persona].get("actions_available") or None
         result = parse_turn(raw, contacts=self.network.contacts(persona),
-                            groups=set(self.network.context(persona)["whatsapp_groups"]), previous=previous)
+                            groups=set(self.network.context(persona)["whatsapp_groups"]), previous=previous,
+                            allowed_actions=allowed)
         if any(not self.network.enabled(persona, message["channel"]) for message in result["messages"]):
             raise ValueError("Cannot send through a disabled channel")
         return result

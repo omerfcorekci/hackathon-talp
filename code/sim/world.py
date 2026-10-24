@@ -115,9 +115,10 @@ class World:
         # A record without media attributes cannot be modelled: assume the announcement reaches it.
         return "checks_app_daily" not in p and "news_sources" not in p
 
-    def _first_seen_week(self, event_id, event_week, p):
-        """First week in which this persona hears a dashboard announcement (seeded, stateless)."""
-        if self._media_unknown(p):
+    def _first_seen_week(self, event_id, event_week, p, reach=None):
+        """First week in which this persona hears a dashboard announcement (seeded, stateless).
+        An event with `reach: "all"` (e.g. an email to every customer) is heard by everyone at once."""
+        if reach == "all" or self._media_unknown(p):
             return event_week
         if p.get("checks_app_daily"):
             probability = self.reach.get("checks_app_daily", 0.9)
@@ -291,7 +292,7 @@ class World:
         incidents = []
         if self.surprises_enabled:
             for event in self.surprises:
-                seen = self._first_seen_week(event["id"], event["week"], p)
+                seen = self._first_seen_week(event["id"], event["week"], p, event.get("reach"))
                 if seen is not None and seen <= week:
                     incidents.append({**event, "heard_in_week": seen})
         holding = [

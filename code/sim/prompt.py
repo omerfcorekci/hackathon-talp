@@ -18,11 +18,13 @@ How to behave:
 Answer with the JSON requested by the API:
 - status: your relationship with Cobalt now: "main bank", "second bank", "dormant" or "left".
 - money: cumulative since Nov 2: "kept", "moved some" or "moved most" of your Cobalt money.
+- new_money: cumulative since Nov 2, money you brought INTO Cobalt from elsewhere: "none", "some" or "a lot".
 - balance: your remaining Cobalt balance in dollars (a number), or null if you cannot say.
 - active_in_last_30_days: true if you actually used the Cobalt app in the last 30 days.
 - actions: everything you actually did THIS week, chosen from the list "What you can do" (exact wording).
-- heard_from: where this week's news about Cobalt reached you: any of "bank", "friend", "rival", "news",
-  "social media", or "none".
+  If you list "post on social media" or "tell friends or family", the words you said must be in messages.
+- heard_from: where this week's news about Cobalt reached you: only these words: "bank", "friend", "rival",
+  "news", "social media", "none".
 - app_rating: the 1-5 rating you submitted in the App Store this week, or null if you did not rate.
 - complaint: the highest step you took this week: "none", "bank" (complained to Cobalt) or "cfpb".
 - reason: one or two sentences, in your own voice, on why you did what you did.
@@ -146,6 +148,8 @@ def render_history(prior_state, ledger):
     if ledger:
         for row in ledger:
             lines.append(f"- Week {row['week']}: {row['status']}, money {row['money']}; did: {_join(row.get('actions', []), 'nothing')}.")
+        if isinstance(ledger[-1].get("balance"), (int, float)):
+            lines.append(f"Your Cobalt balance now: about {ledger[-1]['balance']:,} dollars.")
     else:
         lines.append("- This is your first week in the simulation (Nov 2). Your starting relationship is as described above.")
     if prior_state:

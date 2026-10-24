@@ -12,7 +12,9 @@ edits a persona's answer. Assumptions, written verbatim to metrics.json under "a
   and a note says so. Rounded to 2 decimals.
 - goal_2 (% of Nov 2 deposits) = 100 × Σ weight_deposits_usd × f / Σ weight_deposits_usd over
   the final week's rows, with f = 1.0 for money "kept", 0.6 for "moved some", 0.1 for "moved most",
-  and f = 0 when status is "left". The model-reported balance is not used. Rounded to 2 decimals.
+  and f = 0 when status is "left"; plus 0.1 when new_money is "some" and 0.3 when it is "a lot"
+  (money brought into Cobalt from elsewhere, as a share of the persona's Nov 2 deposits), so
+  new-money offers can show growth. The model-reported balance is not used. Rounded to 2 decimals.
 - goal_3 (App Store rating) = (4.6 × 210,000 + Σ 0.02 × weight_customers × app_rating) /
   (210,000 + Σ 0.02 × weight_customers), summed over every persona-week (weeks 1-10) whose
   app_rating is not null. The existing review mass equals 10% of customers (210,000 reviews) at
@@ -49,7 +51,9 @@ ASSUMPTIONS = [
     "and a note says so. Rounded to 2 decimals.",
     "goal_2 (% of Nov 2 deposits) = 100 × Σ weight_deposits_usd × f / Σ weight_deposits_usd over "
     "the final week's rows, with f = 1.0 for money \"kept\", 0.6 for \"moved some\", 0.1 for \"moved most\", "
-    "and f = 0 when status is \"left\". The model-reported balance is not used. Rounded to 2 decimals.",
+    "and f = 0 when status is \"left\"; plus 0.1 when new_money is \"some\" and 0.3 when it is \"a lot\" "
+    "(money brought into Cobalt from elsewhere, as a share of the persona's Nov 2 deposits), so "
+    "new-money offers can show growth. The model-reported balance is not used. Rounded to 2 decimals.",
     "goal_3 (App Store rating) = (4.6 × 210,000 + Σ 0.02 × weight_customers × app_rating) / "
     "(210,000 + Σ 0.02 × weight_customers), summed over every persona-week (weeks 1-10) whose "
     "app_rating is not null. The existing review mass equals 10% of customers (210,000 reviews) at "
@@ -80,6 +84,7 @@ BOARD_TARGETS = {"goal_1": ">= 98", "goal_2": ">= 97", "goal_3": ">= 4.3", "goal
 
 ACTIVE_STATUSES = ("main bank", "second bank")
 MONEY_FACTOR = {"kept": 1.0, "moved some": 0.6, "moved most": 0.1}
+NEW_MONEY_FACTOR = {"none": 0.0, "some": 0.1, "a lot": 0.3}  # money brought into Cobalt, as a share of Nov 2 deposits
 CUSTOMERS = 2_100_000
 REVIEW_MASS = 210_000
 BASE_RATING = 4.6
@@ -123,7 +128,8 @@ def _goals(ids, rows, last, customers, deposits, notes, label):
     final = [(pid, rows[(pid, last)]) for pid in ids if (pid, last) in rows]
     total = sum(deposits[pid] for pid, _ in final)
     if total > 0:
-        kept = sum(deposits[pid] * (0.0 if row["status"] == "left" else MONEY_FACTOR[row["money"]])
+        kept = sum(deposits[pid] * (0.0 if row["status"] == "left"
+                                    else MONEY_FACTOR[row["money"]] + NEW_MONEY_FACTOR.get(row.get("new_money", "none"), 0.0))
                    for pid, row in final)
         goal_2 = round(100 * kept / total, 2)
     else:

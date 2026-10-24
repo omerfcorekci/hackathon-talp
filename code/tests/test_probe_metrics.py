@@ -36,7 +36,7 @@ def people(*ids):
 
 
 def answer(**changes):
-    value = {"status": "main bank", "money": "kept", "balance": None,
+    value = {"status": "main bank", "money": "kept", "new_money": "none", "balance": None,
              "active_in_last_30_days": True, "actions": [], "heard_from": [],
              "app_rating": None, "complaint": "none", "reason": "test reason",
              "memory": "test memory", "messages": []}
@@ -395,7 +395,8 @@ class RunAllScriptTests(unittest.TestCase):
             refused = subprocess.run(script, cwd=tree, env=env, capture_output=True, text=True)
             self.assertEqual(refused.returncode, 1)
             self.assertFalse((tree / "invocations.log").exists())
-            result = subprocess.run(script, cwd=tree, env={**env, "TALP_KEY": "test-only-placeholder", "TEAM": "42"},
+            result = subprocess.run(script, cwd=tree, env={**env, "TALP_KEY": "test-only-placeholder", "TEAM": "42",
+                                                           "ALLOW_SHORT_RUNS": "1"},
                                     capture_output=True, text=True)
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
             self.assertIn("packaged 42", result.stdout)
