@@ -108,6 +108,25 @@ updates are excluded from prompts. Earlier announcements remain labelled by week
 `--no-surprises` removes these announcements and their updates while retaining the
 known migration. An omitted surprises path means no surprise inputs have been supplied.
 
+An event or update may also carry `effects`: what the announcement means in the world,
+applied to every persona's "what happened to you this week" regardless of whether they
+heard the text. Because they describe what really happened, an overrun announced in
+week 7 still shapes week 6. With `--no-surprises` the effects vanish with the text.
+
+```json
+{"id": "overrun", "week": 7, "text": "<exact dashboard text>",
+ "effects": {"migration_overrun_hours": 8,
+             "support_wait_by_week": {"7": 30},
+             "experience": [{"week": 6, "text": "Your Sunday payment attempts failed until the evening.",
+                             "if": {"uses_p2p": true}}]}}
+```
+
+Supported keys: `migration_overrun_hours` (integer; the migration-week and following-week
+lines use it), `support_wait_by_week` (week → minutes, before the extra-staff factor), and
+`experience` (lines added to that week; an optional `if` requires persona attributes to equal
+the given values). Transcribe the organizers' text verbatim; the effects are our reading of
+it and belong in `docs/crisis-log.md`.
+
 **World:** `code/config/world.json` contains dossier facts, the known migration,
 calendar events and BAU notices. BAU notices are simulation wording, not dashboard
 decisions. BAU includes the week-five email and normal holding statements. No actual
@@ -168,9 +187,11 @@ underlying client API.
 The weekly response fields are defined in `sim/schema.py`: `status`, `money`,
 `balance`, `active_in_last_30_days`, `actions`, `heard_from`, `app_rating`,
 `complaint`, `reason`, `memory`, `messages`. Status and money use dossier wording.
-Downstream metrics can consume these recorded behaviors; this engine does not
-invent metrics, select weights, generate probes or package the five-run submission.
-Submission aggregation and packaging are separate tasks.
+`sim/metrics.py` turns the weekly rows and the personas' weights into `metrics.json`
+(`goal_1`–`goal_3b`, `units`, stated assumptions, a by-group breakdown); `sim/probe.py`
+asks the eight check-in questions at week 0 and week 11 when `--probe` is set and writes
+`probe.jsonl`. `code/scripts/run_all.sh` runs the five official runs with fixed seeds and
+then the organizers' checker.
 
 For library integration, construct `SimulationEngine` with your external records,
 `Network`, `World`, `Settings` and an async `Transport`, then await `run(output)`.

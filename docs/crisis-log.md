@@ -15,7 +15,9 @@ Template:
 **Update (week N+1, verbatim):** ...
 **What is known / unknown:** ...
 **Our reading:** size, who hears about it, how people feel, what they do, which groups are hit
-**Simulation input:** file in code/config/surprises/, which personas see it and through which channels
+**Simulation input:** file in code/config/surprises/ with the verbatim text, plus `effects` = our reading
+of what really happened (`migration_overrun_hours`, `support_wait_by_week`, per-week `experience` lines
+with an optional persona condition). Who hears the text is decided by the engine's reach rules.
 ```
 
 ---

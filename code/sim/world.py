@@ -23,12 +23,37 @@ def validate_event(event):
         raise ValueError("Each event needs text")
 
 
+def validate_effects(effects):
+    """Optional world consequences a dashboard announcement carries, applied to everyone's week."""
+    if effects is None:
+        return
+    if not isinstance(effects, dict):
+        raise ValueError("Surprise effects must be an object")
+    unknown = set(effects) - {"migration_overrun_hours", "support_wait_by_week", "experience"}
+    if unknown:
+        raise ValueError(f"Unknown surprise effect keys: {sorted(unknown)}")
+    hours = effects.get("migration_overrun_hours", 0)
+    if type(hours) is not int or hours < 0:
+        raise ValueError("migration_overrun_hours must be a nonnegative integer")
+    for week, minutes in effects.get("support_wait_by_week", {}).items():
+        if not str(week).isdigit() or type(minutes) is not int or minutes < 0:
+            raise ValueError("support_wait_by_week maps week numbers to nonnegative minutes")
+    for item in effects.get("experience", []):
+        if not isinstance(item, dict) or type(item.get("week")) is not int or not 1 <= item["week"] <= 10:
+            raise ValueError("Each experience effect needs a week in 1-10")
+        if not isinstance(item.get("text"), str) or not item["text"].strip():
+            raise ValueError("Each experience effect needs text")
+        if "if" in item and not isinstance(item["if"], dict):
+            raise ValueError("An experience effect's 'if' must map persona attributes to required values")
+
+
 def expand_surprises(events):
     if not isinstance(events, list):
         raise ValueError("Surprises must be a list of event objects")
     result = []
     for event in events:
         validate_event(event)
+        validate_effects(event.get("effects"))
         result.append({k: v for k, v in event.items() if k not in ("update", "updates")})
         updates = list(event.get("updates", []))
         if event.get("update") is not None:
@@ -38,6 +63,7 @@ def expand_surprises(events):
                 raise ValueError("Surprise update must be an object")
             update = {**update, "id": f"{event['id']}-update-{number}"}
             validate_event(update)
+            validate_effects(update.get("effects"))
             if update["week"] <= event["week"]:
                 raise ValueError("A surprise update must arrive after the original announcement")
             result.append(update)
@@ -118,9 +144,35 @@ class World:
                 return week
         return None
 
+    # ------------------------------------------------------------------ surprise effects
+    def _surprise_effects(self):
+        """World consequences carried by announcements. They describe what really happened, so an
+        overrun announced in week 7 still shapes week 6; with surprises off they vanish with the text."""
+        if not self.surprises_enabled:
+            return []
+        return [e["effects"] for e in self.surprises if isinstance(e.get("effects"), dict)]
+
+    def overrun_hours(self):
+        hours = self.migration.get("overrun_hours", 0) or 0
+        for eff in self._surprise_effects():
+            hours = max(hours, eff.get("migration_overrun_hours", 0) or 0)
+        return hours
+
+    def _surprise_experience(self, p, week):
+        lines = []
+        for eff in self._surprise_effects():
+            for item in eff.get("experience", []):
+                if item["week"] != week:
+                    continue
+                if all(p.get(key) == value for key, value in item.get("if", {}).items()):
+                    lines.append(item["text"])
+        return lines
+
     # ------------------------------------------------------------------ deterministic consequences
     def support_wait(self, week, effects):
         base = self.support.get("by_week", {}).get(str(week), self.support.get("base_minutes", 4))
+        for eff in self._surprise_effects():
+            base = eff.get("support_wait_by_week", {}).get(str(week), base)
         staff = 0
         for item in effects:
             staff = max(staff, item["effect"].get("extra_support_staff", 0))
@@ -140,7 +192,7 @@ class World:
         pay_weeks = p.get("pay_weeks") or []
         early = any(item["effect"].get("early_pay_days") for item in effects)
         migration_week = self.migration.get("week", 6)
-        overrun = self.migration.get("overrun_hours", 0) or 0
+        overrun = self.overrun_hours()
         if week in pay_weeks:
             if week == migration_week and p.get("paid_fri_dec11"):
                 if early:
@@ -153,10 +205,10 @@ class World:
             lines.append("Early pay is on: paychecks now show in your account up to two days early.")
         if week == migration_week:
             limit = self.offline_limit(effects)
-            end = "Sunday Dec 13 12:00"
+            end = "Sunday Dec 13 12:00 Central Time"
             if overrun:
-                end = f"Sunday Dec 13 {12 + overrun:02d}:00, {overrun} hours later than announced"
-            lines.append(f"From Saturday Dec 12 00:00 until {end} Central Time the Cobalt app was read-only: you could see "
+                end = f"Sunday Dec 13 {12 + overrun:02d}:00 Central Time, {overrun} hours later than announced,"
+            lines.append(f"From Saturday Dec 12 00:00 until {end} the Cobalt app was read-only: you could see "
                          f"balances but could not send transfers or P2P payments or get a new card. "
                          f"Card payments worked offline up to {_money(limit)} per payment.")
             if p.get("uses_p2p"):
@@ -165,8 +217,9 @@ class World:
                 lines.append(f"Your Cobalt card reader accepted payments up to {_money(limit)} each during the window; a larger ticket could not be charged to a card.")
             lines.append(self.migration.get("scheduled_payments", "Payments due during the window were processed once the system returned."))
         if week == migration_week + 1:
-            finish = "on schedule at Sunday Dec 13 12:00" if not overrun else f"{overrun} hours late"
+            finish = "on schedule at Sunday Dec 13 12:00" if not overrun else f"{overrun} hours late, at Sunday Dec 13 {12 + overrun:02d}:00"
             lines.append(f"The migration finished {finish}. Transfers, P2P and new cards are available again on the new system.")
+        lines += self._surprise_experience(p, week)
         wait = self.support_wait(week, effects)
         lines.append(f"If you contacted Cobalt support this week, the typical wait was about {wait} minutes.")
         for item in effects:
