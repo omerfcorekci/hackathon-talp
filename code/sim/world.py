@@ -447,6 +447,36 @@ class World:
                 lines.append(f"Your zero-interest advance from week {taken}: repaid from this week's pay.")
         return lines
 
+    def helped_before(self, person, week, ledger=()):
+        """What Cobalt did for this persona in weeks 1 to week - 1, as (week, fact) pairs, by the same rules as
+        its open business: a dispute credited (at once, or the provisional credit), an advance paid, a goodwill
+        credit. The counterpart of went_wrong_before, so help is remembered as long as harm is."""
+        if not self.decisions_enabled:
+            return []
+        p = self.person(person)
+        base = self.config["baseline"]
+        provisional = math.ceil(base.get("dispute_provisional_credit_business_days", 10) / 5)
+        earlier = [row for row in ledger if row["week"] < week]
+        history = []
+        filed = next((row["week"] for row in earlier if "dispute a card charge" in row.get("actions", [])), None)
+        if filed is not None:
+            instant = any("instant_dispute_credit_cap" in item["effect"] for item in self.plan.for_person(person, filed)[1])
+            if instant:
+                history.append((filed, "Cobalt credited your disputed card charge right away, while it investigated."))
+            elif filed + provisional < week:
+                history.append((filed + provisional, "Cobalt's provisional credit for your disputed card charge landed."))
+        taken = next((row["week"] for row in earlier if REQUEST_ACTION in row.get("actions", [])
+                      and self.advance_offer(person, row["week"])), None)
+        if taken is not None and taken + 1 < week:
+            history.append((taken + 1, f"Cobalt paid you a {_money(self.advance_offer(person, taken))} zero-interest advance "
+                                       "when you asked for it."))
+        for earlier_week in range(1, week):
+            for item in self.plan.for_person(person, earlier_week)[1]:
+                credit = item["effect"].get("goodwill_credit")
+                if credit and earlier_week == item["starts_week"]:
+                    history.append((earlier_week, f"Cobalt put a {_money(credit)} goodwill credit in your account."))
+        return sorted(history)
+
     def went_wrong_before(self, person, week, ledger=()):
         """What went wrong for this persona in weeks 1 to week - 1, as (week, fact) pairs.
 

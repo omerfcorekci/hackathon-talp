@@ -103,6 +103,23 @@ class SurpriseEffectTests(unittest.TestCase):
         off = World(WORLD, DecisionPlan(decisions, [person]), decisions_enabled=False)
         self.assertEqual(off.issues("p", 10, asked), [])
 
+    def test_help_from_cobalt_is_remembered(self):
+        person = {"id": "p", "group": "g", "weight_customers": 10_000, "pay_weeks": [2, 4], "pay_schedule": "every other Friday"}
+        decisions = [{"week": 5, "target": "everyone", "actions": [{"action": "Instant dispute credit", "level": "on"}],
+                      "message": "MSG ONE", "channels": ["push"], "why": "w"},
+                     {"week": 8, "target": "everyone", "actions": [{"action": "Zero-interest advance", "level": "on"}],
+                      "message": "MSG TWO", "channels": ["push"], "why": "w"}]
+        w = World(WORLD, DecisionPlan(decisions, [person]), decisions_enabled=True)
+        row = lambda week, *actions: {"week": week, "status": "main bank", "actions": list(actions)}
+        ledger = [row(6, "dispute a card charge"), row(8, "ask Cobalt for a refund or a credit")]
+        helped = w.helped_before("p", 10, ledger)
+        self.assertEqual([week for week, _ in helped], [6, 9])
+        self.assertIn("right away", helped[0][1])
+        self.assertIn("$500 zero-interest advance", helped[1][1])
+        self.assertEqual(w.helped_before("p", 9, ledger)[1:], [])  # the advance lands in week 9, history from week 10
+        off = World(WORLD, DecisionPlan(decisions, [person]), decisions_enabled=False)
+        self.assertEqual(off.helped_before("p", 10, ledger), [])
+
     def test_weekend_transfers_are_queued_not_failed(self):
         person = {"id": "a", "group": "g", "migration_weekend": {"type": "p2p", "what": "the babysitter's pay", "amount": 120,
                                                                  "scheduled": "Saturday 10:00"}}

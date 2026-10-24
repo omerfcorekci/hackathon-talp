@@ -146,6 +146,18 @@ def render_week(p, week, facts):
     return "\n".join(lines)
 
 
+def render_helped(world, persona_id, week, ledger):
+    """What Cobalt did for this persona in earlier weeks, so help is remembered as long as harm is."""
+    history = world.helped_before(persona_id, week, ledger)
+    if not history:
+        return ""
+    lines = ["=== WHAT COBALT DID FOR YOU SINCE NOV 2 ==="]
+    for earlier, text in history:
+        dates = world.calendar.get(earlier, {}).get("dates")
+        lines.append(f"- Week {earlier}{f' ({dates})' if dates else ''}: {text}")
+    return "\n".join(lines)
+
+
 def render_issues(world, persona_id, week, ledger):
     """The persona's open business with Cobalt (disputes, regulator complaints, an advance) and where it stands."""
     issues = world.issues(persona_id, week, ledger)
@@ -248,6 +260,7 @@ def build_prompt(*, persona, week, round_number, prior_state, ledger, world, net
              render_profile(persona, world, network),
              render_week(persona, week, facts),
              render_went_wrong(world, persona["id"], week, ledger),
+             render_helped(world, persona["id"], week, ledger),
              render_issues(world, persona["id"], week, ledger),
              render_history(prior_state, ledger, world, week, persona["id"]),
              render_inbox(inbox, world)]
