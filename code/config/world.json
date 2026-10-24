@@ -1,0 +1,31 @@
+{
+  "company": "Cobalt Bank",
+  "baseline": {
+    "customers": 2100000,
+    "active_customers_30_days": 1000000,
+    "deposits": 6000000000,
+    "support_wait_minutes": 4,
+    "dispute_provisional_credit_business_days": 10,
+    "dispute_investigation_max_days": 45,
+    "savings_rate_gap_to_top_three_points": -0.5,
+    "app_store_rating": 4.6,
+    "cfpb_complaints_per_month": 120
+  },
+  "known_schedule": [
+    {
+      "id": "planned-migration",
+      "week": 5,
+      "text": "The planned core banking migration is in week 6, Saturday December 12 00:00 to Sunday December 13 12:00 Central Time. For 36 hours balances remain visible but transfers, P2P and new cards are unavailable. Offline card payments work up to $100 per payment unless an applicable decision raises that limit. The date cannot move. An overrun of some hours is possible, but neither its occurrence nor its duration is known. Many customers receive pay on Friday December 11. Rivals know the date. This is a known future schedule, not an incident that has already happened."
+    }
+  ],
+  "weekly_events": [
+    {"id": "thanksgiving", "week": 4, "text": "Thanksgiving and Black Friday occur this week."},
+    {"id": "migration-window", "week": 6, "text": "The scheduled migration takes place this weekend. Respect the Friday-payday then Saturday-to-Sunday outage sequence. Do not invent an actual overrun or service restoration beyond the supplied announcements."},
+    {"id": "christmas", "week": 8, "text": "Christmas occurs this week."},
+    {"id": "new-year", "week": 9, "text": "New Year occurs this week."}
+  ],
+  "bau_notices": [
+    {"id": "bau-migration-email", "week": 5, "channel": "email", "text": "Scheduled maintenance notice: the core banking move is planned for December 12 at 00:00 through December 13 at 12:00 Central Time. Balances will be visible; transfers, P2P and new card creation will be unavailable. Offline card purchases remain available within your applicable limit. Please plan payments ahead. Completion may take some additional hours."},
+    {"id": "bau-migration-statement", "week": 6, "channel": "social", "text": "The announced core banking migration window is this weekend. Balances remain visible and offline card purchases are available within applicable limits. Transfers, P2P and new cards are unavailable during the migration. Support remains available."}
+  ]
+}

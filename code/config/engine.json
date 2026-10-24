@@ -1,0 +1,12 @@
+{
+  "weeks": 10,
+  "concurrency": 24,
+  "temperature": 0.8,
+  "attempts": 3,
+  "timeout_seconds": 60,
+  "max_peer_messages": 2,
+  "stranger_probability": 0.05,
+  "following_probability": 0.35,
+  "close_friend_probability": 0.65,
+  "whatsapp_probability": 0.8
+}
