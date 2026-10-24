@@ -228,6 +228,12 @@ so it differs between plan and no-decision runs only through the decisions, and 
 vanish when the persona's one-week memory moves on. The end check-in (week 11) gets the same list for
 the weeks the run covered, as `what_went_wrong_for_you_since_nov_2`.
 
+Each prompt also shows **"Your open business with Cobalt"**: where the persona's own cases stand, by the
+bank's rules. A dispute gets its provisional credit after 10 business days (at once under instant dispute
+credit) and closes after about 45 days; a regulator complaint is answered within 15 days; while an advance
+is offered the persona is told to "ask Cobalt for a refund or a credit" to take it, and once asked it lands
+the next week and stays outstanding until pay lands at Cobalt.
+
 The world follows the persona's own choices: once it has left, or from the week after it moved its
 direct deposit, its pay or card-reader sales no longer land at Cobalt and its week says so.
 The response schema carries `propertyOrdering` with `reason` first, so the model says what happened

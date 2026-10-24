@@ -146,6 +146,14 @@ def render_week(p, week, facts):
     return "\n".join(lines)
 
 
+def render_issues(world, persona_id, week, ledger):
+    """The persona's open business with Cobalt (disputes, regulator complaints, an advance) and where it stands."""
+    issues = world.issues(persona_id, week, ledger)
+    if not issues:
+        return ""
+    return "\n".join(["=== YOUR OPEN BUSINESS WITH COBALT ==="] + [f"- {line}" for line in issues])
+
+
 def render_went_wrong(world, persona_id, week, ledger):
     """Everything that went wrong for this persona in earlier weeks, so it outlives the one-week memory."""
     lines = ["=== WHAT WENT WRONG FOR YOU SINCE NOV 2 ===",
@@ -165,8 +173,6 @@ def outcomes_of_last_week(ledger, world, week, persona_id):
         return []
     done = set(ledger[-1].get("actions", []))
     last = world.context(persona_id, week - 1) if week > 1 else {}
-    effects = last.get("active_action_effects", [])
-    instant = any("instant_dispute_credit_cap" in e["effect"] for e in effects)
     base = world.config.get("baseline", {})
     lines = []
     if "call or chat with support" in done:
@@ -174,17 +180,11 @@ def outcomes_of_last_week(ledger, world, week, persona_id):
                      "minutes and the agent could only follow the standard process and repeat what Cobalt has announced.")
     if "complain in the app" in done:
         lines.append("Cobalt acknowledged your in-app complaint with a standard reply within two business days.")
-    if "dispute a card charge" in done:
-        lines.append("Your disputed charge was credited immediately." if instant else
-                     f"Your dispute was opened; provisional credit is due within {base.get('dispute_provisional_credit_business_days', 10)} "
-                     f"business days and the investigation can take up to {base.get('dispute_investigation_max_days', 45)} days.")
-    if "file a complaint with the CFPB or BBB" in done:
-        lines.append("Your complaint was logged with the regulator; Cobalt must respond in writing within 15 days.")
     if "post a review (App Store / Google / Trustpilot)" in done:
         lines.append("Your review is live where you posted it.")
     if "move direct deposit to another bank" in done:
         lines.append("Your direct deposit change takes effect from your next pay cycle.")
-    if "ask Cobalt for a refund or a credit" in done:
+    if "ask Cobalt for a refund or a credit" in done and not world.advance_offer(persona_id, week - 1):
         lines.append("Cobalt replied that refunds and credits follow the standard dispute process unless a special offer applies.")
     return lines
 
@@ -244,6 +244,7 @@ def build_prompt(*, persona, week, round_number, prior_state, ledger, world, net
              render_profile(persona, world, network),
              render_week(persona, week, facts),
              render_went_wrong(world, persona["id"], week, ledger),
+             render_issues(world, persona["id"], week, ledger),
              render_history(prior_state, ledger, world, week, persona["id"]),
              render_inbox(inbox, world)]
     if first_turn is not None:
@@ -258,7 +259,7 @@ def build_prompt(*, persona, week, round_number, prior_state, ledger, world, net
         parts.append(f"OFFICIAL BANK MESSAGE {message['id']} (sent to you in week {message['starts_week']} {how}; "
                      f"still in your inbox):\n{message['text']}\nEND OFFICIAL MESSAGE")
     parts.append(f"Round {round_number} of this week. Reply with the JSON only.")
-    prompt = "\n\n".join(parts)
+    prompt = "\n\n".join(part for part in parts if part)
     world.guard_prompt(prompt, persona["id"], week)
     return prompt
 

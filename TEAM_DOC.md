@@ -72,6 +72,12 @@ weeks from about 5 million customers). Formulas: [`code/sim/metrics.py`](code/si
   the same rules each week, so a grievance outlives the persona's three-sentence memory;
 - its own history as stretches of unchanged status and money ("Weeks 1-5: main bank, money kept"),
   plus last week's memory and reason;
+- **"Your open business with Cobalt"**: where its own cases stand by the bank's rules: a dispute's
+  provisional credit (10 business days, or at once under the instant dispute credit) and its close
+  after about 45 days, a regulator complaint's answer within 15 days, and an advance it asked for,
+  paid the next week and outstanding until pay lands. Before this, P2 said he asked for the shutdown
+  advance but nothing could happen; now it lands, and his trust and rating in weeks 8–10 are 3 instead
+  of 2 in both plan runs;
 - a rival's rate offer in week 5 (certain for rate-chasers and people with three or more banks);
 - messages from other personas: posts, group chats, direct messages.
 
