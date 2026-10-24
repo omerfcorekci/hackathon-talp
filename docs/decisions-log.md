@@ -94,5 +94,5 @@ D2 (migration notice, week 5) as a PLACEHOLDER so plan runs have two decisions; 
 | 1 | 5 | Security pack (on) + Instant dispute credit (on) + Extra support staff (+50), everyone, push/email/in-app | $0.95M | locked 15:00 (last saved 14:57:44, confirmed on the dashboard) | yes: added +50 support staff (weeks 5–8, covers the migration week) |
 | 2 | | not locked; options in `docs/decision-1-lock.md` | ≤ $3.05M | | |
 
-Decision 1 in `plan.json` is the dashboard export's `run_decisions` entry, unchanged (`dashboard-export.json`, 14:58). Reasons and
+Decision 1 in `plan.json` is the dashboard export's `run_decisions` entry, unchanged (`dashboard-export.json`, exported 15:36, shows it locked at 15:00). Reasons and
 simulation evidence: `docs/decision-1-lock.md` (sweep `c1_plans`).
