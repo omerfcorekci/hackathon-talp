@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Algoritmalar</title>
+<style>
+  :root { --text:#1f2328; --muted:#6a7079; --accent:#2f6fde; --green:#1a7f37; --bg:#fbfbfc; --border:#e3e6ea; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:14px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width:860px; margin:0 auto; padding:20px 16px 40px; }
+  a { color:var(--accent); text-decoration:none; }
+  a:hover { text-decoration:underline; }
+  .back { font-size:13px; }
+  h1 { font-size:22px; margin:10px 0 4px; }
+  .lead { color:var(--muted); margin:0 0 18px; }
+  .card { background:#fff; border:1px solid var(--border); border-radius:10px; padding:16px 18px; margin:0 0 14px; }
+  h2 { font-size:16px; margin:0 0 8px; }
+  h2 span { color:var(--accent); margin-right:6px; }
+  p { margin:0 0 8px; }
+  .ex { color:var(--muted); font-size:13px; }
+  .ex b { color:var(--text); }
+  svg { display:block; width:100%; max-width:700px; height:auto; margin:10px auto 6px; color:var(--text); }
+  svg text { font:12px system-ui, sans-serif; fill:currentColor; }
+  svg .m { fill:var(--muted); font-size:11px; }
+  svg rect { fill:#fff; stroke:currentColor; stroke-width:1.2; }
+  svg rect.a { stroke:var(--accent); fill:#eef3fd; }
+  svg rect.g { stroke:var(--green); fill:#edf7f0; }
+  svg line, svg path { stroke:var(--muted); stroke-width:1.4; fill:none; }
+  .limits { border-color:var(--accent); background:#f5f8fe; }
+  .limits ul { margin:0; padding-left:18px; }
+</style>
+</head>
+<body>
+<main>
+<a class="back" href="/">← Görüntüleyici</a>
+<h1>Algoritmalar</h1>
+<p class="lead">Cobalt Bank müşteri simülasyonu, altı adımda. Her adımda kısa bir açıklama ve bir şema var.</p>
+<svg width="0" height="0" style="position:absolute"><defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:#6a7079;stroke:none"/></marker></defs></svg>
+
+<section class="card">
+  <h2><span>1</span>Personalar</h2>
+  <p>24 yapay müşteri (persona) kurduk: 4 grup, her grupta 6 kişi. Gruplar: maaşlı müşteriler, büyük bakiyeli tasarrufçular, kart okuyuculu küçük işletmeler ve gündelik müşteriler.</p>
+  <p>Her persona belli sayıda gerçek müşteriyi temsil eder. Bu sayıya <i>ağırlık</i> diyoruz: müşteri ağırlıklarının toplamı 2,1 milyon, mevduat ağırlıklarının toplamı yaklaşık 6,0 milyar dolar. Yani her persona bankanın gerçek rakamlarından bir dilimdir.</p>
+  <p>Her personanın sabit özellikleri (yaş, bakiye, maaş günü…), kısa bir hikâyesi ve göç haftası için somut bir <i>taahhüdü</i> vardır. Bu taahhüt, uygulama kilitliyken neyin aksayacağını belirler.</p>
+  <svg viewBox="0 0 700 150" role="img" aria-label="Persona yapısı">
+    <rect class="a" x="10" y="45" width="150" height="60" rx="8"/><text x="85" y="72" text-anchor="middle">Persona</text><text class="m" x="85" y="90" text-anchor="middle">24 kişi, 4 grup × 6</text>
+    <rect x="230" y="5" width="200" height="40" rx="8"/><text x="330" y="29" text-anchor="middle">Sabit özellikler</text>
+    <rect x="230" y="55" width="200" height="40" rx="8"/><text x="330" y="79" text-anchor="middle">Hikâye</text>
+    <rect x="230" y="105" width="200" height="40" rx="8"/><text x="330" y="129" text-anchor="middle">Göç haftası taahhüdü</text>
+    <rect class="g" x="500" y="45" width="190" height="60" rx="8"/><text x="595" y="70" text-anchor="middle">Ağırlık</text><text class="m" x="595" y="88" text-anchor="middle">2,1M müşteri · ≈$6,0B mevduat</text>
+    <line x1="160" y1="75" x2="228" y2="25" marker-end="url(#ar)"/><line x1="160" y1="75" x2="228" y2="75" marker-end="url(#ar)"/><line x1="160" y1="75" x2="228" y2="125" marker-end="url(#ar)"/>
+    <line x1="430" y1="75" x2="498" y2="75" marker-end="url(#ar)"/>
+  </svg>
+  <p class="ex"><b>Örnek:</b> kirası Cumartesi otomatik çekilen maaşlı bir müşteri, ya da hafta sonu $100 üstü kart ödemesi alan bir pazar tezgâhı.</p>
+</section>
+
+<section class="card">
+  <h2><span>2</span>Bir hafta nasıl işler (iki tur)</h2>
+  <p>Her hafta her persona bir metin (prompt) alır: takvim, o haftaya kadarki duyurular (kelimesi kelimesine), hedefindeyse bankanın karar mesajı, "bu hafta sana ne oldu" (maaş yattı, uygulama salt-okunur, destekte N dakika bekledin), varsa rakip teklifi ve arkadaşlardan gelen mesajlar.</p>
+  <p>Dil modeli JSON ile cevap verir: ne yaptı, statü (main bank / second bank / dormant / left), para (kept / moved some / moved most), uygulama puanı, şikayet, hafıza ve en fazla 2 mesaj.</p>
+  <p><b>1. tur:</b> herkes aynı anda (paralel) çağrılır. Yazılan mesajlar sosyal ağ üzerinden dağıtılır; görülme olasılığı ilişkiye bağlıdır: yabancı paylaşımı %5, takip edilen %35, yakın arkadaş %65, grup %80, doğrudan mesaj %100. Bir persona haftada en fazla 2 mesaj alır. <b>2. tur:</b> sadece mesaj alanlar bir kez daha çağrılır. Son cevap sonraki haftaya taşınır.</p>
+  <svg viewBox="0 0 700 130" role="img" aria-label="Haftalık iki tur">
+    <rect x="5" y="40" width="120" height="50" rx="8"/><text x="65" y="62" text-anchor="middle">Prompt</text><text class="m" x="65" y="78" text-anchor="middle">olgular + mesajlar</text>
+    <rect class="a" x="155" y="40" width="120" height="50" rx="8"/><text x="215" y="62" text-anchor="middle">1. tur</text><text class="m" x="215" y="78" text-anchor="middle">24 çağrı, paralel</text>
+    <rect x="305" y="40" width="120" height="50" rx="8"/><text x="365" y="62" text-anchor="middle">Ağ dağıtımı</text><text class="m" x="365" y="78" text-anchor="middle">%5 … %100, ≤2 mesaj</text>
+    <rect class="a" x="455" y="40" width="110" height="50" rx="8"/><text x="510" y="62" text-anchor="middle">2. tur</text><text class="m" x="510" y="78" text-anchor="middle">sadece alıcılar</text>
+    <rect class="g" x="595" y="40" width="100" height="50" rx="8"/><text x="645" y="62" text-anchor="middle">Durum</text><text class="m" x="645" y="78" text-anchor="middle">statü, para</text>
+    <line x1="125" y1="65" x2="153" y2="65" marker-end="url(#ar)"/><line x1="275" y1="65" x2="303" y2="65" marker-end="url(#ar)"/><line x1="425" y1="65" x2="453" y2="65" marker-end="url(#ar)"/><line x1="565" y1="65" x2="593" y2="65" marker-end="url(#ar)"/>
+    <path d="M645,90 V115 H65 V92" marker-end="url(#ar)"/><text class="m" x="355" y="110" text-anchor="middle">sonraki hafta</text>
+  </svg>
+</section>
+
+<section class="card">
+  <h2><span>3</span>Kararlar ve krizler girdi olarak</h2>
+  <p>Karar dosyasında her karar için hafta, hedef kitle, 1–3 aksiyon, en fazla 600 karakterlik mesaj ve kanallar yazar. Motor önce aksiyonların menüde olduğunu, seviyelerin geçerli olduğunu ve toplam maliyetin $4M'yi aşmadığını kontrol eder (her SMS gönderimi $25k).</p>
+  <p>Sonra her aksiyonu personanın başına gelen düz bir olguya çevirir. Model "kararı" değil, sonucunu yaşar.</p>
+  <p>Kriz duyuruları iki parçadır: dashboard metni (kelimesi kelimesine) ve bizim "gerçekte ne oldu" okumamız (etkiler). Sürprizler kapatılınca ikisi birlikte kaybolur; bilinen göç krizi kalır.</p>
+  <svg viewBox="0 0 700 140" role="img" aria-label="Kararlar ve krizler">
+    <rect class="a" x="5" y="10" width="150" height="45" rx="8"/><text x="80" y="37" text-anchor="middle">Karar dosyası</text>
+    <rect x="200" y="10" width="160" height="45" rx="8"/><text x="280" y="30" text-anchor="middle">Kontrol</text><text class="m" x="280" y="46" text-anchor="middle">menü · seviye · $4M</text>
+    <rect class="a" x="5" y="85" width="150" height="45" rx="8"/><text x="80" y="104" text-anchor="middle">Kriz duyurusu</text><text class="m" x="80" y="120" text-anchor="middle">metin + etkiler</text>
+    <rect x="200" y="85" width="160" height="45" rx="8"/><text x="280" y="105" text-anchor="middle">Sürprizler açık mı?</text><text class="m" x="280" y="121" text-anchor="middle">kapalıysa ikisi de yok</text>
+    <rect class="g" x="420" y="45" width="270" height="50" rx="8"/><text x="555" y="66" text-anchor="middle">"Bu hafta sana ne oldu"</text><text class="m" x="555" y="83" text-anchor="middle">personanın gördüğü düz olgular</text>
+    <line x1="155" y1="32" x2="198" y2="32" marker-end="url(#ar)"/><line x1="155" y1="107" x2="198" y2="107" marker-end="url(#ar)"/>
+    <line x1="360" y1="32" x2="418" y2="60" marker-end="url(#ar)"/><line x1="360" y1="107" x2="418" y2="82" marker-end="url(#ar)"/>
+  </svg>
+  <p class="ex"><b>Örnek:</b> offline limit $250 → "$300'lük biletin reddedilmedi"; +150 destek personeli → bekleme 25 dk yerine 9 dk.</p>
+</section>
+
+<section class="card">
+  <h2><span>4</span>Metrikler: davranıştan yönetim kurulu hedeflerine</h2>
+  <p>Bir persona on binlerce müşteriyi temsil eder, ama hepsi onunla aynı şeyi yapmaz. Bu yüzden her personanın bir <i>takip payı</i> f vardır (0,05 ile 0,5 arası): persona bankadan ayrılırsa, temsil ettiği müşterilerin sadece f kadarı ayrılır. Cobalt'ı ikinci banka olarak kullanan veya faiz kovalayan birinde f yüksek, maaşı Cobalt'a yatan birinde düşüktür.</p>
+  <p><b>goal_1</b> aktif müşteri yüzdesi. <b>goal_2</b> mevduat yüzdesi: para kept ×1,0, moved some ×0,6, moved most ×0,1; yeni getirilen para eklenir. <b>goal_3</b> App Store puanı: mevcut 210 bin yorum (4,6) ile yeni puanlar harmanlanır. <b>goal_3b</b> aylık CFPB şikayeti: en kötü 4 haftalık pencere.</p>
+  <svg viewBox="0 0 700 130" role="img" aria-label="Metrik hesabı">
+    <rect class="a" x="5" y="40" width="150" height="50" rx="8"/><text x="80" y="62" text-anchor="middle">Haftalık cevaplar</text><text class="m" x="80" y="78" text-anchor="middle">statü, para, puan, şikayet</text>
+    <rect x="195" y="40" width="150" height="50" rx="8"/><text x="270" y="62" text-anchor="middle">× ağırlık × f</text><text class="m" x="270" y="78" text-anchor="middle">f = 0,05 … 0,5</text>
+    <rect class="g" x="390" y="5" width="140" height="28" rx="6"/><text x="460" y="24" text-anchor="middle">goal_1 ≥ %98</text>
+    <rect class="g" x="390" y="38" width="140" height="28" rx="6"/><text x="460" y="57" text-anchor="middle">goal_2 ≥ %97</text>
+    <rect class="g" x="390" y="71" width="140" height="28" rx="6"/><text x="460" y="90" text-anchor="middle">goal_3 ≥ 4,3</text>
+    <rect class="g" x="390" y="104" width="140" height="24" rx="6"/><text x="460" y="121" text-anchor="middle">goal_3b ≤ 240/ay</text>
+    <text class="m" x="550" y="24">aktif müşteri</text><text class="m" x="550" y="57">mevduat</text><text class="m" x="550" y="90">App Store puanı</text><text class="m" x="550" y="121">CFPB şikayeti</text>
+    <line x1="155" y1="65" x2="193" y2="65" marker-end="url(#ar)"/>
+    <line x1="345" y1="65" x2="388" y2="19" marker-end="url(#ar)"/><line x1="345" y1="65" x2="388" y2="52" marker-end="url(#ar)"/><line x1="345" y1="65" x2="388" y2="85" marker-end="url(#ar)"/><line x1="345" y1="65" x2="388" y2="116" marker-end="url(#ar)"/>
+  </svg>
+  <p class="ex"><b>Örnek:</b> f = 0,2 olan ve 50 bin müşteriyi temsil eden persona ayrılırsa, 10 bin müşteri kaybı sayılır.</p>
+</section>
+
+<section class="card">
+  <h2><span>5</span>Karar önerisi</h2>
+  <p>Görüntüleyicideki "Karar önerisi" sayfası adayları şöyle sıralar. Her aday plan 2 seed ile koşulur ve aynı seed'in kararsız (iş her zamanki gibi) koşusuyla karşılaştırılır.</p>
+  <p>Sıralama üç adımdır: (a) 4 hedeften kaçını tutuyor; (b) toplam hedef açığı, yani her hedefin ne kadar altında kalındığı, ortak birimle (aktif ve mevduatta 1 yüzde puan = 1 puan, App Store'da 0,1 = 1 puan, 24 şikayet = 1 puan); (c) maliyet.</p>
+  <p><b>Gürültü kuralı:</b> en iyiyle aynı sayıda hedef tutan ve açık farkı seed'ler arasındaki oynamadan küçük olan planlar "eşdeğer" sayılır; eşdeğerlerden <b>en ucuzu</b> önerilir. 24 persona ile bir fark tek bir personanın tercihi olabilir: sonuçlar yön gösterir, büyüklük göstermez.</p>
+  <svg viewBox="0 0 700 120" role="img" aria-label="Sıralama adımları">
+    <rect class="a" x="5" y="35" width="120" height="50" rx="8"/><text x="65" y="57" text-anchor="middle">Aday planlar</text><text class="m" x="65" y="73" text-anchor="middle">2 seed + kararsız</text>
+    <rect x="155" y="35" width="120" height="50" rx="8"/><text x="215" y="57" text-anchor="middle">(a) Tutan hedef</text><text class="m" x="215" y="73" text-anchor="middle">4 üzerinden</text>
+    <rect x="305" y="35" width="120" height="50" rx="8"/><text x="365" y="57" text-anchor="middle">(b) Toplam açık</text><text class="m" x="365" y="73" text-anchor="middle">ortak birim</text>
+    <rect x="455" y="35" width="100" height="50" rx="8"/><text x="505" y="57" text-anchor="middle">(c) Maliyet</text><text class="m" x="505" y="73" text-anchor="middle">eşdeğerler içinde</text>
+    <rect class="g" x="585" y="35" width="110" height="50" rx="8"/><text x="640" y="57" text-anchor="middle">Öneri</text><text class="m" x="640" y="73" text-anchor="middle">en ucuz eşdeğer</text>
+    <line x1="125" y1="60" x2="153" y2="60" marker-end="url(#ar)"/><line x1="275" y1="60" x2="303" y2="60" marker-end="url(#ar)"/><line x1="425" y1="60" x2="453" y2="60" marker-end="url(#ar)"/><line x1="555" y1="60" x2="583" y2="60" marker-end="url(#ar)"/>
+    <text class="m" x="440" y="108" text-anchor="middle">fark &lt; seed oynaması → eşdeğer</text>
+  </svg>
+</section>
+
+<section class="card">
+  <h2><span>6</span>Beş resmi koşu ve kontrol</h2>
+  <p>Teslimde beş koşu var: plan_1 ve plan_2 (kararlarımız, iki farklı seed), nodecision_1 ve nodecision_2 (karar yok, aynı seed'ler) ve plan_nosurprises (kararlarımız, sürprizler kapalı). Beşinde de aynı personalar kullanılır.</p>
+  <p>Her haftalık statü, cevabında o statü yazan bir LLM çağrısına izlenebilir; hiçbir sonuç elle yazılmaz. plan_1 ve nodecision_1'de her personaya 8 soruluk anket (probe) 0. ve 11. haftada sorulur. Organizatörün check.py betiği ZIP'i doğrular.</p>
+  <svg viewBox="0 0 700 130" role="img" aria-label="Beş koşu">
+    <rect class="a" x="5" y="45" width="110" height="40" rx="8"/><text x="60" y="69" text-anchor="middle">Aynı personalar</text>
+    <rect x="160" y="5" width="150" height="30" rx="6"/><text x="235" y="25" text-anchor="middle">plan_1 · plan_2</text>
+    <rect x="160" y="50" width="150" height="30" rx="6"/><text x="235" y="70" text-anchor="middle">nodecision_1 · _2</text>
+    <rect x="160" y="95" width="150" height="30" rx="6"/><text x="235" y="115" text-anchor="middle">plan_nosurprises</text>
+    <rect x="360" y="45" width="150" height="40" rx="8"/><text x="435" y="62" text-anchor="middle">calls.jsonl</text><text class="m" x="435" y="77" text-anchor="middle">her statü → bir çağrı</text>
+    <rect class="g" x="555" y="45" width="140" height="40" rx="8"/><text x="625" y="62" text-anchor="middle">check.py</text><text class="m" x="625" y="77" text-anchor="middle">ZIP doğrulama</text>
+    <line x1="115" y1="65" x2="158" y2="20" marker-end="url(#ar)"/><line x1="115" y1="65" x2="158" y2="65" marker-end="url(#ar)"/><line x1="115" y1="65" x2="158" y2="110" marker-end="url(#ar)"/>
+    <line x1="310" y1="20" x2="358" y2="58" marker-end="url(#ar)"/><line x1="310" y1="65" x2="358" y2="65" marker-end="url(#ar)"/><line x1="310" y1="110" x2="358" y2="72" marker-end="url(#ar)"/>
+    <line x1="510" y1="65" x2="553" y2="65" marker-end="url(#ar)"/>
+  </svg>
+</section>
+
+<section class="card limits">
+  <h2>Ne söyleyemez</h2>
+  <ul>
+    <li><b>Ölçek:</b> 24 persona ve 2 seed; küçük farklar gürültü olabilir.</li>
+    <li><b>Gecikme:</b> göçün gerçekte kaç saat uzayacağını bilmiyoruz; varsayım kullanıyoruz.</li>
+    <li><b>Kanal farkı:</b> SMS ile push veya CEO videosu arasındaki etki farkı modellenmedi.</li>
+  </ul>
+</section>
+</main>
+</body>
+</html>
