@@ -1,0 +1,840 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Haberleşme</title>
+<link rel="stylesheet" href="/shell.css">
+<style>
+  .wrap { max-width: 1240px; margin: 0 auto; padding: 22px 16px 48px; }
+  h1 { font-size: 24px; margin: 4px 0 2px; letter-spacing: -.01em; }
+  .sub { color: var(--muted); margin: 0 0 18px; }
+  .sub b { color: var(--text); font-weight: 600; }
+
+  /* channel cards */
+  .chans { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+  .chan { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 14px 12px; }
+  .chan .hd { display: flex; align-items: center; gap: 10px; }
+  .chan .ic { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent-text); flex: none; }
+  .chan .ic svg { width: 18px; height: 18px; }
+  .chan h3 { margin: 0; font-size: 15px; }
+  .chan .who { color: var(--muted); font-size: 12.5px; }
+  .odds { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .odd { white-space: nowrap; display: inline-flex; align-items: baseline; gap: 5px; padding: 3px 9px; border-radius: 999px; background: var(--hover); font-size: 12px; color: var(--muted); }
+  .odd b { color: var(--text); font-size: 13px; }
+  .rules { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 12px 2px 20px; color: var(--muted); font-size: 13px; }
+  .rules span::before { content: "•"; color: var(--accent); margin-right: 6px; }
+  .rules b { color: var(--text); }
+
+  /* stage */
+  .stage { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+  .bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; padding: 12px 14px; border-bottom: 1px solid var(--line-soft); }
+  .play { width: 40px; height: 40px; border-radius: 50%; border: 0; background: var(--accent); color: #fff; cursor: pointer; display: grid; place-items: center; flex: none; }
+  .play:disabled { background: var(--line); cursor: default; }
+  .play svg { width: 16px; height: 16px; }
+  .when { font-weight: 600; min-width: 110px; }
+  .when small { display: block; font-weight: 400; color: var(--muted); font-size: 12px; }
+  .seg { display: inline-flex; background: var(--hover); border-radius: 9px; padding: 3px; }
+  .seg button { border: 0; background: none; font: inherit; font-size: 13px; padding: 4px 11px; border-radius: 7px; color: var(--muted); cursor: pointer; }
+  .seg button.on { background: var(--panel); color: var(--text); font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+  .timeline { flex: 1 1 260px; min-width: 200px; }
+  .bars { display: grid; grid-template-columns: repeat(var(--n, 10), 1fr); gap: 4px; height: 26px; align-items: end; }
+  .bars button { border: 0; padding: 0; background: none; height: 100%; display: flex; gap: 1px; align-items: flex-end; cursor: pointer; }
+  .bars i { flex: 1; background: var(--line); border-radius: 2px 2px 0 0; min-height: 2px; }
+  .bars i.r2 { opacity: .55; }
+  .bars button.on i { background: var(--accent); }
+  .bars button.on i.cur { box-shadow: 0 0 0 1.5px var(--accent-text); }
+  .timeline input { width: 100%; margin: 4px 0 0; accent-color: var(--accent); }
+  .counts { display: flex; gap: 6px; flex-wrap: wrap; font-size: 12px; }
+  .cnt { padding: 3px 8px; border-radius: 999px; background: var(--hover); color: var(--muted); white-space: nowrap; }
+  .cnt b { color: var(--text); }
+  .cnt.ok { background: var(--good-bg); } .cnt.ok b { color: var(--good); }
+  .cnt.lim { background: var(--warn-bg); } .cnt.lim b { color: var(--warn); }
+
+  .body { display: grid; grid-template-columns: minmax(0, 1fr) 340px; }
+  .gwrap { position: relative; min-width: 0; }
+  #g { display: block; width: 100%; height: auto; touch-action: manipulation; }
+  #g .edge { stroke: #b9c0c8; stroke-width: 1; fill: none; transition: opacity .2s; }
+  #g .edge.fr { stroke: #5b6570; stroke-width: 2.2; }
+  #g .hull { stroke-linejoin: round; stroke-linecap: round; transition: opacity .2s; }
+  #g .hlab { font-size: 11px; fill: #1f7a52; font-weight: 600; paint-order: stroke; stroke: #fff; stroke-width: 3px; }
+  #g .node { cursor: pointer; transition: opacity .2s; }
+  #g .node circle.c { stroke: #fff; stroke-width: 2; }
+  #g .node text { font-size: 11px; font-weight: 600; fill: #fff; pointer-events: none; text-anchor: middle; dominant-baseline: central; }
+  #g .node.sel circle.c { stroke: var(--text); stroke-width: 3; }
+  #g .node.off circle.c { stroke-dasharray: 3 2; }
+  #g.focus .edge, #g.focus .hull { opacity: .08; }
+  #g.focus .edge.hi { opacity: 1; stroke: var(--accent); }
+  #g.focus .hull.hi { opacity: 1; }
+  #g.focus .node { opacity: .22; }
+  #g.focus .node.hi { opacity: 1; }
+  #g.lines .edge { opacity: .35; }
+  #g .ray { fill: none; stroke-width: 1.8; stroke-linecap: round; }
+  #g .dot { pointer-events: none; }
+  #g .pulse { fill: none; stroke-width: 2.5; animation: pulse .9s ease-out forwards; pointer-events: none; }
+  @keyframes pulse { from { opacity: .9; r: var(--r0); } to { opacity: 0; r: var(--r1); } }
+  .empty { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); background: var(--warn-bg); color: var(--warn); font-size: 12.5px; padding: 5px 12px; border-radius: 999px; white-space: nowrap; }
+
+  /* node card */
+  #card { position: absolute; top: 12px; right: 12px; width: 300px; max-height: calc(100% - 24px); overflow: auto; background: var(--panel);
+    border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 10px 30px rgba(20,30,50,.14); padding: 14px; font-size: 13px; z-index: 5; }
+  #card[hidden] { display: none; }
+  .x { position: absolute; top: 8px; right: 8px; width: 28px; height: 28px; border: 0; border-radius: 8px; background: none; font-size: 18px; color: var(--muted); cursor: pointer; }
+  .x:hover { background: var(--hover); color: var(--text); }
+  .who-hd { display: flex; gap: 10px; align-items: center; padding-right: 26px; }
+  .av { width: 34px; height: 34px; border-radius: 50%; color: #fff; font-weight: 700; font-size: 12px; display: grid; place-items: center; flex: none; }
+  .who-hd b { display: block; font-size: 15px; }
+  .who-hd span { color: var(--muted); font-size: 12px; }
+  .tags { display: flex; flex-wrap: wrap; gap: 5px; margin: 10px 0 4px; }
+  .tag { font-size: 11.5px; padding: 2px 8px; border-radius: 999px; background: var(--hover); color: var(--muted); }
+  .tag.no { text-decoration: line-through; opacity: .7; }
+  .sec { margin-top: 12px; }
+  .sec h4 { margin: 0 0 6px; font-size: 11.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--faint); }
+  .row { display: flex; gap: 8px; align-items: flex-start; padding: 5px 0; border-top: 1px solid var(--line-soft); }
+  .row:first-of-type { border-top: 0; }
+  .row .k { flex: none; width: 88px; color: var(--muted); font-size: 12px; }
+  .row .k b { display: block; color: var(--text); font-size: 13px; }
+  .pp { display: flex; flex-wrap: wrap; gap: 4px; }
+  .p { border: 0; font: inherit; font-size: 11.5px; padding: 1px 7px 1px 5px; border-radius: 999px; background: var(--hover); color: var(--text); cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
+  .p::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--c, var(--faint)); }
+  .p:hover { background: var(--accent-soft); }
+  .muted { color: var(--muted); font-size: 12px; }
+
+  /* feed */
+  #feed { border-left: 1px solid var(--line-soft); max-height: 640px; overflow: auto; min-width: 0; }
+  .fhd { position: sticky; top: 0; background: var(--panel); padding: 12px 14px 8px; font-weight: 600; font-size: 13px; border-bottom: 1px solid var(--line-soft); z-index: 1; }
+  .fhd span { color: var(--muted); font-weight: 400; }
+  .msg { padding: 10px 14px; border-bottom: 1px solid var(--line-soft); cursor: pointer; }
+  .msg:hover { background: #fafbfc; }
+  .msg.on { background: var(--accent-soft); }
+  .mh { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+  .mh b { color: var(--text); }
+  .mh .ci { width: 14px; height: 14px; color: var(--muted); }
+  .mh .nx { margin-left: auto; font-size: 11px; padding: 1px 6px; border-radius: 6px; background: var(--hover); }
+  .mt { margin: 5px 0 6px; font-size: 13.5px; line-height: 1.45; }
+  .mb { display: flex; height: 5px; border-radius: 3px; overflow: hidden; background: var(--line-soft); }
+  .mb i { display: block; }
+  .det { margin-top: 10px; cursor: default; }
+  .rc { display: flex; flex-wrap: wrap; gap: 4px; }
+  .rc .p { cursor: default; }
+  .rc .p small { color: var(--muted); }
+  .llm { margin-top: 10px; border: 1px solid var(--line); background: var(--panel); border-radius: 8px; font: inherit; font-size: 12px; padding: 5px 10px; cursor: pointer; color: var(--accent-text); }
+  .call h5 { margin: 10px 0 4px; font-size: 11px; color: var(--faint); text-transform: uppercase; letter-spacing: .05em; }
+  .call pre { margin: 0; max-height: 240px; overflow: auto; background: #f6f7f9; border: 1px solid var(--line-soft); border-radius: 8px; padding: 8px; font-size: 11.5px; white-space: pre-wrap; word-break: break-word; }
+  .none { padding: 26px 16px; color: var(--muted); text-align: center; font-size: 13px; }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; padding: 10px 14px; border-top: 1px solid var(--line-soft); font-size: 12px; color: var(--muted); }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .legend i { display: inline-block; }
+  .lg-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .lg-line { width: 18px; height: 0; border-top: 2px solid #5b6570; }
+  .lg-line.thin { border-top: 1px solid #b9c0c8; }
+  .lg-hull { width: 18px; height: 10px; border-radius: 6px; background: rgba(37,163,106,.18); border: 1px dashed #25a36a; }
+
+  @media (max-width: 980px) {
+    .chans { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .body { grid-template-columns: minmax(0, 1fr); }
+    #feed { border-left: 0; border-top: 1px solid var(--line); max-height: none; }
+  }
+  @media (max-width: 560px) {
+    .wrap { padding: 16px 16px 40px; }
+    h1 { font-size: 21px; }
+    .chans { gap: 8px; }
+    .chan { padding: 10px; }
+    .chan .hd { gap: 8px; }
+    .chan .ic { width: 28px; height: 28px; }
+    .chan h3 { font-size: 14px; }
+    .chan .who { font-size: 11.5px; line-height: 1.3; }
+    .odd { font-size: 11px; padding: 2px 7px; }
+    .chan .odds { margin-top: 7px; }
+    #card { position: fixed; top: auto; left: 8px; right: 8px; bottom: 8px; width: auto; max-height: 62vh; z-index: 60; }
+    .bar { padding: 10px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    #g .pulse { animation: none; opacity: 0; }
+    #g .edge, #g .node, #g .hull { transition: none; }
+  }
+</style>
+</head>
+<body>
+<main class="wrap">
+  <h1>Kim kime, neye göre?</h1>
+  <p class="sub" id="sub">Kimin kimi duyabileceğini ağ, gerçekten duyup duymadığını seed'li bir zar belirler.</p>
+
+  <section class="chans" id="chans"></section>
+  <div class="rules" id="rules"></div>
+
+  <section class="stage">
+    <div class="bar">
+      <button class="play" id="play" title="Oynat / durdur (boşluk)" aria-label="Oynat"></button>
+      <div class="when" id="when">—</div>
+      <div class="seg" id="seg"><button data-r="1" class="on">1. tur</button><button data-r="2">2. tur</button></div>
+      <div class="timeline"><div class="bars" id="bars"></div><input type="range" id="wk" min="1" max="10" value="1" aria-label="Hafta"></div>
+      <div class="counts" id="counts"></div>
+    </div>
+    <div class="body">
+      <div class="gwrap" id="gwrap">
+        <svg id="g" viewBox="0 0 900 620" role="img" aria-label="Personaların iletişim ağı"></svg>
+        <div id="card" hidden></div>
+      </div>
+      <aside id="feed"></aside>
+    </div>
+    <div class="legend" id="legend"></div>
+  </section>
+</main>
+
+<script src="/shell.js"></script>
+<script id="net-core">
+// Pure data prep (no DOM) — also runnable in node for checks.
+"use strict";
+const NET = (() => {
+  const GROUPS = [
+    ["everyday customers", "Günlük müşteriler", "var(--g1)", "#2f6fde"],
+    ["paycheck customers", "Maaş müşterileri", "var(--g2)", "#1a9a8a"],
+    ["savers with large balances", "Yüksek bakiyeli tasarrufçular", "var(--g3)", "#d08a1e"],
+    ["small business owners with a Cobalt card reader", "Kart okuyuculu küçük işletmeler", "var(--g4)", "#a04fc4"],
+    ["students", "Öğrenciler", "var(--g5)", "#d4506a"],
+  ];
+  const EXTRA = ["#4a7d8c", "#7a6a3a", "#5c5ca8"];
+  const INF_R = { leader: 15, independent: 12, follower: 10 };
+  const CIRC_R = { small: 0, medium: 1.5, large: 3, "large online": 4 };
+  const key = (a, b) => a + "|" + b;
+
+  function groupInfo(names) {
+    const out = {};
+    let extra = 0;
+    for (const g of names) {
+      const hit = GROUPS.find((x) => x[0] === g);
+      out[g] = hit ? { tr: hit[1], color: hit[2], hex: hit[3], order: GROUPS.indexOf(hit) }
+                   : { tr: g, color: EXTRA[extra % EXTRA.length], hex: EXTRA[extra++ % EXTRA.length], order: 10 + extra };
+    }
+    return out;
+  }
+
+  function prep(d) {
+    const net = d.network || {};
+    const personas = d.personas || [];
+    const ginfo = groupInfo([...new Set(personas.map((p) => p.group))]);
+    const nodes = personas.map((p, i) => ({
+      ...p, i, g: ginfo[p.group] || { tr: p.group, color: "#888", hex: "#888", order: 99 },
+      r: (INF_R[p.influence] || 11) + (CIRC_R[p.circle_size] || 0),
+    }));
+    const byId = Object.fromEntries(nodes.map((n) => [n.id, n]));
+    const ok = (a, b) => byId[a] && byId[b] && a !== b;
+    const follows = new Set(), friends = new Set();
+    for (const [a, b] of net.follows || []) if (ok(a, b)) follows.add(key(a, b));
+    for (const [a, b] of net.close_friends || []) if (ok(a, b)) { friends.add(key(a, b)); friends.add(key(b, a)); }
+    const groups = {};
+    for (const [name, mem] of Object.entries(net.groups || {})) groups[name] = (mem || []).filter((x) => byId[x]);
+    const disabled = {};
+    for (const [p, ch] of Object.entries(net.disabled_channels || {})) disabled[p] = new Set(ch || []);
+
+    // undirected edge list for drawing: friends (solid) take precedence over follows
+    const edges = [];
+    const seen = new Set();
+    for (const k of friends) {
+      const [a, b] = k.split("|");
+      const u = a < b ? key(a, b) : key(b, a);
+      if (seen.has(u)) continue;
+      seen.add(u); edges.push({ a, b, type: "friend" });
+    }
+    for (const k of follows) {
+      const [a, b] = k.split("|");
+      const u = a < b ? key(a, b) : key(b, a);
+      if (seen.has(u)) continue;
+      seen.add(u);
+      const mutual = follows.has(key(b, a));
+      // a follows b → b's posts land on a: arrow points at the follower
+      edges.push({ a: b, b: a, type: "follow", mutual });
+    }
+
+    const s = d.settings || {};
+    const settings = {
+      max_peer_messages: num(s.max_peer_messages, 2), stranger: num(s.stranger_probability, 0.05),
+      follower: num(s.following_probability, 0.35), friend: num(s.close_friend_probability, 0.65),
+      whatsapp: num(s.whatsapp_probability, 0.8),
+    };
+
+    // messages + exposures, grouped by the (week, round) the message was WRITTEN in
+    const msgs = (d.messages || []).filter((m) => m && m.id && byId[m.author]);
+    const expBy = {};
+    for (const e of d.exposures || []) if (e && e.message) (expBy[e.message] = expBy[e.message] || []).push(e);
+    for (const k in expBy) expBy[k].sort((x, y) => (x.recipient < y.recipient ? -1 : 1));
+    const steps = {};
+    let maxWeek = 10;
+    for (const m of msgs) {
+      const st = (steps[m.week + ":" + m.round] = steps[m.week + ":" + m.round] || []);
+      st.push({ ...m, exposures: expBy[m.id] || [] });
+      maxWeek = Math.max(maxWeek, m.week);
+    }
+    const totals = tally(msgs.map((m) => ({ exposures: expBy[m.id] || [] })));
+    totals.sent = msgs.length;
+    return { nodes, byId, follows, friends, groups, disabled, edges, settings, steps, maxWeek, totals,
+             hasMessages: msgs.length > 0, hasExposures: Object.keys(expBy).length > 0, run: d.run };
+  }
+
+  function num(v, dflt) { return typeof v === "number" && isFinite(v) ? v : dflt; }
+
+  function tally(list) {
+    const t = { sent: list.length, delivered: 0, not_seen: 0, inbox_limit: 0, bank_message_quote: 0, tries: 0 };
+    for (const m of list) for (const e of m.exposures) { t.tries++; if (e.result in t) t[e.result]++; }
+    return t;
+  }
+
+  function stepOf(model, week, round) { return model.steps[week + ":" + round] || []; }
+
+  function enabled(model, p, ch) { return !(model.disabled[p] && model.disabled[p].has(ch)); }
+
+  // Who this persona can reach, per channel, with the engine's probabilities (network.py _probability)
+  function reach(model, id) {
+    const s = model.settings;
+    const others = model.nodes.map((n) => n.id).filter((x) => x !== id);
+    const out = { social: null, whatsapp: [], private: [] };
+    if (enabled(model, id, "social")) {
+      const fr = [], fo = [], st = [], off = [];
+      for (const r of others) {
+        if (!enabled(model, r, "social")) off.push(r);
+        else if (model.friends.has(key(r, id))) fr.push(r);
+        else if (model.follows.has(key(r, id))) fo.push(r);
+        else st.push(r);
+      }
+      out.social = { friend: fr, follower: fo, stranger: st, off };
+    }
+    if (enabled(model, id, "whatsapp"))
+      for (const [name, mem] of Object.entries(model.groups))
+        if (mem.includes(id)) out.whatsapp.push({ name, members: mem.filter((x) => x !== id && enabled(model, x, "whatsapp")) });
+    out.private = contacts(model, id).filter((x) => enabled(model, id, "direct") || enabled(model, id, "phone"));
+    return out;
+  }
+
+  // network.py contacts(): people I follow + close friends + my group mates
+  function contacts(model, id) {
+    const c = new Set();
+    for (const k of model.follows) { const [a, b] = k.split("|"); if (a === id) c.add(b); }
+    for (const k of model.friends) { const [a, b] = k.split("|"); if (a === id) c.add(b); }
+    for (const mem of Object.values(model.groups)) if (mem.includes(id)) mem.forEach((x) => x !== id && c.add(x));
+    return [...c].sort();
+  }
+
+  // Everyone linked to id in any direction (for hover highlight)
+  function neighbours(model, id) {
+    const c = new Set(contacts(model, id));
+    for (const k of model.follows) { const [a, b] = k.split("|"); if (b === id) c.add(a); }
+    return c;
+  }
+
+  // Deterministic force layout: group anchors on a ring, springs on edges, repulsion between nodes.
+  function layout(model, W, H) {
+    const nodes = model.nodes;
+    const order = [...new Set(nodes.map((n) => n.g.order))].sort((a, b) => a - b);
+    const G = order.length || 1;
+    const cx = W / 2, cy = H / 2, R = Math.min(W, H) * 0.3;
+    const anchor = {};
+    order.forEach((o, i) => {
+      const a = -Math.PI / 2 + Math.PI / 4 + (i * 2 * Math.PI) / G;
+      anchor[o] = [cx + R * 1.25 * Math.cos(a), cy + R * Math.sin(a)];
+    });
+    const per = {};
+    nodes.forEach((n) => {
+      const list = (per[n.g.order] = per[n.g.order] || []);
+      const [ax, ay] = anchor[n.g.order];
+      const k = list.length; list.push(n);
+      const a = k * 2.39996; // golden angle spiral
+      n.x = ax + 28 * Math.sqrt(k + 0.5) * Math.cos(a);
+      n.y = ay + 28 * Math.sqrt(k + 0.5) * Math.sin(a);
+    });
+    const springs = [];
+    const by = model.byId;
+    for (const e of model.edges) springs.push([by[e.a], by[e.b], e.type === "friend" ? 0.03 : 0.004, e.type === "friend" ? 70 : 120]);
+    for (const mem of Object.values(model.groups))
+      for (let i = 0; i < mem.length; i++) for (let j = i + 1; j < mem.length; j++) springs.push([by[mem[i]], by[mem[j]], 0.02, 85]);
+    for (let it = 0; it < 420; it++) {
+      const cool = 1 - it / 420;
+      const f = nodes.map(() => [0, 0]);
+      for (let i = 0; i < nodes.length; i++) for (let j = i + 1; j < nodes.length; j++) {
+        const a = nodes[i], b = nodes[j];
+        let dx = a.x - b.x, dy = a.y - b.y;
+        let d2 = dx * dx + dy * dy;
+        if (d2 < 1) { dx = (i - j) * 0.1 + 0.3; dy = 0.2; d2 = dx * dx + dy * dy; }
+        const d = Math.sqrt(d2);
+        const min = a.r + b.r + 22;
+        let push = 2600 / d2;
+        if (d < min) push += (min - d) * 0.5;
+        f[i][0] += (dx / d) * push; f[i][1] += (dy / d) * push;
+        f[j][0] -= (dx / d) * push; f[j][1] -= (dy / d) * push;
+      }
+      for (const [a, b, k, L] of springs) {
+        const dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || 1;
+        const pull = (d - L) * k;
+        f[a.i][0] += (dx / d) * pull; f[a.i][1] += (dy / d) * pull;
+        f[b.i][0] -= (dx / d) * pull; f[b.i][1] -= (dy / d) * pull;
+      }
+      nodes.forEach((n, i) => {
+        const [ax, ay] = anchor[n.g.order];
+        f[i][0] += (ax - n.x) * 0.02; f[i][1] += (ay - n.y) * 0.02;
+        const step = 6 * cool + 0.3;
+        const m = Math.hypot(f[i][0], f[i][1]) || 1;
+        const s = Math.min(m, step) / m;
+        n.x += f[i][0] * s; n.y += f[i][1] * s;
+      });
+    }
+    // fit into the box with a margin
+    const pad = 44;
+    const xs = nodes.map((n) => n.x), ys = nodes.map((n) => n.y);
+    const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
+    // x and y may stretch differently (up to 1.6x) so a tall phone box is filled too
+    let sx = (W - 2 * pad) / Math.max(1, x1 - x0), sy = (H - 2 * pad) / Math.max(1, y1 - y0);
+    sx = Math.min(sx, sy * 1.6); sy = Math.min(sy, sx * 1.6);
+    const ox = (W - (x1 - x0) * sx) / 2, oy = (H - (y1 - y0) * sy) / 2;
+    nodes.forEach((n) => { n.x = ox + (n.x - x0) * sx; n.y = oy + (n.y - y0) * sy; });
+    return nodes;
+  }
+
+  function hull(points) {
+    const p = [...points].sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+    if (p.length < 3) return p;
+    const cross = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+    const lo = [], up = [];
+    for (const q of p) { while (lo.length >= 2 && cross(lo[lo.length - 2], lo[lo.length - 1], q) <= 0) lo.pop(); lo.push(q); }
+    for (const q of p.reverse()) { while (up.length >= 2 && cross(up[up.length - 2], up[up.length - 1], q) <= 0) up.pop(); up.push(q); }
+    return lo.slice(0, -1).concat(up.slice(0, -1));
+  }
+
+  return { prep, layout, reach, contacts, neighbours, stepOf, tally, hull, key, enabled };
+})();
+if (typeof module !== "undefined") module.exports = NET;
+</script>
+<script>
+"use strict";
+(() => {
+  const $ = (s) => document.querySelector(s);
+  const svg = $("#g");
+  const SVGNS = "http://www.w3.org/2000/svg";
+  let W = 900, H = 620;
+  const narrow = () => (document.getElementById("gwrap").clientWidth || 900) < 640;
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const pct = (p) => "%" + Math.round(p * 100);
+  const reduced = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  const ICON = {
+    social: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l15-6v14L3 13z"/><path d="M7 13v5a2 2 0 0 0 4 0v-3.5"/></svg>',
+    whatsapp: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.7 7.1L4 20.5l1.4-5A8 8 0 1 1 21 12z"/><path d="M8.5 11h7M8.5 14h4"/></svg>',
+    direct: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>',
+    phone: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/></svg>',
+    play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l13-7.5z"/></svg>',
+    pause: '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4.5" width="4" height="15" rx="1"/><rect x="14" y="4.5" width="4" height="15" rx="1"/></svg>',
+  };
+  const CH = { social: "Sosyal medya", whatsapp: "WhatsApp", direct: "Direkt mesaj", phone: "Telefon" };
+  const RES = {
+    delivered: { tr: "ulaştı", c: "#1a7f37" },
+    not_seen: { tr: "görülmedi", c: "#aab2bb" },
+    inbox_limit: { tr: "kota dolu", c: "#d08a1e" },
+    bank_message_quote: { tr: "banka alıntısı", c: "#c62f2f" },
+  };
+  const INF = { leader: "fikir lideri", follower: "takipçi", independent: "bağımsız" };
+  const CIRC = { small: "küçük çevre", medium: "orta çevre", large: "geniş çevre", "large online": "geniş · online" };
+
+  let M = null;               // prepared model
+  const S = { week: 1, round: 1, playing: false, sel: null, focus: null, msg: null, token: 0 };
+  const calls = {};
+
+  // ---------- channel legend ----------
+  function renderChannels() {
+    const s = M ? M.settings : { friend: .65, follower: .35, stranger: .05, whatsapp: .8, max_peer_messages: 2 };
+    const odd = (l, p) => `<span class="odd">${l} <b>${pct(p)}</b></span>`;
+    const card = (ch, who, odds) => `<article class="chan"><div class="hd"><span class="ic">${ICON[ch]}</span>
+      <div><h3>${CH[ch]}</h3><div class="who">${who}</div></div></div><div class="odds">${odds}</div></article>`;
+    $("#chans").innerHTML =
+      card("social", "Herkese açık gönderi", odd("yakın arkadaş", s.friend) + odd("takipçi", s.follower) + odd("yabancı", s.stranger)) +
+      card("whatsapp", "Bir grup sohbetine", odd("her üye", s.whatsapp)) +
+      card("direct", "Rehberden tek kişiye", odd("her zaman okunur", 1)) +
+      card("phone", "Rehberden tek kişiyi arar", odd("her zaman duyulur", 1));
+    $("#rules").innerHTML =
+      (M && M.privateCapped
+        ? `<span>Kişi başı haftada en çok <b>${s.max_peer_messages}</b> mesaj okunur. Bu run eski kuralla koştu: direkt mesaj da bu sayıya girdi.</span>`
+        : `<span>Grup ve sosyal medya mesajlarından kişi başı haftada en çok <b>${s.max_peer_messages}</b> tanesi okunur. Direkt mesaj ve telefon bu sayıya girmez.</span>`) +
+      `<span>Bankanın karar mesajını aynen aktaran mesaj <b>iletilmez</b>.</span>` +
+      `<span>1. turda yazılan mesaj aynı hafta, 2. turda yazılan ertesi hafta okunur.</span>`;
+  }
+
+  // ---------- graph ----------
+  const el = (tag, attrs, parent) => {
+    const e = document.createElementNS(SVGNS, tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(e);
+    return e;
+  };
+  let L = {};
+
+  function trim(a, b, ra, rb) {
+    const dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || 1;
+    return [a.x + (dx / d) * ra, a.y + (dy / d) * ra, b.x - (dx / d) * rb, b.y - (dy / d) * rb];
+  }
+
+  function renderGraph() {
+    [W, H] = narrow() ? [560, 720] : [900, 620];
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    svg.innerHTML = "";
+    const defs = el("defs", {}, svg);
+    const mk = el("marker", { id: "arw", viewBox: "0 0 10 10", refX: "9", refY: "5", markerWidth: "5", markerHeight: "5", orient: "auto" }, defs);
+    el("path", { d: "M0,0 L10,5 L0,10 z", fill: "#b9c0c8" }, mk);
+    L = { hull: el("g", {}, svg), edge: el("g", {}, svg), ray: el("g", {}, svg), node: el("g", {}, svg), dot: el("g", {}, svg) };
+    if (!M) return;
+    NET.layout(M, W, H);
+    for (const [name, mem] of Object.entries(M.groups)) {
+      if (!mem.length) continue;
+      const pts = NET.hull(mem.map((id) => [M.byId[id].x, M.byId[id].y]));
+      const d = pts.map((p, i) => (i ? "L" : "M") + p[0].toFixed(1) + "," + p[1].toFixed(1)).join("") + "Z";
+      const g = el("g", { class: "hull", "data-g": name }, L.hull);
+      el("path", { d, fill: "rgba(37,163,106,.10)", stroke: "rgba(37,163,106,.10)", "stroke-width": "58" }, g);
+      el("path", { d, fill: "none", stroke: "#25a36a", "stroke-width": "1", "stroke-dasharray": "4 4", opacity: ".55" }, g);
+      const top = mem.map((id) => M.byId[id]).reduce((a, b) => (b.y < a.y ? b : a));
+      const t = el("text", { class: "hlab", x: top.x, y: top.y - top.r - 14, "text-anchor": "middle" }, g);
+      t.textContent = name.replace(/-chat$/, "").replace(/-/g, " ");
+    }
+    for (const e of M.edges) {
+      const a = M.byId[e.a], b = M.byId[e.b];
+      const [x1, y1, x2, y2] = trim(a, b, a.r + 2, b.r + 3);
+      const attrs = { class: "edge" + (e.type === "friend" ? " fr" : ""), x1, y1, x2, y2, "data-a": e.a, "data-b": e.b };
+      if (e.type === "follow" && !e.mutual) attrs["marker-end"] = "url(#arw)";
+      el("line", attrs, L.edge);
+    }
+    for (const n of M.nodes) {
+      const g = el("g", { class: "node" + (NET.enabled(M, n.id, "social") ? "" : " off"), "data-id": n.id, tabindex: "0",
+        role: "button", "aria-label": `${n.name} (${n.id})`, transform: `translate(${n.x.toFixed(1)},${n.y.toFixed(1)})` }, L.node);
+      el("circle", { class: "c", r: n.r, fill: n.g.hex }, g);
+      const t = el("text", n.id.length > 2 ? { style: "font-size:9px" } : {}, g); t.textContent = n.id;
+      const tt = el("title", {}, g); tt.textContent = `${n.name} · ${n.g.tr}`;
+    }
+  }
+
+  function setFocus(id) {
+    S.focus = id;
+    svg.classList.toggle("focus", !!id);
+    svg.querySelectorAll(".hi").forEach((x) => x.classList.remove("hi"));
+    svg.querySelectorAll(".node.sel").forEach((x) => x.classList.remove("sel"));
+    if (!id || !M) return;
+    const nb = NET.neighbours(M, id);
+    svg.querySelectorAll(".node").forEach((g) => { if (g.dataset.id === id || nb.has(g.dataset.id)) g.classList.add("hi"); });
+    svg.querySelectorAll(".edge").forEach((l) => { if (l.dataset.a === id || l.dataset.b === id) l.classList.add("hi"); });
+    svg.querySelectorAll(".hull").forEach((h) => { if ((M.groups[h.dataset.g] || []).includes(id)) h.classList.add("hi"); });
+    if (S.sel === id) svg.querySelector(`.node[data-id="${id}"]`)?.classList.add("sel");
+  }
+
+  // ---------- node card ----------
+  const pill = (id) => {
+    const n = M.byId[id];
+    return `<button class="p" data-go="${esc(id)}" style="--c:${n ? n.g.hex : "#999"}" title="${esc(n ? n.name : id)}">${esc(id)}</button>`;
+  };
+  function openCard(id) {
+    const n = M && M.byId[id];
+    if (!n) return closeCard();
+    S.sel = id;
+    setFocus(id);
+    const r = NET.reach(M, id);
+    const s = M.settings;
+    const row = (k, p, ids, extra = "") => `<div class="row"><div class="k">${k}<b>${p}</b></div><div class="pp">${ids.map(pill).join("")}${extra}</div></div>`;
+    let reachHtml = "";
+    if (r.social) {
+      if (r.social.friend.length) reachHtml += row("Sosyal · yakın", pct(s.friend), r.social.friend);
+      if (r.social.follower.length) reachHtml += row("Sosyal · takipçi", pct(s.follower), r.social.follower);
+      if (r.social.stranger.length) reachHtml += row("Sosyal · yabancı", pct(s.stranger), [], `<span class="muted">${r.social.stranger.length} kişi</span>`);
+    } else reachHtml += `<div class="row"><div class="k">Sosyal</div><div class="muted">kullanmıyor</div></div>`;
+    for (const g of r.whatsapp) reachHtml += row("WA · " + esc(g.name.replace(/-chat$/, "")), pct(s.whatsapp), g.members);
+    if (r.private.length) reachHtml += row("Direkt / tel.", "%100", r.private);
+    const sent = Object.values(M.steps).flat().filter((m) => m.author === id);
+    const got = Object.values(M.steps).flat().flatMap((m) => m.exposures).filter((e) => e.recipient === id && e.result === "delivered");
+    const chans = ["social", "whatsapp", "direct", "phone"].map((c) => `<span class="tag${NET.enabled(M, id, c) ? "" : " no"}">${CH[c]}</span>`).join("");
+    const card = $("#card");
+    card.innerHTML = `<button class="x" aria-label="Kapat" data-close>✕</button>
+      <div class="who-hd"><span class="av" style="background:${n.g.hex}">${esc(n.id)}</span><div><b>${esc(n.name || n.id)}</b><span>${esc(n.g.tr)}</span></div></div>
+      <div class="tags">${n.influence ? `<span class="tag">${INF[n.influence] || esc(n.influence)}</span>` : ""}${n.circle_size ? `<span class="tag">${CIRC[n.circle_size] || esc(n.circle_size)}</span>` : ""}${n.sways_easily ? `<span class="tag">etkilenme: ${esc(n.sways_easily)}</span>` : ""}${n.checks_rumors != null ? `<span class="tag">${n.checks_rumors ? "söylentiyi doğrular" : "söylentiyi doğrulamaz"}</span>` : ""}</div>
+      ${(n.news_sources || []).length ? `<div class="muted">Haber: ${n.news_sources.map(esc).join(" · ")}</div>` : ""}
+      <div class="sec"><h4>Kanallar</h4><div class="tags" style="margin:0">${chans}</div></div>
+      <div class="sec"><h4>Kime ulaşır</h4>${reachHtml}</div>
+      ${M.hasMessages ? `<div class="sec"><h4>Bu run'da</h4><div class="muted"><b style="color:var(--text)">${sent.length}</b> mesaj yazdı · <b style="color:var(--text)">${got.length}</b> mesaj ona ulaştı</div></div>` : ""}`;
+    card.hidden = false;
+    card.scrollTop = 0;
+  }
+  function closeCard() {
+    S.sel = null;
+    $("#card").hidden = true;
+    setFocus(null);
+  }
+
+  // ---------- playback ----------
+  let anim = null;
+  function curve(a, b) {
+    const dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || 1;
+    return { a, b, c: { x: (a.x + b.x) / 2 - (dy / d) * d * 0.14, y: (a.y + b.y) / 2 + (dx / d) * d * 0.14 } };
+  }
+  const at = (q, t) => ({
+    x: (1 - t) * (1 - t) * q.a.x + 2 * (1 - t) * t * q.c.x + t * t * q.b.x,
+    y: (1 - t) * (1 - t) * q.a.y + 2 * (1 - t) * t * q.c.y + t * t * q.b.y,
+  });
+  const cpath = (q, t1 = 1) => {
+    // sub-curve 0..t1 via de Casteljau
+    const p1 = { x: q.a.x + (q.c.x - q.a.x) * t1, y: q.a.y + (q.c.y - q.a.y) * t1 };
+    const e = at(q, t1);
+    return `M${q.a.x.toFixed(1)},${q.a.y.toFixed(1)} Q${p1.x.toFixed(1)},${p1.y.toFixed(1)} ${e.x.toFixed(1)},${e.y.toFixed(1)}`;
+  };
+  const REACH = { delivered: 1, not_seen: 0.5, inbox_limit: 0.85, bank_message_quote: 0.3 };
+
+  function drawRays(list) {
+    L.ray.innerHTML = "";
+    svg.classList.toggle("lines", list.length > 0);
+    for (const m of list) for (const e of m.exposures) {
+      const a = M.byId[e.author], b = M.byId[e.recipient];
+      if (!a || !b) continue;
+      const q = curve(a, b);
+      const res = RES[e.result] || RES.not_seen;
+      el("path", { class: "ray", d: cpath(q, REACH[e.result] ?? 1), stroke: res.c,
+        "stroke-dasharray": e.result === "delivered" ? "" : "3 4", opacity: e.result === "delivered" ? ".85" : e.result === "not_seen" ? ".3" : ".7" }, L.ray);
+    }
+  }
+
+  function stopAnim() { if (anim) cancelAnimationFrame(anim.raf); anim = null; L.dot && (L.dot.innerHTML = ""); }
+
+  function animateStep(done) {
+    stopAnim();
+    const list = NET.stepOf(M, S.week, S.round);
+    if (reduced() || !list.length) {
+      drawRays(list);
+      const t = setTimeout(done, list.length ? 2200 : 600);
+      anim = { raf: 0, cancel: () => clearTimeout(t) };
+      return;
+    }
+    drawRays([]);
+    const DUR = 1500, gap = Math.min(420, 2600 / list.length);
+    const dots = [];
+    list.forEach((m, i) => m.exposures.forEach((e) => {
+      const a = M.byId[e.author], b = M.byId[e.recipient];
+      if (!a || !b) return;
+      const c = (RES[e.result] || RES.not_seen).c;
+      dots.push({ q: curve(a, b), e, b, start: i * gap + Math.random() * 120, el: el("circle", { class: "dot", r: 4.5, fill: c, opacity: 0 }, L.dot), fired: false });
+    }));
+    const end = Math.max(0, ...dots.map((d) => d.start)) + DUR + 350;
+    const t0 = performance.now();
+    const frame = (now) => {
+      const t = now - t0;
+      for (const d of dots) {
+        const p = Math.max(0, Math.min(1, (t - d.start) / DUR));
+        if (t < d.start) continue;
+        let pos = p, op = 1;
+        const r = d.e.result;
+        if (r === "delivered") { if (p >= 1) op = 0; }
+        else if (r === "not_seen") { pos = p * 0.55; op = 1 - p; }
+        else if (r === "inbox_limit") { pos = p < 0.7 ? (p / 0.7) * 0.85 : 0.85 - ((p - 0.7) / 0.3) * 0.3; op = p < 0.7 ? 1 : 1 - (p - 0.7) / 0.3; }
+        else { pos = p * 0.3; op = 1 - p; }
+        const xy = at(d.q, Math.min(1, pos));
+        d.el.setAttribute("cx", xy.x.toFixed(1)); d.el.setAttribute("cy", xy.y.toFixed(1));
+        d.el.setAttribute("opacity", op.toFixed(2));
+        if (r === "delivered" && p >= 1 && !d.fired) {
+          d.fired = true;
+          const ring = el("circle", { class: "pulse", cx: d.b.x, cy: d.b.y, r: d.b.r, stroke: "#1a7f37",
+            style: `--r0:${d.b.r}px;--r1:${d.b.r + 14}px` }, L.dot);
+          setTimeout(() => ring.remove(), 950);
+        }
+      }
+      if (t < end) anim.raf = requestAnimationFrame(frame);
+      else { drawRays(list); L.dot.innerHTML = ""; anim = null; done(); }
+    };
+    anim = { raf: requestAnimationFrame(frame) };
+  }
+
+  function play() {
+    if (!M || !M.hasMessages) return;
+    S.playing = true; S.msg = null; renderBar(); renderFeed();
+    const run = () => animateStep(() => {
+      if (!S.playing) return;
+      if (S.round === 1) S.round = 2;
+      else if (S.week < M.maxWeek) { S.week++; S.round = 1; }
+      else { pause(); return; }
+      renderBar(); renderFeed();
+      run();
+    });
+    run();
+  }
+  function pause() {
+    S.playing = false;
+    if (anim && anim.cancel) anim.cancel();
+    stopAnim();
+    if (M) drawRays(S.msg ? NET.stepOf(M, S.week, S.round).filter((m) => m.id === S.msg) : NET.stepOf(M, S.week, S.round));
+    renderBar();
+  }
+  function goStep(week, round) {
+    if (S.playing) { S.playing = false; if (anim && anim.cancel) anim.cancel(); stopAnim(); }
+    S.week = week; S.round = round; S.msg = null;
+    renderBar(); renderFeed();
+    if (M) drawRays(NET.stepOf(M, week, round));
+  }
+
+  function renderBar() {
+    const has = M && M.hasMessages;
+    const btn = $("#play");
+    btn.disabled = !has;
+    btn.innerHTML = S.playing ? ICON.pause : ICON.play;
+    btn.setAttribute("aria-label", S.playing ? "Durdur" : "Oynat");
+    $("#when").innerHTML = `Hafta ${S.week}<small>${S.round === 1 ? "1. tur · herkes yazar" : "2. tur · tepkiler"}</small>`;
+    document.querySelectorAll("#seg button").forEach((b) => b.classList.toggle("on", +b.dataset.r === S.round));
+    const n = M ? M.maxWeek : 10;
+    const wk = $("#wk"); wk.max = n; wk.value = S.week;
+    const bars = $("#bars");
+    bars.style.setProperty("--n", n);
+    let max = 1;
+    if (M) for (const k in M.steps) max = Math.max(max, M.steps[k].length);
+    let h = "";
+    for (let w = 1; w <= n; w++) {
+      const c1 = M ? NET.stepOf(M, w, 1).length : 0, c2 = M ? NET.stepOf(M, w, 2).length : 0;
+      const ht = (c) => Math.max(8, (c / max) * 100);
+      h += `<button data-w="${w}" class="${w === S.week ? "on" : ""}" title="Hafta ${w}: ${c1} + ${c2} mesaj">
+        <i style="height:${c1 ? ht(c1) : 8}%" class="${w === S.week && S.round === 1 ? "cur" : ""}"></i><i class="r2 ${w === S.week && S.round === 2 ? "cur" : ""}" style="height:${c2 ? ht(c2) : 8}%"></i></button>`;
+    }
+    bars.innerHTML = h;
+    const list = M ? NET.stepOf(M, S.week, S.round) : [];
+    const t = NET.tally(list);
+    $("#counts").innerHTML = has
+      ? `<span class="cnt"><b>${t.sent}</b> mesaj</span><span class="cnt ok"><b>${t.delivered}</b> ulaştı</span><span class="cnt"><b>${t.not_seen}</b> görülmedi</span>${t.inbox_limit ? `<span class="cnt lim"><b>${t.inbox_limit}</b> kota dolu</span>` : ""}${t.bank_message_quote ? `<span class="cnt" style="background:var(--bad-bg)"><b style="color:var(--bad)">${t.bank_message_quote}</b> engellendi</span>` : ""}`
+      : "";
+  }
+
+  function resultBar(ex) {
+    const t = NET.tally([{ exposures: ex }]);
+    if (!t.tries) return "";
+    return `<div class="mb">${["delivered", "inbox_limit", "bank_message_quote", "not_seen"].map((k) => t[k] ? `<i style="width:${(t[k] / t.tries) * 100}%;background:${RES[k].c}" title="${t[k]} ${RES[k].tr}"></i>` : "").join("")}</div>`;
+  }
+
+  function renderFeed() {
+    const feed = $("#feed");
+    if (!M) { feed.innerHTML = ""; return; }
+    if (!M.hasMessages) {
+      feed.innerHTML = `<div class="fhd">Mesajlar</div><div class="none">Bu run'da mesaj kaydı yok.<br>Sadece ağ gösteriliyor.</div>`;
+      return;
+    }
+    const list = NET.stepOf(M, S.week, S.round);
+    let h = `<div class="fhd">Hafta ${S.week} · ${S.round}. tur <span>· ${list.length} mesaj</span></div>`;
+    if (!list.length) h += `<div class="none">Bu turda kimse yazmadı.</div>`;
+    for (const m of list) {
+      const a = M.byId[m.author];
+      const tgt = m.channel === "whatsapp" ? esc(String(m.target || "").replace(/-chat$/, "")) : m.target ? esc(m.target) + (M.byId[m.target] ? " · " + esc(M.byId[m.target].name) : "") : "herkes";
+      const next = m.round === 2 ? `<span class="nx">${m.week < M.maxWeek ? `H${m.week + 1}'de okunur` : "okunmadı · sim bitti"}</span>` : "";
+      h += `<div class="msg${S.msg === m.id ? " on" : ""}" data-m="${esc(m.id)}">
+        <div class="mh"><span class="lg-dot" style="background:${a.g.hex}"></span><b>${esc(m.author)}</b> ${esc(a.name || "")}<span class="ci">${ICON[m.channel] || ""}</span>${tgt}${next}</div>
+        <div class="mt">“${esc(m.text)}”</div>${resultBar(m.exposures)}
+        ${S.msg === m.id ? detail(m) : ""}</div>`;
+    }
+    feed.innerHTML = h;
+  }
+
+  function detail(m) {
+    const order = { delivered: 0, inbox_limit: 1, bank_message_quote: 2, not_seen: 3 };
+    const ex = [...m.exposures].sort((x, y) => order[x.result] - order[y.result] || (x.recipient < y.recipient ? -1 : 1));
+    const chips = ex.map((e) => {
+      const n = M.byId[e.recipient], r = RES[e.result] || { tr: e.result, c: "#999" };
+      return `<span class="p" style="--c:${r.c}" title="${esc(n ? n.name : e.recipient)} · şans ${pct(e.probability)} · zar ${(+e.draw).toFixed(2)}">${esc(e.recipient)} <small>${r.tr} · ${pct(e.probability)}</small></span>`;
+    }).join("");
+    const c = calls[m.call];
+    return `<div class="det" data-stop>
+      ${ex.length ? `<div class="rc">${chips}</div>` : `<div class="muted">Kimseye yönlendirilmedi.</div>`}
+      ${m.call ? `<button class="llm" data-call="${esc(m.call)}">${c && c.open ? "LLM çağrısını gizle" : "LLM çağrısını göster"}</button>` : ""}
+      ${c && c.open ? `<div class="call">${c.err ? `<div class="muted">${esc(c.err)}</div>` : c.data ? `<h5>Yanıt</h5><pre>${esc(pretty(c.data.response))}</pre><h5>Prompt</h5><pre>${esc(c.data.prompt)}</pre>` : `<div class="muted">Yükleniyor…</div>`}</div>` : ""}
+    </div>`;
+  }
+  const pretty = (s) => { try { return JSON.stringify(JSON.parse(s), null, 2); } catch { return s ?? ""; } };
+
+  async function toggleCall(id) {
+    const c = (calls[id] = calls[id] || {});
+    c.open = !c.open;
+    renderFeed();
+    if (c.open && !c.data && !c.err) {
+      try {
+        const r = await fetch(`/api/call?run=${encodeURIComponent(M.run || "")}&id=${encodeURIComponent(id)}`);
+        if (!r.ok) throw new Error("Çağrı bulunamadı");
+        c.data = await r.json();
+      } catch (e) { c.err = e.message || "Hata"; }
+      renderFeed();
+    }
+  }
+
+  function renderLegend() {
+    if (!M) return;
+    const gs = [...new Map(M.nodes.map((n) => [n.group, n.g])).values()].sort((a, b) => a.order - b.order);
+    $("#legend").innerHTML = gs.map((g) => `<span><i class="lg-dot" style="background:${g.hex}"></i>${esc(g.tr)}</span>`).join("") +
+      `<span><i class="lg-dot" style="border:1.5px dashed #888"></i>sosyal medyası yok</span><span><i class="lg-line"></i>yakın arkadaş</span><span><i class="lg-line thin"></i>takip (ok: gönderi kime düşer)</span><span><i class="lg-hull"></i>WhatsApp grubu</span>` +
+      Object.values(RES).map((r) => `<span><i class="lg-dot" style="background:${r.c}"></i>${r.tr}</span>`).join("");
+  }
+
+  // ---------- load ----------
+  async function load(run) {
+    const token = ++S.token;
+    pause(); closeCard();
+    let d;
+    try {
+      const r = await fetch("/api/network" + (run ? "?run=" + encodeURIComponent(run) : ""), { cache: "no-store" });
+      d = await r.json();
+    } catch { d = { personas: [], network: {} }; }
+    if (token !== S.token) return;
+    M = NET.prep(d);
+    M.privateCapped = (d.exposures || []).some((e) => e.result === "inbox_limit" && (e.channel === "direct" || e.channel === "phone"));
+    for (const k in calls) delete calls[k];
+    const first = Object.keys(M.steps).map((k) => k.split(":").map(Number)).sort((a, b) => a[0] - b[0] || a[1] - b[1])[0];
+    S.week = first ? first[0] : 1; S.round = first ? first[1] : 1; S.msg = null;
+    const t = M.totals;
+    $("#sub").innerHTML = M.hasMessages
+      ? `Bu run'da <b>${t.sent}</b> mesaj yazıldı. Bir mesaj birden çok kişiye gidebildiği için alıcı başına <b>${t.delivered + t.not_seen + t.inbox_limit + t.bank_message_quote}</b> deneme oldu.<br>Okunan: <b>${t.delivered}</b> · görülmeyen: <b>${t.not_seen}</b>${t.inbox_limit ? ` · alıcının haftalık kotası dolu olduğu için okunmayan: <b>${t.inbox_limit}</b>` : ""}${t.bank_message_quote ? ` · banka mesajını aktardığı için engellenen: <b>${t.bank_message_quote}</b>` : ""}`
+      : `Bu run'da mesaj kaydı yok. Aşağıda yalnız kimin kimi duyabileceği görünüyor.`;
+    renderChannels(); renderGraph(); renderLegend(); renderBar(); renderFeed();
+    const empty = $("#gwrap .empty"); if (empty) empty.remove();
+    if (!M.nodes.length) $("#gwrap").insertAdjacentHTML("beforeend", `<div class="empty">Persona bulunamadı</div>`);
+    else if (!M.hasMessages) $("#gwrap").insertAdjacentHTML("beforeend", `<div class="empty">Bu run'da mesaj kaydı yok</div>`);
+    drawRays(NET.stepOf(M, S.week, S.round));
+  }
+
+  // ---------- events ----------
+  svg.addEventListener("pointerover", (e) => { const g = e.target.closest(".node"); if (g && !S.sel) setFocus(g.dataset.id); });
+  svg.addEventListener("pointerout", (e) => { const g = e.target.closest(".node"); if (g && !S.sel && !g.contains(e.relatedTarget)) setFocus(null); });
+  svg.addEventListener("click", (e) => {
+    const g = e.target.closest(".node");
+    if (g) { e.stopPropagation(); S.sel === g.dataset.id ? closeCard() : openCard(g.dataset.id); }
+  });
+  svg.addEventListener("keydown", (e) => { const g = e.target.closest(".node"); if (g && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); openCard(g.dataset.id); } });
+  $("#card").addEventListener("click", (e) => {
+    e.stopPropagation();
+    if (e.target.closest("[data-close]")) return closeCard();
+    const go = e.target.closest("[data-go]"); if (go) openCard(go.dataset.go);
+  });
+  document.addEventListener("click", (e) => { if (S.sel && !e.target.closest("#card") && !e.target.closest(".node")) closeCard(); });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") { if (S.sel) closeCard(); else if (S.msg) { S.msg = null; renderFeed(); drawRays(NET.stepOf(M, S.week, S.round)); } }
+    if (e.key === " " && !e.target.closest("input,select,button,textarea,[tabindex]")) { e.preventDefault(); S.playing ? pause() : play(); }
+  });
+  $("#play").addEventListener("click", () => (S.playing ? pause() : play()));
+  $("#seg").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) goStep(S.week, +b.dataset.r); });
+  $("#bars").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) goStep(+b.dataset.w, S.week === +b.dataset.w && S.round === 1 ? 2 : 1); });
+  $("#wk").addEventListener("input", (e) => goStep(+e.target.value, S.round));
+  $("#feed").addEventListener("click", (e) => {
+    const call = e.target.closest("[data-call]");
+    if (call) return toggleCall(call.dataset.call);
+    if (e.target.closest("[data-stop]")) return;
+    const m = e.target.closest(".msg");
+    if (!m || !M) return;
+    if (S.playing) { S.playing = false; if (anim && anim.cancel) anim.cancel(); stopAnim(); renderBar(); }
+    S.msg = S.msg === m.dataset.m ? null : m.dataset.m;
+    renderFeed();
+    const list = NET.stepOf(M, S.week, S.round);
+    drawRays(S.msg ? list.filter((x) => x.id === S.msg) : list);
+  });
+
+  let wasNarrow = narrow();
+  window.addEventListener("resize", () => {
+    const n = narrow();
+    if (M && n !== wasNarrow) { const sel = S.sel; pause(); renderGraph(); drawRays(NET.stepOf(M, S.week, S.round)); if (sel) openCard(sel); }
+    wasNarrow = n;
+  });
+  renderChannels(); renderBar();
+  TALP.ready.then(({ run }) => load(run));
+  window.addEventListener("talp:run", (e) => load(e.detail.run));
+})();
+</script>
+</body>
+</html>

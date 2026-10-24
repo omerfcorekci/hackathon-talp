@@ -1,0 +1,28 @@
+/* Shared look for every viewer page: tokens, top bar, run picker. Pages add their own styles below. */
+:root {
+  --bg: #f7f8fa; --panel: #fff; --text: #1d2125; --muted: #66707a; --faint: #9aa2ab;
+  --line: #e4e7eb; --line-soft: #eff1f4; --hover: #f2f4f7;
+  --accent: #2f6fde; --accent-soft: #e9f0fd; --accent-text: #1f56b8;
+  --good: #1a7f37; --good-bg: #e7f5ec; --bad: #c62f2f; --bad-bg: #fcebeb; --warn: #8a5a00; --warn-bg: #fff5e0;
+  --g1: #2f6fde; --g2: #1a9a8a; --g3: #d08a1e; --g4: #a04fc4; --g5: #d4506a;
+  --radius: 12px;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--text); font: 14px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, sans-serif; }
+a { color: var(--accent); text-decoration: none; }
+#topbar { position: sticky; top: 0; z-index: 50; display: flex; align-items: center; gap: 22px; height: 56px; padding: 0 24px;
+  background: rgba(255,255,255,.92); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
+#topbar .brand { font-weight: 700; letter-spacing: .02em; white-space: nowrap; }
+#topbar .brand span { color: var(--accent); }
+#topbar nav { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; }
+#topbar nav a { padding: 7px 13px; border-radius: 8px; color: var(--muted); font-weight: 500; white-space: nowrap; }
+#topbar nav a:hover { background: var(--hover); color: var(--text); }
+#topbar nav a.on { background: var(--accent-soft); color: var(--accent-text); font-weight: 600; }
+#topbar .spacer { flex: 1; }
+#topbar select { font: inherit; max-width: 300px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--text); }
+@media (max-width: 760px) {
+  #topbar { gap: 10px; padding: 0 12px; }
+  #topbar .brand { display: none; }
+  #topbar select { max-width: 130px; }
+}

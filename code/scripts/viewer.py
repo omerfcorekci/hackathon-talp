@@ -3,7 +3,7 @@
 
     python3 code/scripts/viewer.py [--root PATH] [--port 8765] [--show-fake]
 
-Binds 127.0.0.1 only. Stdlib only. Serves code/viewer/index.html and algorithms.html (from this checkout) and a small
+Binds 127.0.0.1 only. Stdlib only. Serves the pages under code/viewer/ (html/css/js and media/, from this checkout) and a small
 JSON API that reads, on every request, from an allowlist under --root:
   <root>/runs/** and <root>/experiments/**   any folder with run.json (two-round engine layout:
                                               calls/weekly/messages/probe .jsonl, network.json, ...)
@@ -21,7 +21,7 @@ Nothing else is readable (no .env, no traversal). No LLM calls are made.
 /api/run also returns money_flow (weighted $ in/out per week, same weights and factors as goal_2) and
 trust_by_week; /api/sweep variants carry series (deposits, active, trust per week, mean over seeds).
 
-Endpoints: /api/sweeps, /api/sweep?name=, /api/runs, /api/run?id=, /api/call?run=&id=,
+Endpoints: /api/network?run=, /api/sweeps, /api/sweep?name=, /api/runs, /api/run?id=, /api/call?run=&id=,
 /api/raw?run=&file=, /api/logs, /api/log?run=, /api/config, /api/docs.
 """
 from __future__ import annotations
@@ -40,8 +40,7 @@ from urllib.parse import parse_qs, urlparse
 
 HERE = Path(__file__).resolve().parent          # code/scripts
 CODE_DIR = HERE.parent                           # code/
-INDEX_HTML = CODE_DIR / "viewer" / "index.html"
-ALGORITHMS_HTML = CODE_DIR / "viewer" / "algorithms.html"
+VIEWER_DIR = CODE_DIR / "viewer"
 RUN_FILES = ["run.json", "personas.jsonl", "calls.jsonl", "weekly.jsonl", "metrics.json",
              "probe.jsonl", "messages.jsonl", "exposures.jsonl", "network.json", "world.json",
              "announcements.json", "decision_targets.json", "state.json"]
@@ -50,6 +49,10 @@ SAFE_NAME = re.compile(r"^[A-Za-z0-9_.\-]+$")
 BUDGET_USD = 4_000_000
 GOAL_KEYS = ("goal_1", "goal_2", "goal_3", "goal_3b")
 DEFAULT_TARGETS = {"goal_1": ">= 98", "goal_2": ">= 97", "goal_3": ">= 4.3", "goal_3b": "<= 240"}
+
+STATIC_TYPES = {".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8",
+                ".js": "text/javascript; charset=utf-8", ".svg": "image/svg+xml",
+                ".webm": "video/webm", ".mp4": "video/mp4", ".png": "image/png"}
 
 ROOT: Path = CODE_DIR.parent
 SHOW_FAKE = False
@@ -78,6 +81,20 @@ def load_sim() -> None:
 
 
 # ---------------------------------------------------------------- file helpers
+
+def static_file(rel: str) -> tuple[bytes, str] | None:
+    """A file directly under code/viewer/ (or code/viewer/media/) with a known type, else None."""
+    parts = rel.split("/")
+    if not (1 <= len(parts) <= 2) or not all(SAFE_NAME.match(x) and not x.startswith(".") for x in parts):
+        return None
+    if len(parts) == 2 and parts[0] != "media":
+        return None
+    fp = VIEWER_DIR.joinpath(*parts)
+    ctype = STATIC_TYPES.get(fp.suffix.lower())
+    if ctype is None or not fp.is_file() or not inside(fp, VIEWER_DIR):
+        return None
+    return fp.read_bytes(), ctype
+
 
 def inside(path: Path, base: Path) -> bool:
     try:
@@ -714,7 +731,32 @@ def api_docs(q) -> dict:
     return {"docs": out}
 
 
-ROUTES = {"/api/runs": api_runs, "/api/run": api_run, "/api/call": api_call, "/api/raw": api_raw,
+def api_network(q) -> dict:
+    """Who can reach whom, with what chance, and what was actually said and seen (one run, optional)."""
+    rid = q.get("run", [""])[0]
+    p = run_path(rid) if rid else None
+    personas = read_jsonl((p or ROOT / "code" / "personas") / "personas.jsonl")
+    net = read_json(p / "network.json", None) if p else None
+    if net is None:
+        net = read_json(ROOT / "code" / "personas" / "network.json", {}) or {}
+    engine = read_json(ROOT / "code" / "config" / "engine.json", {}) or {}
+    if p:  # the run's own settings win over today's engine.json
+        engine = {**engine, **((read_json(p / "run.json", {}) or {}).get("settings") or {})}
+    keep = ("max_peer_messages", "stranger_probability", "following_probability",
+            "close_friend_probability", "whatsapp_probability")
+    return {
+        "run": rid or None,
+        "personas": [{k: v for k, v in x.items() if k in ("id", "name", "group", "circle_size", "influence",
+                                                         "sways_easily", "checks_rumors", "news_sources")}
+                     for x in personas],
+        "network": net, "settings": {k: engine.get(k) for k in keep},
+        "messages": read_jsonl(p / "messages.jsonl") if p else [],
+        "exposures": read_jsonl(p / "exposures.jsonl") if p else [],
+    }
+
+
+ROUTES = {"/api/network": api_network,
+          "/api/runs": api_runs, "/api/run": api_run, "/api/call": api_call, "/api/raw": api_raw,
           "/api/logs": api_logs, "/api/log": api_log,
           "/api/config": api_config, "/api/docs": api_docs,
           "/api/sweeps": api_sweeps, "/api/sweep": api_sweep}
@@ -741,12 +783,9 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):  # noqa: N802
         u = urlparse(self.path)
         path = u.path
-        page = {"/": INDEX_HTML, "/index.html": INDEX_HTML, "/algorithms.html": ALGORITHMS_HTML}.get(path)
-        if page is not None:
-            try:
-                return self.send(200, page.read_bytes(), "text/html; charset=utf-8")
-            except FileNotFoundError:
-                return self.send_json(500, {"error": f"missing {page}"})
+        static = static_file("index.html" if path == "/" else path.lstrip("/"))
+        if static is not None:
+            return self.send(200, static[0], static[1])
         fn = ROUTES.get(path)
         if fn is None:
             return self.send_json(404, {"error": "not found"})

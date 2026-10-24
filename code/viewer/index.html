@@ -3,205 +3,204 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>TALP Viewer</title>
+<title>TALP Panorama</title>
+<link rel="stylesheet" href="/shell.css">
 <style>
 :root {
-  --bg: #fbfbfc; --panel: #ffffff; --text: #1f2328; --muted: #6a7079; --faint: #9aa0a8;
-  --line: #e7e9ec; --line-soft: #f0f1f3; --hover: #f5f7fa;
-  --accent: #2f6fde; --accent-soft: #eaf1fd; --accent-text: #1d4fa8;
-  --good: #1f7a4d; --good-bg: #e8f5ee; --bad: #b4372c; --bad-bg: #fcebea; --warn: #8a5a00; --warn-bg: #fff6e0;
+  --s-main: var(--accent); --s-second: #a9c6f5; --s-dormant: #ddd6c6; --s-left: var(--bad); --s-none: #f1f2f4;
   --code: #f6f7f9;
-  --s-main: #4a7fd8; --s-second: #b9d1f3; --s-dormant: #e3dfd4; --s-left: #e0675a; --s-none: #f1f2f4;
-  --s-main-t: #fff; --s-second-t: #17365f; --s-dormant-t: #4a4538; --s-left-t: #fff;
-  --c1: #2f6fde; --c2: #e08a2e;
-  --g1: #2f6fde; --g2: #e08a2e; --g3: #1f9a6a; --g4: #9b59b6; --g5: #c8463c;
-  --m-calm: #dde8f7; --m-calm-t: #1d4fa8; --m-hopeful: #e3f3e8; --m-hopeful-t: #1f7a4d;
-  --m-relieved: #d4f0f0; --m-relieved-t: #1b6b6b; --m-worried: #fff1cc; --m-worried-t: #7a5200;
-  --m-frustrated: #fde3cf; --m-frustrated-t: #9a4a10; --m-angry: #f8d3cf; --m-angry-t: #9b2a20;
-  color-scheme: light;
 }
-* { box-sizing: border-box; }
-html, body { margin: 0; }
-body { background: var(--bg); color: var(--text); font: 14px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, sans-serif; }
-a { color: var(--accent); text-decoration: none; cursor: pointer; }
-a:hover { text-decoration: underline; }
-.num { font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+main { max-width: 1120px; margin: 0 auto; padding: 22px 24px 96px; }
+button, select, input { font: inherit; color: var(--text); }
+select, input[type=search] { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; max-width: 100%; }
+button { cursor: pointer; background: none; border: 0; padding: 0; }
 code, pre, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12.5px; }
-pre { background: var(--code); border: 1px solid var(--line-soft); padding: 10px 12px; border-radius: 8px; overflow: auto; white-space: pre-wrap; word-break: break-word; margin: 6px 0 12px; max-height: 520px; }
-header { position: sticky; top: 0; height: 56px; display: flex; align-items: center; gap: 28px; padding: 0 28px; background: var(--panel); border-bottom: 1px solid var(--line); z-index: 20; }
-header .brand { font-weight: 700; letter-spacing: .02em; }
-header nav { display: flex; gap: 4px; flex: 1; overflow-x: auto; }
-header nav a { padding: 6px 12px; border-radius: 8px; color: var(--muted); white-space: nowrap; }
-header nav a:hover { background: var(--hover); color: var(--text); text-decoration: none; }
-header nav a.on { background: var(--accent-soft); color: var(--accent-text); font-weight: 600; }
-main { max-width: 1240px; margin: 0 auto; padding: 32px 28px 80px; }
-h1 { font-size: 22px; margin: 0 0 4px; font-weight: 650; }
-h2 { font-size: 16px; margin: 40px 0 12px; font-weight: 650; }
-h3 { font-size: 14px; margin: 16px 0 8px; font-weight: 650; }
-.lead { color: var(--muted); margin: 0 0 24px; }
-.muted { color: var(--muted); }
-.faint { color: var(--faint); }
-.small { font-size: 12.5px; }
-button, select, input[type=text], input[type=search] { font: inherit; color: var(--text); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 6px 12px; }
-button { cursor: pointer; }
-button:hover:not(:disabled) { background: var(--hover); }
-button:disabled { opacity: .45; cursor: default; }
-button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
-button.primary:hover:not(:disabled) { background: var(--accent-text); }
-button.ghost { border-color: transparent; color: var(--muted); }
-.bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 12px 0 16px; }
+pre { background: var(--code); border: 1px solid var(--line-soft); padding: 10px 12px; border-radius: 8px; overflow: auto; white-space: pre-wrap; word-break: break-word; margin: 6px 0 12px; max-height: 480px; }
+.muted { color: var(--muted); } .faint { color: var(--faint); } .small { font-size: 12.5px; }
+.ok { color: var(--good); } .no { color: var(--bad); }
+.num { font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
 .spacer { flex: 1; }
-.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin: 20px 0 24px; flex-wrap: wrap; }
-.tabs a { padding: 8px 14px; color: var(--muted); border-bottom: 2px solid transparent; margin-bottom: -1px; }
-.tabs a.on { color: var(--text); border-bottom-color: var(--accent); font-weight: 600; }
-.tabs a:hover { text-decoration: none; color: var(--text); }
-.tablewrap { overflow: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); }
-.tablewrap.tall { max-height: 70vh; }
-table { border-collapse: collapse; width: 100%; }
-th, td { padding: 10px 14px; border-bottom: 1px solid var(--line-soft); text-align: left; vertical-align: top; }
-tbody tr:last-child td { border-bottom: 0; }
-th { position: sticky; top: 0; background: var(--panel); font-weight: 600; font-size: 12px; color: var(--muted); z-index: 2; white-space: nowrap; border-bottom: 1px solid var(--line); }
-tr.click { cursor: pointer; }
-tr.click:hover td { background: var(--hover); }
-.badge { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 600; line-height: 18px; background: var(--line-soft); color: var(--muted); white-space: nowrap; }
-.badge.good { background: var(--good-bg); color: var(--good); }
-.badge.bad { background: var(--bad-bg); color: var(--bad); }
-.badge.accent { background: var(--accent-soft); color: var(--accent-text); }
-.g-good { color: var(--good); }
-.g-bad { color: var(--bad); }
-.card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; }
-.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
-.metric .k { font-size: 12.5px; color: var(--muted); }
-.metric .v { font-size: 26px; font-weight: 650; font-variant-numeric: tabular-nums; margin: 2px 0; }
-.metric .t { font-size: 12px; }
-.box { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; margin-bottom: 12px; }
-.kv { display: grid; grid-template-columns: max-content 1fr; gap: 6px 18px; }
-.kv > div:nth-child(odd) { color: var(--muted); font-size: 12.5px; }
+
+/* section switcher */
+.toprow { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+.seg { display: inline-flex; gap: 2px; padding: 3px; background: #eceef2; border-radius: 10px; max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+.seg button { padding: 6px 14px; border-radius: 8px; color: var(--muted); font-weight: 500; white-space: nowrap; }
+.seg button:hover { color: var(--text); }
+.seg button.on { background: var(--panel); color: var(--text); font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+.seg.sm button { padding: 4px 12px; font-size: 13px; }
+.ghost { color: var(--muted); padding: 6px 10px; border-radius: 8px; font-size: 13px; }
+.ghost:hover { background: var(--hover); color: var(--text); }
+
+h1 { font-size: 22px; font-weight: 650; margin: 0; }
+.sec { font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: 36px 0 12px; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.sec .hint { text-transform: none; letter-spacing: 0; font-weight: 400; color: var(--faint); }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px 18px; }
 .note { background: var(--warn-bg); color: var(--warn); border-radius: 10px; padding: 10px 14px; margin: 10px 0; font-size: 13px; }
 .err { background: var(--bad-bg); color: var(--bad); border-radius: 10px; padding: 10px 14px; margin: 10px 0; }
-details { margin: 8px 0; }
-summary { cursor: pointer; color: var(--muted); font-size: 13px; }
-.two { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-/* recommendation */
-.rec { border: 1px solid var(--accent); background: linear-gradient(180deg, var(--accent-soft), var(--panel) 70%); border-radius: 16px; padding: 24px 26px; }
-.rec .eyebrow { font-size: 12px; font-weight: 600; color: var(--accent-text); letter-spacing: .04em; text-transform: uppercase; }
-.rec .title { font-size: 24px; font-weight: 700; margin: 6px 0 4px; }
-.rec .title .weeks { font-weight: 500; color: var(--muted); font-size: 18px; }
-.rec .facts { display: flex; gap: 28px; flex-wrap: wrap; margin: 18px 0 6px; }
-.rec .fact .k { font-size: 12px; color: var(--muted); }
-.rec .fact .v { font-size: 20px; font-weight: 650; font-variant-numeric: tabular-nums; }
-.score { font-size: 12.5px; color: var(--muted); margin-top: 10px; }
-/* lock strip */
-.locks { display: grid; grid-template-columns: repeat(10, 1fr); gap: 6px; }
-.lock { border: 1px solid var(--line); border-radius: 10px; padding: 8px 6px; text-align: center; background: var(--panel); }
-.lock .w { font-size: 12px; color: var(--muted); }
-.lock .h { font-weight: 650; font-variant-numeric: tabular-nums; }
-.lock.past { background: var(--line-soft); color: var(--faint); border-color: var(--line-soft); }
-.lock.past .w, .lock.past .h { color: var(--faint); font-weight: 500; }
-.lock.next { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
-.lock.pick { background: var(--accent-soft); }
-/* matrix */
-table.matrix td, table.matrix th { text-align: center; }
-table.matrix td.lbl, table.matrix th.lbl { text-align: left; }
-.mcell { display: block; border-radius: 8px; padding: 8px 6px; font-variant-numeric: tabular-nums; border: 1px solid transparent; }
-.mcell.best { border-color: var(--accent); font-weight: 700; }
-.mcell .s { display: block; font-size: 11px; color: var(--muted); font-weight: 400; }
-/* group bars */
-.gbars { display: grid; grid-template-columns: minmax(150px, 220px) 1fr 1fr; gap: 10px 20px; align-items: center; }
-.gbars .hd { font-size: 12px; color: var(--muted); }
-.hbar { position: relative; height: 22px; background: var(--line-soft); border-radius: 6px; }
-.hbar .mid { position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: var(--line); }
-.hbar .fill { position: absolute; top: 4px; bottom: 4px; border-radius: 4px; background: var(--accent); opacity: .75; }
-.hbar .fill.neg { background: var(--bad); }
-.hbar .lab { position: absolute; top: 0; white-space: nowrap; line-height: 22px; font-size: 11.5px; font-variant-numeric: tabular-nums; color: var(--text); }
-/* ranked table */
-.ticks { letter-spacing: 2px; white-space: nowrap; }
-.spread { display: block; font-size: 11px; color: var(--faint); }
-tr.best td { background: #f7faff; }
-tr.expand td { background: var(--bg); padding: 16px 20px 20px; }
-.dec { border: 1px solid var(--line); border-radius: 10px; background: var(--panel); padding: 12px 14px; margin-bottom: 10px; }
-.dec .hd { font-weight: 600; margin-bottom: 4px; }
-/* status grid */
-table.grid { width: auto; }
-table.grid td, table.grid th { padding: 0; border: 0; }
-table.grid th { padding: 6px 2px; text-align: center; }
-table.grid th.pname, table.grid td.pname { text-align: left; padding: 2px 14px 2px 10px; white-space: nowrap; position: sticky; left: 0; background: var(--panel); z-index: 1; }
-table.grid th.pname { z-index: 3; }
-table.grid tr.grp td { padding: 14px 10px 4px; font-weight: 600; font-size: 12px; color: var(--muted); position: sticky; left: 0; background: var(--panel); }
-.cell { display: block; width: 44px; height: 26px; margin: 2px; border-radius: 6px; font-size: 11px; line-height: 26px; text-align: center; cursor: pointer; font-variant-numeric: tabular-nums; position: relative; border: 2px solid transparent; }
-.cell:hover { outline: 2px solid var(--text); outline-offset: -1px; }
-.cell.sel { outline: 2px solid var(--accent); outline-offset: 1px; }
-.cell.diff { border-color: var(--text); }
-.cell.split { overflow: hidden; }
-.cell.split span { display: block; height: 11px; line-height: 11px; }
-.st-main { background: var(--s-main); color: var(--s-main-t); }
-.st-second { background: var(--s-second); color: var(--s-second-t); }
-.st-dormant { background: var(--s-dormant); color: var(--s-dormant-t); }
-.st-left { background: var(--s-left); color: var(--s-left-t); }
-.st-none { background: var(--s-none); color: var(--muted); }
-.legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12.5px; color: var(--muted); align-items: center; }
-.legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -1px; margin-right: 6px; }
-/* drawer */
-#scrim { position: fixed; inset: 56px 0 0 0; background: rgba(31, 35, 40, .08); z-index: 29; display: none; }
-#scrim.open { display: block; }
-#drawer { position: fixed; top: 56px; right: 0; bottom: 0; width: min(760px, 96vw); background: var(--panel); border-left: 1px solid var(--line); box-shadow: -8px 0 24px rgba(31, 35, 40, .06); overflow: auto; padding: 20px 26px 48px; z-index: 30; display: none; }
-#drawer.open { display: block; }
-#drawer .close { position: sticky; top: 0; float: right; }
-.traits { display: grid; grid-template-columns: max-content 120px max-content; gap: 6px 12px; align-items: center; font-size: 12.5px; }
-.tbar { height: 6px; background: var(--line-soft); border-radius: 3px; overflow: hidden; }
-.tbar > div { height: 100%; background: var(--accent); }
-.timeline .row { display: grid; grid-template-columns: 50px 120px 1fr; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line-soft); }
-.charts { display: grid; grid-template-columns: repeat(auto-fill, minmax(440px, 1fr)); gap: 16px; }
+.empty { text-align: center; padding: 48px 20px; color: var(--muted); }
+.loading { color: var(--faint); padding: 40px 0; text-align: center; }
+details > summary { cursor: pointer; color: var(--muted); font-size: 13px; }
+
+/* run head */
+.runhead { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.tag { display: inline-block; padding: 1px 9px; border-radius: 999px; font-size: 12px; font-weight: 600; background: var(--line-soft); color: var(--muted); white-space: nowrap; }
+.tag.acc { background: var(--accent-soft); color: var(--accent-text); }
+.tag.warn { background: var(--warn-bg); color: var(--warn); }
+.tag.bad { background: var(--bad-bg); color: var(--bad); }
+.tag.good { background: var(--good-bg); color: var(--good); }
+.meta { color: var(--muted); font-size: 13px; margin-top: 4px; }
+
+/* goal cards */
+.goals { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.goal { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px 10px; min-width: 0; }
+.goal .top { display: flex; justify-content: space-between; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); }
+.goal .val { font-size: 30px; font-weight: 650; font-variant-numeric: tabular-nums; line-height: 1.15; margin-top: 6px; }
+.goal .val small { font-size: 15px; font-weight: 500; color: var(--muted); margin-left: 2px; }
+.goal .tgt { font-size: 12px; color: var(--faint); }
+.goal svg { display: block; width: 100%; height: 34px; margin-top: 8px; }
+.pill { font-size: 11.5px; font-weight: 600; padding: 1px 8px; border-radius: 999px; white-space: nowrap; }
+.pill.ok { background: var(--good-bg); color: var(--good); } .pill.no { background: var(--bad-bg); color: var(--bad); }
+
+/* decisions */
+.decs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.dec .hd { display: flex; align-items: baseline; gap: 8px; }
+.dec .hd b.cost { font-variant-numeric: tabular-nums; }
+.eyebrow { font-size: 12px; font-weight: 600; color: var(--accent-text); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 8px; }
+.chip { font-size: 12.5px; padding: 3px 10px; border-radius: 999px; background: var(--hover); border: 1px solid var(--line-soft); }
+.msg { margin: 8px 0; padding: 10px 12px; background: var(--code); border-radius: 8px; font-size: 13px; }
+.why { margin: 4px 0 0; padding-left: 18px; font-size: 13px; color: var(--muted); }
+.budget { display: flex; align-items: center; gap: 12px; margin-top: 12px; font-size: 13px; color: var(--muted); }
+.bbar { flex: 0 1 220px; height: 6px; background: var(--line-soft); border-radius: 3px; overflow: hidden; }
+.bbar i { display: block; height: 100%; background: var(--good); }
+.bbar i.over { background: var(--bad); }
+
+/* charts */
 svg text { fill: var(--muted); font-size: 11px; font-family: system-ui, sans-serif; }
 svg .axis { stroke: var(--line-soft); }
-svg .mark { stroke: var(--muted); stroke-dasharray: 3 4; opacity: .8; }
-svg .mark-dec { stroke: var(--accent); stroke-dasharray: 6 3; }
-svg text.marklbl { font-size: 10.5px; }
-svg circle.tp { cursor: help; }
-svg circle.tp:hover { r: 5; }
-.mood { display: inline-block; min-width: 62px; padding: 1px 6px; border-radius: 10px; font-size: 11px; text-align: center; white-space: nowrap; }
-.mood.calm { background: var(--m-calm); color: var(--m-calm-t); } .mood.hopeful { background: var(--m-hopeful); color: var(--m-hopeful-t); }
-.mood.relieved { background: var(--m-relieved); color: var(--m-relieved-t); } .mood.worried { background: var(--m-worried); color: var(--m-worried-t); }
-.mood.frustrated { background: var(--m-frustrated); color: var(--m-frustrated-t); } .mood.angry { background: var(--m-angry); color: var(--m-angry-t); }
-table.moods td, table.moods th { padding: 3px 4px; text-align: center; }
-table.moods td.pname, table.moods th.pname { text-align: left; padding-right: 12px; white-space: nowrap; }
-svg .tgt { stroke: var(--bad); stroke-dasharray: 4 3; opacity: .7; }
+svg .mark { stroke: var(--faint); stroke-dasharray: 3 4; }
+svg .mark.dec { stroke: var(--accent); stroke-dasharray: 5 3; opacity: .7; }
+svg text.ml { font-size: 10.5px; }
+svg text.ml.dec { fill: var(--accent-text); }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12.5px; color: var(--muted); align-items: center; margin-bottom: 6px; }
+.legend i { display: inline-block; width: 12px; height: 3px; border-radius: 2px; vertical-align: 3px; margin-right: 6px; }
+.legend i.sq { height: 12px; vertical-align: -1px; border-radius: 3px; }
+.legend i.dash { background: repeating-linear-gradient(90deg, currentColor 0 4px, transparent 4px 7px) !important; }
+.evs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.ev { font-size: 12.5px; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); color: var(--text); text-align: left; }
+.ev b { color: var(--muted); font-weight: 600; margin-right: 4px; }
+.ev.dec { border-color: var(--accent); color: var(--accent-text); }
+button.ev:hover { background: var(--hover); }
+.stack > .card + .card { margin-top: 12px; }
+
+/* tables */
+.tw { overflow: auto; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); max-width: 100%; }
+.tw.tall { max-height: 70vh; }
+table { border-collapse: collapse; width: 100%; }
+th, td { padding: 9px 12px; border-bottom: 1px solid var(--line-soft); text-align: left; vertical-align: top; }
+tbody tr:last-child td { border-bottom: 0; }
+th { position: sticky; top: 0; background: var(--panel); font-weight: 600; font-size: 12px; color: var(--muted); white-space: nowrap; z-index: 2; border-bottom: 1px solid var(--line); }
+tr.click { cursor: pointer; } tr.click:hover td { background: var(--hover); }
+tr.hl td { background: #f5f9ff; }
+
+/* persona grid */
+.toolbar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 14px; }
+.toolbar input[type=search] { width: 260px; }
+table.pg { width: auto; }
+table.pg th, table.pg td { padding: 0; border: 0; }
+table.pg th { padding: 8px 0 6px; text-align: center; font-variant-numeric: tabular-nums; }
+table.pg th.ev { color: var(--text); }
+table.pg th.ev::after { content: ""; display: block; width: 4px; height: 4px; border-radius: 50%; background: var(--accent); margin: 2px auto 0; }
+table.pg .pname { position: sticky; left: 0; background: var(--panel); z-index: 1; text-align: left; padding: 0 12px 0 14px; white-space: nowrap; }
+table.pg th.pname { z-index: 3; }
+table.pg tr.grp td { padding: 16px 14px 4px; font-size: 12px; font-weight: 600; color: var(--muted); }
+table.pg tr.grp td span.gh { position: sticky; left: 14px; }
+.plink { text-align: left; padding: 3px 0; max-width: 220px; overflow: hidden; text-overflow: ellipsis; display: block; }
+.plink:hover .nm { color: var(--accent); }
+.dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 7px; vertical-align: 1px; }
+.cell { display: block; width: 38px; height: 24px; margin: 2px; border-radius: 6px; font-size: 11px; line-height: 24px; text-align: center; font-variant-numeric: tabular-nums; }
+.cell:hover { outline: 2px solid var(--text); outline-offset: -1px; }
+.s-main { background: var(--s-main); color: #fff; } .s-second { background: var(--s-second); color: #17365f; }
+.s-dormant { background: var(--s-dormant); color: #4a4538; } .s-left { background: var(--s-left); color: #fff; }
+.s-none { background: var(--s-none); color: var(--faint); }
+.hide { display: none !important; }
+
+/* side panel */
+#scrim { position: fixed; inset: 56px 0 0 0; background: rgba(29, 33, 37, .18); z-index: 39; opacity: 0; pointer-events: none; transition: opacity .15s; }
+#scrim.open { opacity: 1; pointer-events: auto; }
+#panel { position: fixed; top: 56px; right: 0; bottom: 0; width: min(640px, 100vw); background: var(--panel); border-left: 1px solid var(--line); box-shadow: -10px 0 30px rgba(29,33,37,.08); z-index: 40; transform: translateX(100%); transition: transform .18s ease; display: flex; flex-direction: column; visibility: hidden; }
+#panel.open { transform: none; visibility: visible; }
+#panel .phead { display: flex; justify-content: flex-end; padding: 10px 12px 0; }
+#panel .x { width: 34px; height: 34px; border-radius: 8px; font-size: 18px; color: var(--muted); }
+#panel .x:hover { background: var(--hover); color: var(--text); }
+#pbody { overflow: auto; padding: 0 26px 48px; flex: 1; }
+#pbody h2 { font-size: 20px; margin: 2px 0 2px; font-weight: 650; }
+#pbody h3 { font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: 26px 0 10px; }
+.pfacts { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin: 16px 0; }
+.pfacts div { background: var(--bg); border-radius: 10px; padding: 8px 12px; }
+.pfacts .k { font-size: 11.5px; color: var(--muted); } .pfacts .v { font-weight: 600; font-variant-numeric: tabular-nums; }
+.narr { line-height: 1.6; }
+.quote { color: var(--muted); font-style: italic; border-left: 3px solid var(--line); padding-left: 12px; }
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; font-size: 12.5px; }
+.kv > div:nth-child(odd) { color: var(--muted); }
+.wk { display: grid; grid-template-columns: 34px 1fr; gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--line-soft); }
+.wk .n { font-weight: 650; color: var(--faint); font-variant-numeric: tabular-nums; padding-top: 1px; }
+.wk.focus { background: var(--accent-soft); margin: 0 -12px; padding: 12px; border-radius: 10px; border-bottom-color: transparent; }
+.wk.focus .n { color: var(--accent-text); }
+.wk p { margin: 6px 0; }
+.wk .top { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 12.5px; }
+.st { font-size: 12px; font-weight: 600; padding: 1px 8px; border-radius: 999px; }
+.said { font-size: 12.5px; color: var(--muted); margin: 4px 0; }
+.said b { color: var(--text); font-weight: 600; }
+.linkbtn { color: var(--accent); font-size: 12.5px; }
+.linkbtn:hover { text-decoration: underline; }
+.probe td, .probe th { padding: 6px 8px; }
+.callh { font-size: 12.5px; font-weight: 600; margin: 12px 0 2px; }
+
+/* markdown */
 .md { line-height: 1.6; }
-.md table { width: auto; margin: 10px 0; border: 1px solid var(--line); border-radius: 8px; }
+.md h2 { font-size: 18px; } .md h3 { font-size: 15px; margin-top: 24px; } .md h4 { font-size: 14px; }
+.md table { width: auto; }
 .md th { position: static; }
-.md h1 { font-size: 20px; } .md h2 { font-size: 16px; margin-top: 28px; } .md h3 { font-size: 14px; }
 .md blockquote { margin: 8px 0; padding: 2px 14px; border-left: 3px solid var(--line); color: var(--muted); }
 .md code { background: var(--code); padding: 1px 5px; border-radius: 4px; }
 .md pre code { background: none; padding: 0; }
-.diffmark td { background: var(--warn-bg); }
-.empty { text-align: center; padding: 48px 20px; color: var(--muted); }
-@media (max-width: 860px) {
-  header { padding: 0 14px; gap: 14px; }
-  main { padding: 20px 16px 60px; }
-  .two { grid-template-columns: 1fr; }
-  .locks { grid-template-columns: repeat(5, 1fr); }
-  .gbars { grid-template-columns: 1fr 1fr; } .gbars .gname { grid-column: 1 / -1; }
-  .charts { grid-template-columns: 1fr; }
+
+@media (max-width: 900px) {
+  .goals { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .decs { grid-template-columns: 1fr; }
+}
+@media (max-width: 600px) {
+  main { padding: 16px 16px 80px; }
+  .toprow { margin-bottom: 18px; }
+  .toprow { gap: 6px; }
+  .seg button { padding: 6px 9px; font-size: 13.5px; }
+  .ghost .t { display: none; }
+  .goal { padding: 12px 12px 8px; }
+  .goal .val { font-size: 24px; }
+  #pbody { padding: 0 16px 40px; }
+  .toolbar input[type=search] { width: 100%; }
+  .cell { width: 30px; }
+  .plink { max-width: 130px; }
 }
 </style>
 </head>
 <body>
-<header>
-  <span class="brand">TALP</span>
-  <nav id="nav"></nav>
-  <button class="ghost" id="refresh" title="Dosyaları yeniden oku">Yenile</button>
-</header>
-<main id="main"><p class="muted">Yükleniyor…</p></main>
-<div id="scrim" data-close></div>
-<aside id="drawer"></aside>
+<main>
+  <div class="toprow"><div class="seg" id="nav"></div><span class="spacer"></span><button class="ghost" data-act="refresh" title="Dosyaları yeniden oku">↻<span class="t"> Yenile</span></button></div>
+  <div id="body"><div class="loading">Yükleniyor…</div></div>
+</main>
+<div id="scrim" data-act="close"></div>
+<aside id="panel" aria-hidden="true"><div class="phead"><button class="x" data-act="close" title="Kapat (Esc)">✕</button></div><div id="pbody"></div></aside>
+<script src="/shell.js"></script>
 <script>
 "use strict";
 // ------------------------------------------------------------ helpers
-const $ = (s) => document.querySelector(s);
+const $ = (s, el = document) => el.querySelector(s);
 const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const enc = encodeURIComponent;
 const cache = new Map();
-async function api(path) {
+function api(path) {
   if (cache.has(path)) return cache.get(path);
   const p = fetch(path, { cache: "no-store" }).then(async (r) => {
     const j = await r.json().catch(() => ({ error: "bad JSON" }));
@@ -212,412 +211,121 @@ async function api(path) {
   p.catch(() => cache.delete(path));
   return p;
 }
+const runApi = (id) => api(`/api/run?id=${enc(id)}`);
 const fmtNum = (v, d = 0) => v == null || v === "" || Number.isNaN(+v) ? "–" : Number(v).toLocaleString("en-US", { maximumFractionDigits: d, minimumFractionDigits: d });
 const fmtUsd = (v) => v == null ? "–" : "$" + (Math.abs(v) >= 1e9 ? fmtNum(v / 1e9, 2) + "B" : Math.abs(v) >= 1e5 ? fmtNum(v / 1e6, 2) + "M" : Math.abs(v) >= 1e4 ? fmtNum(v / 1e3, 0) + "k" : fmtNum(v));
-const fmtPp = (v, d = 1) => v == null ? "–" : (v > 0 ? "+" : v < 0 ? "−" : "±") + fmtNum(Math.abs(v), d) + " pp";
-const fmtTime = (t) => { if (!t) return "–"; const d = new Date(t * 1000); return d.toLocaleDateString("tr-TR") + " " + d.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" }); };
-const STATUSES = ["main bank", "second bank", "dormant", "left"];
-const stClass = (s) => ({ "main bank": "st-main", "second bank": "st-second", "dormant": "st-dormant", "left": "st-left" }[s] || "st-none");
-const MONEY_MARK = { "kept": "", "moved some": "↓", "moved most": "↓↓" };
+const cssVar = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const shortId = (id) => String(id || "").replace(/^(runs|experiments)\//, "");
+
+// key, label, unit, decimals, higher-is-better
 const GOALS = [
-  ["goal_1", "Aktif müşteri", "%", 2],
-  ["goal_2", "Mevduat", "%", 2],
-  ["goal_3", "App Store puanı", "★", 2],
-  ["goal_3b", "CFPB şikayet/ay", "", 0],
+  ["goal_1", "Aktif müşteri", "%", 2, true],
+  ["goal_2", "Mevduat", "%", 2, true],
+  ["goal_3", "App Store puanı", "★", 2, true],
+  ["goal_3b", "CFPB şikayeti / ay", "", 0, false],
 ];
 const DEFAULT_TARGETS = { goal_1: ">= 98", goal_2: ">= 97", goal_3: ">= 4.3", goal_3b: "<= 240" };
 function goalOk(key, v, targets) {
   if (v == null) return null;
-  const t = (targets || {})[key] || DEFAULT_TARGETS[key];
-  const m = /^(>=|<=)\s*([\d.]+)/.exec(t || ""); if (!m) return null;
+  const m = /^(>=|<=)\s*([\d.]+)/.exec(((targets || {})[key] || DEFAULT_TARGETS[key]) || "");
+  if (!m) return null;
   return m[1] === ">=" ? v >= +m[2] : v <= +m[2];
 }
-const goalCls = (k, v, t) => { const o = goalOk(k, v, t); return o == null ? "" : o ? "g-good" : "g-bad"; };
-const tgtText = (t, k) => String((t || DEFAULT_TARGETS)[k] || "").replace(">=", "≥").replace("<=", "≤");
+const tgtText = (t, k) => String(((t || {})[k] || DEFAULT_TARGETS[k]) || "").replace(">=", "≥").replace("<=", "≤");
+const tgtNum = (t, k) => { const m = /([\d.]+)/.exec(((t || {})[k] || DEFAULT_TARGETS[k]) || ""); return m ? +m[1] : null; };
+const okCls = (o) => o == null ? "" : o ? "ok" : "no";
+
 const PROBE_Q = {
   "1a": ["Güven", "How much do you trust Cobalt Bank?"],
-  "1b": ["Güven (b)", "\"I can count on Cobalt Bank to treat me right.\""],
-  "2a": ["Kalma", "How likely are you to keep using Cobalt Bank over the next three months?"],
+  "1b": ["Bana iyi davranır", "\"I can count on Cobalt Bank to treat me right.\""],
+  "2a": ["Kalma niyeti", "How likely are you to keep using Cobalt Bank over the next three months?"],
   "2b": ["Ayrılmayı düşünme", "\"I am thinking about leaving Cobalt Bank.\"", true],
   "3a": ["Tavsiye", "How likely are you to recommend Cobalt Bank to a friend or colleague?"],
-  "3b": ["Tavsiye (b)", "If a friend asked you about Cobalt Bank today, what would you tell them?"],
+  "3b": ["Arkadaşa ne der", "If a friend asked you about Cobalt Bank today, what would you tell them?"],
   "4a": ["Adillik", "How fairly has Cobalt Bank treated you?"],
   "4b": ["Haksızlık", "\"Cobalt Bank takes advantage of people like me.\"", true],
 };
-const TRAITS = ["anxiety", "patience", "rumor_belief", "talkativeness", "rate_sensitivity", "financial_literacy"];
-const TRAIT_TR = { anxiety: "kaygı", patience: "sabır", rumor_belief: "söylentiye inanma", talkativeness: "konuşkanlık", rate_sensitivity: "faiz hassasiyeti", financial_literacy: "finans bilgisi" };
 const GROUP_TR = { "everyday customers": "Günlük müşteriler", "paycheck customers": "Maaş müşterileri", "savers with large balances": "Yüksek bakiyeli tasarrufçular", "small business owners with a Cobalt card reader": "Kart okuyuculu küçük işletmeler", "students": "Öğrenciler" };
-const groupTr = (g) => GROUP_TR[g] || g;
-const go = (h) => { if (location.hash !== h) location.hash = h; else render(); };
-const setMain = (html) => { $("#main").innerHTML = html; };
-const isShare = (s) => s && String(s).trim() && !/^nothing\.?$/i.test(String(s).trim()) && !/^none\.?$/i.test(String(s).trim());
-const targetText = (t) => typeof t === "string" ? t : JSON.stringify(t);
-const shortAction = (a) => String(a.action || "").replace(" during the migration", "").replace(" to other banks", "").replace(", new money only", " (yeni para)") + (a.level && a.level !== "on" ? ` ${a.level}` : "");
+const groupTr = (g) => GROUP_TR[g] || g || "–";
+const STATUSES = ["main bank", "second bank", "dormant", "left"];
+const STATUS_TR = { "main bank": "ana banka", "second bank": "ikinci banka", dormant: "uykuda", left: "ayrıldı" };
+const stc = (s) => ({ "main bank": "s-main", "second bank": "s-second", dormant: "s-dormant", left: "s-left" }[s] || "s-none");
+const MONEY_TR = { kept: "parası yerinde", "moved some": "bir kısmını taşıdı", "moved most": "çoğunu taşıdı" };
+const MONEY_MARK = { kept: "", "moved some": "↓", "moved most": "↓↓" };
+const NEW_TR = { some: "biraz yeni para", "a lot": "çok yeni para" };
+const MOOD_TR = { calm: "sakin", hopeful: "umutlu", relieved: "rahatlamış", worried: "endişeli", frustrated: "bıkkın", angry: "öfkeli" };
+const TYPE_TR = { plan: "Plan · kararlarımızla", nodecision: "Kararsız · iş her zamanki gibi", plan_nosurprises: "Plan · sürprizsiz" };
+const groupsOf = (personas) => { const g = []; personas.forEach((p) => { if (!g.includes(p.group)) g.push(p.group); }); return g; };
+const gcol = (i) => `var(--g${(i % 5) + 1})`;
+const indexWeekly = (weekly) => { const m = {}; (weekly || []).forEach((r) => { (m[r.persona] ||= {})[r.week] = r; }); return m; };
+const targetText = (t) => t == null ? "–" : typeof t === "string" ? (t === "everyone" ? "herkes" : t) : JSON.stringify(t);
+const shortAction = (a) => String(a.action || "").replace(" during the migration", "").replace(" to other banks", "").replace(", new money only", " (yeni para)") + (a.level && a.level !== "on" ? ` · ${a.level}` : "");
+const whyLines = (w) => (Array.isArray(w) ? w : String(w || "").split("\n")).map((x) => String(x).trim()).filter(Boolean);
+const lastWeekOf = (weekly) => Math.max(0, ...(weekly || []).map((r) => r.week || 0));
 
-// ------------------------------------------------------------ route
-function parseHash() {
-  const raw = location.hash.replace(/^#\/?/, "");
-  return raw ? raw.split("/").map(decodeURIComponent) : [];
+// ------------------------------------------------------------ state + routing
+// Hash = what is on screen: #ozet, #personalar/P1/5, #karsilastir/<a>/<b>, #kayitlar/loglar/<call>.
+// Every change uses replaceState: switching or closing never adds browser history.
+const S = { run: null, sec: "ozet", arg: [], data: null, sweep: null, q: "", lf: { persona: "", week: "", failed: false, q: "" }, panelBase: null, width: 0 };
+const SECTIONS = [["ozet", "Özet"], ["personalar", "Personalar"], ["karsilastir", "Karşılaştır"], ["kayitlar", "Kayıtlar"]];
+const VIEWS = {};
+const readHash = () => { const raw = location.hash.replace(/^#\/?/, ""); return raw ? raw.split("/").map((x) => { try { return decodeURIComponent(x); } catch { return x; } }) : []; };
+function setHash(parts) {
+  const h = "#" + parts.filter((x) => x != null && x !== "").map((x) => enc(String(x))).join("/");
+  if (location.hash !== h) history.replaceState(null, "", h);
 }
-const compareSel = new Set();
-const NAV = [["oneri", "Karar önerisi"], ["runs", "Run'lar"], ["compare", "Karşılaştır"], ["logs", "Loglar"], ["docs", "Belgeler"]];
-const NAV_EXTRA = `<a href="/algorithms.html">Algoritmalar</a>`;
+function go(parts, keepScroll = false) { setHash(parts); render(keepScroll); }
 
-async function render() {
-  const r = parseHash();
-  const view = r[0] || "oneri";
-  const navKey = view === "run" ? "runs" : view;
-  $("#nav").innerHTML = NAV.map(([k, t]) => `<a href="#/${k}" class="${navKey === k ? "on" : ""}">${t}</a>`).join("") + NAV_EXTRA;
-  closeDrawer(false);
+let renderToken = 0;
+async function render(keepScroll = false) {
+  const parts = readHash();
+  S.sec = VIEWS[parts[0]] ? parts[0] : "ozet";
+  S.arg = parts.slice(1);
+  $("#nav").innerHTML = SECTIONS.map(([k, t]) => `<button class="${k === S.sec ? "on" : ""}" data-act="sec" data-sec="${k}">${t}</button>`).join("");
+  hidePanel();
+  const t = ++renderToken, y = window.scrollY;
+  const body = $("#body");
+  const slow = setTimeout(() => { if (t === renderToken) body.innerHTML = `<div class="loading">Yükleniyor…</div>`; }, 160);
   try {
-    if (view === "oneri") await viewAdvice(r[1]);
-    else if (view === "runs") await viewRuns();
-    else if (view === "run") await viewRun(r[1], r[2] || "ozet", r.slice(3));
-    else if (view === "compare") await viewCompare(r[1], r[2]);
-    else if (view === "logs") await viewLogs(r[1], r.slice(2));
-    else if (view === "docs") await viewDocs(r[1]);
-    else setMain(`<p>Bilinmeyen sayfa.</p>`);
+    let out = await VIEWS[S.sec]();
+    if (t !== renderToken) return;
+    clearTimeout(slow);
+    if (typeof out === "string") out = [out];
+    body.innerHTML = out[0];
+    S.width = body.clientWidth;
+    window.scrollTo(0, keepScroll ? y : 0);
+    if (out[1]) out[1]();
   } catch (e) {
-    setMain(`<div class="err">Hata: ${esc(e.message)}</div>`);
+    clearTimeout(slow);
+    if (t === renderToken) body.innerHTML = `<div class="err">Hata: ${esc(e.message)}</div>`;
   }
 }
+const noRun = () => `<div class="card empty">Henüz run yok.<br><span class="small">runs/ veya experiments/ altında run.json içeren bir klasör oluşunca burada görünür.</span></div>`;
 
-// ------------------------------------------------------------ drawer
-function openDrawer(html) { const d = $("#drawer"); d.innerHTML = `<button class="close" data-close>Kapat</button>` + html; d.classList.add("open"); $("#scrim").classList.add("open"); d.scrollTop = 0; }
-function closeDrawer(nav = true) {
-  const d = $("#drawer"); if (!d.classList.contains("open")) return;
-  d.classList.remove("open"); $("#scrim").classList.remove("open");
-  if (nav && d.dataset.back) { const b = d.dataset.back; d.dataset.back = ""; go(b); }
+// ------------------------------------------------------------ side panel
+let panelToken = 0;
+function showPanel(html, hashParts, baseParts) {
+  const p = $("#panel");
+  $("#pbody").innerHTML = html;
+  $("#pbody").scrollTop = 0;
+  p.classList.add("open"); p.setAttribute("aria-hidden", "false");
+  $("#scrim").classList.add("open");
+  S.panelBase = baseParts || null;
+  if (hashParts) setHash(hashParts);
+  return ++panelToken;
 }
-document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeDrawer(true); });
-document.addEventListener("click", (e) => {
-  if (e.target.closest("[data-close]")) { closeDrawer(true); return; }
-  const g = e.target.closest("[data-go]");
-  if (g && !e.target.closest("input,button:not([data-go]),a[href]")) { go(g.dataset.go); }
-});
-$("#refresh").addEventListener("click", () => { cache.clear(); render(); });
-window.addEventListener("hashchange", render);
-
-// ------------------------------------------------------------ lock times
-// Week N starts at 13:00 + 30 min x (N-1), local time today; a decision for week N must be locked before that.
-function weekStart(n) { const d = new Date(); d.setHours(13, 0, 0, 0); d.setMinutes(d.getMinutes() + 30 * (n - 1)); return d; }
-const hhmm = (d) => d.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
-function lockStrip(picked = []) {
-  const now = new Date();
-  const next = Array.from({ length: 10 }, (_, i) => i + 1).find((n) => weekStart(n) > now);
-  const cells = Array.from({ length: 10 }, (_, i) => {
-    const n = i + 1, past = weekStart(n) <= now;
-    return `<div class="lock ${past ? "past" : ""} ${n === next ? "next" : ""} ${picked.includes(n) ? "pick" : ""}" title="${n}. hafta ${hhmm(weekStart(n))}'da başlar; kararı bundan önce kilitle">
-      <div class="w">${n}. hafta</div><div class="h">${hhmm(weekStart(n))}</div></div>`;
-  }).join("");
-  const msg = next ? `Sıradaki kilit: <b>${next}. hafta</b> için ${hhmm(weekStart(next))}'dan önce.` : `Kilit kapandı (17:30'dan sonra karar kilitlenemez).`;
-  return `<div class="bar" style="margin-top:0"><span class="small muted">Şimdi <b style="color:var(--text)">${hhmm(now)}</b> · ${msg}</span><span class="spacer"></span><span class="small faint">Gri = kilit saati geçti · mavi zemin = önerilen kararların haftası</span></div><div class="locks">${cells}</div>`;
+function hidePanel() {
+  $("#panel").classList.remove("open"); $("#panel").setAttribute("aria-hidden", "true");
+  $("#scrim").classList.remove("open");
+  panelToken++;
 }
-
-// ------------------------------------------------------------ advice (landing)
-const openVariants = new Set();
-function ticks(met) { return `<span class="ticks">${GOALS.map(([k, l]) => met[k] == null ? `<span class="faint" title="${l}">·</span>` : met[k] ? `<span class="g-good" title="${l}: tuttu">✓</span>` : `<span class="g-bad" title="${l}: tutmadı">✗</span>`).join("")}</span>`; }
-function goalStat(g, k, d, targets) {
-  if (!g || g.mean == null) return "–";
-  const sp = g.n > 1 && g.max - g.min > 1e-9 ? `<span class="spread">${fmtNum(g.min, d)}–${fmtNum(g.max, d)}</span>` : "";
-  return `<span class="${goalCls(k, g.mean, targets)}">${fmtNum(g.mean, d)}</span>${sp}`;
+function closePanel() {
+  if (!$("#panel").classList.contains("open")) return;
+  hidePanel();
+  if (S.panelBase) setHash(S.panelBase);
+  S.panelBase = null;
 }
-function decisionCards(decs) {
-  if (!decs || !decs.length) return `<div class="muted small">Karar yok (iş her zamanki gibi).</div>`;
-  return decs.map((d, i) => `<div class="dec"><div class="hd">${i + 1}. karar · ${esc(d.week)}. hafta · hedef: ${esc(targetText(d.target))}</div>
-    <div class="small">${(d.actions || []).map((a) => `${esc(a.action)} <span class="muted">(${esc(a.level)})</span>`).join(" · ")}</div>
-    <div class="small muted" style="margin-top:8px">Mesaj · ${(d.message || "").length} karakter · ${esc((d.channels || []).join(", "))}</div>
-    <pre>${esc(d.message)}</pre><div class="small muted">Neden</div><pre>${esc(d.why)}</pre></div>`).join("");
-}
-function groupBars(best, base) {
-  const names = Object.keys(best.groups || {});
-  if (!names.length || !base) return `<div class="muted small">Grup verisi yok.</div>`;
-  const rows = names.map((n) => {
-    const b = (base.groups || {})[n] || {}, x = best.groups[n];
-    return { n, da: x.active != null && b.active != null ? x.active - b.active : null, dd: x.deposits != null && b.deposits != null ? x.deposits - b.deposits : null, x };
-  });
-  const max = Math.max(1, ...rows.flatMap((r) => [Math.abs(r.da || 0), Math.abs(r.dd || 0)]));
-  const bar = (v) => {
-    if (v == null) return `<div class="hbar"><div class="mid"></div></div>`;
-    const w = Math.abs(v) / max * 36;
-    const left = v >= 0 ? 50 : 50 - w;
-    const lab = v >= 0 ? `left:calc(${50 + w}% + 6px)` : `right:calc(${50 + w}% + 6px)`;
-    return `<div class="hbar"><div class="mid"></div><div class="fill ${v < 0 ? "neg" : ""}" style="left:${left}%;width:${w}%"></div><span class="lab" style="${lab}">${fmtPp(v)}</span></div>`;
-  };
-  return `<div class="gbars"><div></div><div class="hd">Aktif müşteri (baza göre)</div><div class="hd">Mevduat (baza göre)</div>
-    ${rows.map((r) => `<div class="gname"><div>${esc(groupTr(r.n))}</div><div class="small faint">${fmtNum(r.x.customers)} müşteri · ${fmtUsd(r.x.deposits_usd)}</div></div>${bar(r.da)}${bar(r.dd)}`).join("")}</div>`;
-}
-function matrixHtml(mx) {
-  const all = mx.rows.flatMap((r) => Object.values(r.cells).map((c) => c.gap_total)).filter((v) => v != null);
-  const lo = Math.min(...all), hi = Math.max(...all);
-  const shade = (v) => v == null ? "transparent" : `rgba(47, 111, 222, ${(0.05 + 0.3 * (hi > lo ? (hi - v) / (hi - lo) : 1)).toFixed(3)})`;
-  return `<div class="tablewrap"><table class="matrix"><thead><tr><th class="lbl">Plan · oynatılan karar</th>${mx.weeks.map((w) => `<th>${w}. hafta</th>`).join("")}</tr></thead><tbody>
-    ${mx.rows.map((r) => `<tr><td class="lbl"><b>${esc(r.label)}</b><div class="small muted">${r.decision}. karar · en iyi: ${r.best_week ? r.best_week + ". hafta" : "–"}</div></td>
-      ${mx.weeks.map((w) => { const c = r.cells[w]; return `<td>${c ? `<span class="mcell ${w === r.best_week ? "best" : ""}" style="background:${shade(c.gap_total)}" title="${esc(c.variant)}">${c.met_count}/4<span class="s">açık ${fmtNum(c.gap_total, 1)}${c.spread ? " · oynama " + fmtNum(c.spread, 1) : ""}</span></span>` : `<span class="faint">–</span>`}</td>`; }).join("")}</tr>`).join("")}
-    </tbody></table></div><div class="small muted" style="margin-top:8px">Hücre = tutan hedef sayısı ve toplam hedef açığı (puan). Koyu = daha iyi; çerçeve = o planın en iyi haftası.</div>`;
-}
-function gapChips(v, targets) {
-  return GOALS.map(([k, l, , d]) => { const g = v.goals[k]; const ok = v.met[k]; const gap = v.gap[k];
-    return `<div class="fact"><div class="k">${l} <span class="faint">${esc(tgtText(targets, k))}</span></div><div class="v ${ok == null ? "" : ok ? "g-good" : "g-bad"}">${fmtNum(g.mean, k === "goal_3b" ? 0 : d)}</div><div class="small muted">${ok ? "tuttu" : gap != null ? "açık " + fmtNum(gap, 1) + " puan" : "–"}${v.delta && v.delta[k] != null ? ` · baza göre ${k === "goal_3b" ? (v.delta[k] > 0 ? "+" : "") + fmtNum(v.delta[k], 0) : k === "goal_3" ? (v.delta[k] > 0 ? "+" : "") + fmtNum(v.delta[k], 2) : fmtPp(v.delta[k])}` : ""}</div></div>`; }).join("");
-}
-function recCard(S, ranked, base) {
-  const rec = S.recommendation;
-  const chosen = ranked.find((v) => v.variant === rec.variant);
-  const byScore = ranked.find((v) => v.variant === rec.best_by_score);
-  const eq = ranked.filter((v) => rec.equivalent.includes(v.variant) && v.variant !== chosen.variant);
-  const late = chosen.decisions.map((d, i) => [i + 1, d.week]).filter(([, w]) => weekStart(w) <= new Date());
-  let honesty = "";
-  if (rec.no_gain) honesty += `<div class="note"><b>Karar vermek kararsız kalmaktan daha iyi değil.</b> Kararsız baz da en az bu kadar hedef tutuyor; bütçeyi harcamadan önce bir kez daha bak.</div>`;
-  if (eq.length) honesty += `<div class="note"><b>Eşdeğer planlar var:</b> ${eq.map((v) => `${esc(v.label)} (${fmtUsd(v.cost)})`).join(", ")} aynı sayıda hedef tutuyor ve açık farkı seed oynamasından (${fmtNum(rec.noise, 1)} puan) küçük. ${chosen.variant !== byScore.variant ? `Puanda ${esc(byScore.label)} önde, ama fark gürültü içinde olduğu için ucuz olan öneriliyor.` : "Ucuz olan öneriliyor."}</div>`;
-  if (rec.single_seed) honesty += `<div class="note">Tek seed'li varyant var: gürültü ölçülemedi, sonucu temkinli oku.</div>`;
-  const lateNote = late.length ? `<div class="note">Kilit saati geçti: ${late.map(([i, w]) => `${i}. karar (${w}. hafta, ${hhmm(weekStart(w))})`).join(", ")}. En erken kilitlenebilir hafta için zamanlama sweep'ine bak.</div>` : "";
-  return `<div class="rec">
-    <div class="eyebrow">Öneri · ${esc(S.name)}</div>
-    <div class="title">${esc(chosen.label)} <span class="weeks">(${chosen.decisions.map((d, i) => `${i + 1}. karar ${d.week}. hafta`).join(", ")})</span></div>
-    <div class="muted small">${chosen.decisions.map((d) => (d.actions || []).map(shortAction).join(" + ")).map((t, i) => `${i + 1}: ${esc(t)}`).join(" · ")}</div>
-    <div class="facts">
-      <div class="fact"><div class="k">Tutan hedef</div><div class="v">${chosen.met_count}/4</div><div class="small muted">toplam açık ${fmtNum(chosen.gap_total, 1)} puan</div></div>
-      <div class="fact"><div class="k">Maliyet</div><div class="v">${fmtUsd(chosen.cost)}</div><div class="small muted">bütçe $4.0M</div></div>
-      ${gapChips(chosen, S.targets)}
-    </div>
-    ${honesty}${lateNote}
-    <div class="bar" style="margin-bottom:0"><button class="primary" data-toggle="${esc(chosen.variant)}">${openVariants.has(chosen.variant) ? "Kararları gizle" : "Kararları göster"}</button>
-      ${base ? `<span class="small muted">Baz: kararsız run, ${base.seeds.length} seed · ${base.met_count}/4 hedef · açık ${fmtNum(base.gap_total, 1)} puan</span>` : ""}</div>
-    ${openVariants.has(chosen.variant) ? `<div style="margin-top:14px">${decisionCards(chosen.decisions)}</div>` : ""}
-  </div>`;
-}
-function sweepWeekly(S, chosenV) {
-  const vs = S.variants.filter((v) => v.series);
-  if (!vs.length) return "";
-  const markers = weekMarkers(S.announcements, chosenV ? chosenV.decisions : []);
-  const ser = (key) => vs.map((v, i) => ({
-    name: v.label + (v.varied ? ` (${v.varied.decision}. karar → ${v.varied.week}. hf)` : ""),
-    color: v.baseline ? cssVar("--muted") : variantColor(i), dash: v.baseline,
-    width: chosenV && v.variant === chosenV.variant ? 3.5 : v.baseline ? 2 : 1.5,
-    points: (v.series[key] || []).map((y, w) => [w + 1, y]),
-  }));
-  const trust = vs.some((v) => v.series.trust) ? trustChart({ markers, series: ser("trust").filter((x) => x.points.some((p) => p[1] != null)) }) : NO_TRUST;
-  return `<h2>Hafta hafta: varyantlar <span class="small muted" style="font-weight:400">seed ortalaması · kesikli gri = kararsız baz · kalın = önerilen · dikey = olaylar ve önerilen planın kararları</span></h2>
-    <div class="charts">
-      ${lineChart({ title: "Mevduat (kasa) %", series: ser("deposits"), target: tgtNum(S.targets, "goal_2"), unit: "%", markers })}
-      ${lineChart({ title: "Aktif müşteri %", series: ser("active"), target: tgtNum(S.targets, "goal_1"), unit: "%", markers })}
-    </div>${trust}`;
-}
-async function viewAdvice(name) {
-  const L = await api("/api/sweeps");
-  if (!L.sweeps.length) {
-    setMain(`<h1>Karar önerisi</h1><div class="card empty">Henüz gerçek sweep yok.<br><span class="small">experiments/sweeps/&lt;ad&gt;/ altında run'lar oluşunca burada görünür.</span></div><h2>Kilit saatleri</h2>${lockStrip()}`);
-    return;
-  }
-  const sel = name && L.sweeps.some((s) => s.name === name) ? name : L.default;
-  const S = await api(`/api/sweep?name=${enc(sel)}`);
-  const ranked = S.variants.filter((v) => !v.baseline), base = S.variants.find((v) => v.baseline);
-  const best = ranked[0];
-  const picker = L.sweeps.length > 1 ? `<label class="small muted">Sweep <select id="swsel">${L.sweeps.map((s) => `<option value="${esc(s.name)}" ${s.name === sel ? "selected" : ""}>${esc(s.name)} · ${s.variants} varyant${s.timing ? " · zamanlama" : ""}</option>`).join("")}</select></label>` : `<span class="small muted">Sweep: ${esc(sel)}</span>`;
-  let top = "";
-  if (!best) top = `<div class="card empty">Sweep'te karar varyantı yok.</div>`;
-  else top = (base ? "" : `<div class="note">Bu sweep'te kararsız baz (nodecision) yok; baza göre değişim gösterilemiyor. Sweep'i <code>--baseline</code> ile çalıştır.</div>`) + recCard(S, ranked, base);
-  const chosenV = S.recommendation ? ranked.find((v) => v.variant === S.recommendation.variant) : null;
-  const picked = chosenV ? chosenV.decisions.map((d) => d.week) : [];
-  const rows = S.variants.map((v) => {
-    const open = openVariants.has(v.variant);
-    const row = `<tr class="click ${chosenV && v.variant === chosenV.variant ? "best" : ""}" data-toggle="${esc(v.variant)}">
-      <td class="num muted">${v.rank ?? ""}</td>
-      <td><b>${esc(v.label)}</b>${v.varied ? ` <span class="badge accent">${v.varied.decision}. karar → ${v.varied.week}. hf</span>` : ""}<div class="small faint">${esc(v.variant)} · ${v.seeds.length} seed</div><div class="small" style="margin-top:4px">${ticks(v.met)} <span class="muted">${v.met_count}/4 hedef</span>${v.equivalent && chosenV && v.variant !== chosenV.variant ? ` <span class="badge">eşdeğer</span>` : ""}</div></td>
-      <td class="small" style="min-width:260px">${v.decisions.length ? v.decisions.map((d) => `<div style="margin-bottom:4px"><b>${esc(d.week)}. hf</b> · ${esc((d.actions || []).map(shortAction).join(" + "))}</div>`).join("") : '<span class="muted">karar yok</span>'}</td>
-      <td class="num">${fmtUsd(v.cost)}</td>
-      ${GOALS.map(([k, , , d]) => `<td class="num">${goalStat(v.goals[k], k, k === "goal_3b" ? 0 : d === 2 && k !== "goal_3" ? 1 : 2, S.targets)}</td>`).join("")}
-      <td class="num"><b>${fmtNum(v.gap_total, 1)}</b>${v.gap_spread ? `<span class="spread">oynama ${fmtNum(v.gap_spread, 1)}</span>` : ""}</td>
-</tr>`;
-    const exp = open ? `<tr class="expand"><td colspan="9"><div class="two"><div>${decisionCards(v.decisions)}</div><div>
-      ${base && !v.baseline ? `<div class="box"><h3 style="margin-top:0">Gruplara etkisi</h3>${groupBars(v, base)}</div>` : ""}
-      <div class="box small"><h3 style="margin-top:0">Run'lar</h3>${Object.entries(v.runs).map(([s, id]) => `<div><a href="#/run/${enc(id)}">seed ${esc(s)}</a></div>`).join("")}</div>
-      </div></div></td></tr>` : "";
-    return row + exp;
-  }).join("");
-  setMain(`<div class="bar" style="margin:0 0 4px"><h1 style="margin:0">Karar önerisi</h1><span class="spacer"></span>${picker}</div>
-    <p class="lead">Hangi plan yönetim kurulunun dört hedefini en ucuza tutuyor? Hedefler her run için güncel <span class="mono">sim/metrics.py</span> ile yeniden hesaplanır.</p>
-    ${top}
-    <h2>Kilit saatleri</h2>${lockStrip(picked)}
-    ${S.matrix ? `<h2>Zamanlama: plan × hafta</h2>${matrixHtml(S.matrix)}` : ""}
-    <h2>Tüm varyantlar</h2>
-    <div class="tablewrap"><table><thead><tr><th></th><th>Plan</th><th>Kararlar (hafta · aksiyonlar)</th><th class="num">Maliyet</th>
-      ${GOALS.map(([k, l]) => `<th class="num" title="hedef ${esc(tgtText(S.targets, k))}">${l}<div class="faint" style="font-weight:400">${esc(tgtText(S.targets, k))}</div></th>`).join("")}
-      <th class="num">Hedef açığı<div class="faint" style="font-weight:400">puan, 0 = hepsi tuttu</div></th></tr></thead><tbody>${rows}</tbody></table></div>
-    <div class="score">Sıralama: <b>${esc(S.score)}</b>. Gri küçük sayılar = seed'ler arası min–maks. Satıra tıkla: kararların tam metni ve gruplara etkisi.</div>
-    ${sweepWeekly(S, chosenV)}
-    ${chosenV && base ? `<h2>Önerilen planın gruplara etkisi <span class="small muted" style="font-weight:400">(${esc(chosenV.label)} − kararsız baz, 10. hafta)</span></h2><div class="card">${groupBars(chosenV, base)}</div>` : ""}`);
-  document.querySelectorAll("[data-toggle]").forEach((el) => el.addEventListener("click", (e) => {
-    if (e.target.closest("a")) return;
-    const v = el.dataset.toggle; openVariants.has(v) ? openVariants.delete(v) : openVariants.add(v);
-    const y = window.scrollY; viewAdvice(sel).then(() => window.scrollTo(0, y));
-  }));
-  const ss = $("#swsel"); if (ss) ss.addEventListener("change", () => go(`#/oneri/${enc(ss.value)}`));
-}
-
-// ------------------------------------------------------------ run list
-function goalCells(m, targets) {
-  return GOALS.map(([k, , , d]) => { const v = m ? m[k] : null; return `<td class="num ${goalCls(k, v, targets)}">${fmtNum(v, d)}</td>`; }).join("");
-}
-let runFilter = "";
-async function viewRuns() {
-  const d = await api("/api/runs");
-  const t = d.targets;
-  const runs = d.runs.filter((x) => !runFilter || x.id.toLowerCase().includes(runFilter.toLowerCase()));
-  const rows = runs.map((x) => `<tr class="click" data-go="#/run/${enc(x.id)}">
-    <td><input type="checkbox" data-cmp="${esc(x.id)}" ${compareSel.has(x.id) ? "checked" : ""}></td>
-    <td><a href="#/run/${enc(x.id)}">${esc(x.id.split("/").slice(-1)[0])}</a><div class="small faint">${esc(x.id.split("/").slice(0, -1).join("/"))}</div></td>
-    <td class="small">${esc(x.type)}${x.surprises === false ? ' <span class="badge">sürprizsiz</span>' : ""}</td><td class="num">${esc(x.seed)}</td>
-    <td class="num">${fmtNum(x.decisions)}</td>${goalCells(x.metrics, t)}<td class="num small muted">${fmtTime(x.mtime)}</td></tr>`).join("");
-  setMain(`<h1>Run'lar</h1><p class="lead">${d.runs.length} gerçek run · hedefler güncel metrik formülüyle yeniden hesaplandı.</p>
-    <div class="bar"><input type="search" id="rfilter" placeholder="Run ara…" value="${esc(runFilter)}" style="min-width:240px">
-      <span class="spacer"></span><span class="small muted">Karşılaştırmak için iki run seç</span>
-      <button class="primary" id="cmpbtn" ${compareSel.size === 2 ? "" : "disabled"}>Karşılaştır (${compareSel.size}/2)</button></div>
-    <div class="tablewrap tall"><table><thead><tr><th></th><th>Run</th><th>Tür</th><th class="num">Seed</th><th class="num">Karar</th>
-    ${GOALS.map(([k, l]) => `<th class="num">${l}<div class="faint" style="font-weight:400">${esc(tgtText(t, k))}</div></th>`).join("")}<th class="num">Değişim</th></tr></thead>
-    <tbody>${rows || `<tr><td colspan="10" class="empty">Run bulunamadı.</td></tr>`}</tbody></table></div>`);
-  document.querySelectorAll("[data-cmp]").forEach((cb) => cb.addEventListener("change", () => {
-    if (cb.checked) { compareSel.add(cb.dataset.cmp); if (compareSel.size > 2) compareSel.delete(compareSel.values().next().value); }
-    else compareSel.delete(cb.dataset.cmp);
-    viewRuns();
-  }));
-  $("#rfilter").addEventListener("input", (e) => { runFilter = e.target.value; const pos = e.target.selectionStart; viewRuns().then(() => { const f = $("#rfilter"); f.focus(); f.setSelectionRange(pos, pos); }); });
-  $("#cmpbtn").addEventListener("click", () => { const [a, b] = [...compareSel]; go(`#/compare/${enc(a)}/${enc(b)}`); });
-}
-
-// ------------------------------------------------------------ run detail
-const RUN_TABS = [["ozet", "Özet"], ["haftalik", "Haftalık"], ["persona", "Personalar"], ["guven", "Güven ve para"], ["grafik", "Grafikler"], ["diger", "Diğer"]];
-let gridGroup = "";
-function groupsOf(personas) { const g = []; personas.forEach((p) => { if (!g.includes(p.group)) g.push(p.group); }); return g; }
-function indexWeekly(weekly) { const m = {}; weekly.forEach((r) => { (m[r.persona] ||= {})[r.week] = r; }); return m; }
-
-async function viewRun(id, tab, rest) {
-  if (!id) return go("#/runs");
-  const d = await api(`/api/run?id=${enc(id)}`);
-  const rj = d.run || {};
-  const head = `<div class="small"><a href="#/runs">← Run'lar</a></div>
-    <h1 style="margin-top:8px">${esc(rj.name || id.split("/").pop())} <span class="badge">${esc(rj.type)}</span></h1>
-    <div class="muted small">${esc(id)} · seed ${esc(rj.seed)} · ${esc(rj.model)} · sürpriz ${rj.type === "plan_nosurprises" ? "kapalı" : "açık"} · ${esc(rj.engine || "")}${rj.complete === false ? " · <b>tamamlanmadı</b>" : ""}</div>
-    <div class="tabs">${RUN_TABS.map(([k, t]) => `<a href="#/run/${enc(id)}/${k}" class="${k === tab ? "on" : ""}">${t}</a>`).join("")}</div>`;
-  const body = { ozet: runSummary, haftalik: runGrid, grafik: runCharts, guven: runTrust, persona: runPersonas, diger: runOther }[tab] || runSummary;
-  setMain(head + `<div id="tabbody"></div>`);
-  await body(d, id, rest);
-}
-
-function metricCards(m, targets) {
-  if (!m) return `<div class="note">Metrik yok.</div>`;
-  return `<div class="cards">${GOALS.map(([k, label, unit, dd]) => {
-    const ok = goalOk(k, m[k], targets);
-    return `<div class="card metric"><div class="k">${label}</div><div class="v">${fmtNum(m[k], dd)}<span class="small muted"> ${unit}</span></div><div class="t ${ok == null ? "muted" : ok ? "g-good" : "g-bad"}">${ok == null ? "" : ok ? "✓ tuttu" : "✗ tutmadı"} <span class="muted">· hedef ${esc(tgtText(targets, k))}</span></div></div>`;
-  }).join("")}</div>`;
-}
-function decisionsHtml(decisions, budget) {
-  if (!decisions || !decisions.length) return `<div class="box muted">Karar yok.</div>`;
-  const b = budget || {};
-  let html = decisions.map((dec, i) => {
-    const bd = (b.decisions || [])[i] || {};
-    return `<div class="box"><div class="bar" style="margin:0 0 8px"><b>${i + 1}. karar · ${esc(dec.week)}. hafta</b><span class="muted small">hedef: ${esc(targetText(dec.target))}</span><span class="spacer"></span><b>${fmtUsd(bd.total)}</b></div>
-      <div class="small">${(dec.actions || []).map((a, j) => `${esc(a.action)} <span class="muted">(${esc(a.level)}) ${fmtUsd((bd.actions || [])[j])}</span>`).join("<br>")}${bd.sms_sends ? `<br>SMS ${bd.sms_sends}× <span class="muted">${fmtUsd(bd.sms_sends * 25000)}</span>` : ""}</div>
-      <details><summary>Mesaj ve gerekçe · ${(dec.message || "").length} karakter · ${esc((dec.channels || []).join(", "))}</summary><pre>${esc(dec.message)}</pre><pre>${esc(dec.why)}</pre></details></div>`;
-  }).join("");
-  if (b.available) {
-    const over = b.total != null && b.total > b.limit;
-    html += `<div class="small">Toplam: <b class="${over ? "g-bad" : "g-good"}">${b.total == null ? "?" : fmtUsd(b.total)}</b> / ${fmtUsd(b.limit)}${b.error ? `<div class="err small">${esc(b.error)}</div>` : ""}</div>`;
-  } else html += `<div class="note small">Bütçe hesaplanamadı: ${esc(b.error || "sim.decisions yok")}</div>`;
-  return html;
-}
-function feedHtml(feed) {
-  if (!feed || !feed.length) return `<div class="muted small">Prompt'lardan haftalık akış okunamadı.</div>`;
-  return `<div class="tablewrap tall"><table><thead><tr><th class="num">Hf</th><th>Personalara ulaşan (resmi / haber / karar)</th><th class="num">Ağızdan ağıza (alınan mesaj)</th></tr></thead><tbody>
-    ${feed.map((w) => {
-      const official = w.lines;
-      const wom = w.word_of_mouth || 0;
-      return `<tr><td class="num">${w.week}</td><td><div class="small faint">${esc(w.title)}</div>${official.map((l) => `<div class="small" style="margin-top:4px">${esc(l.text)} <span class="faint">(${l.personas})</span></div>`).join("") || '<span class="muted">–</span>'}</td><td class="num">${wom || "–"}</td></tr>`;
-    }).join("")}</tbody></table></div>`;
-}
-async function runSummary(d) {
-  const rj = d.run || {};
-  const last = Math.max(0, ...d.weekly.map((r) => r.week || 0));
-  const sc = {}; d.weekly.filter((r) => r.week === last).forEach((r) => { sc[r.status] = (sc[r.status] || 0) + 1; });
-  const cs = d.call_stats || {};
-  const ann = d.announcements || [];
-  $("#tabbody").innerHTML = `${rj.complete === false ? `<div class="note">Run tamamlanmadı: ${esc(rj.completed_weeks)} hafta${rj.failure_type ? ` · hata ${esc(rj.failure_type)}` : ""}.</div>` : ""}${metricCards(d.metrics, d.targets)}
-    <div class="small muted" style="margin-top:10px">${last}. hafta: ${Object.entries(sc).map(([k, v]) => `${esc(k)} ${v}`).join(" · ")} · ${fmtNum(cs.calls)} model denemesi, ${fmtNum(cs.failed)} geçersiz, ${fmtNum(cs.retries)} tekrar · ${d.messages.length} persona mesajı</div>
-    ${(d.metrics && (d.metrics.notes || []).length) ? `<details><summary>Metrik notları (${d.metrics.notes.length})</summary><pre>${esc(d.metrics.notes.join("\n"))}</pre></details>` : ""}
-    ${d.metrics && d.metrics.assumptions ? `<details><summary>Metrik varsayımları</summary><pre>${esc(d.metrics.assumptions.join("\n\n"))}</pre></details>` : ""}
-    <h2>Kararlar</h2>${decisionsHtml(rj.decisions, d.budget)}
-    <h2>Duyurular (sürprizler) <span class="small muted" style="font-weight:400">${ann.length}</span></h2>
-    ${ann.length ? ann.map((a) => `<div class="box"><b>${esc(a.title || a.id)}</b> <span class="badge">${esc(a.week)}. hafta</span><pre>${esc(a.text)}</pre></div>`).join("") : '<div class="muted small">Bu run\'da duyuru yok.</div>'}
-    <h2>Haftalık akış</h2>
-    <details><summary>Personaların 1. tur prompt'unda her hafta gerçekten yer alan satırlar (sürprizler ${rj.type === "plan_nosurprises" ? "kapalı" : "açık"})</summary>${feedHtml(d.feed)}</details>`;
-}
-
-function legendHtml() {
-  return `<div class="legend">${STATUSES.map((s) => `<span><i class="${stClass(s)}"></i>${s}</span>`).join("")}<span>↓ moved some · ↓↓ moved most</span></div>`;
-}
-async function runGrid(d, id, rest) {
-  const groups = groupsOf(d.personas);
-  if (gridGroup && !groups.includes(gridGroup)) gridGroup = "";
-  const W = indexWeekly(d.weekly);
-  const [selP, selW] = [rest[0], +rest[1]];
-  let rows = "";
-  for (const g of groups) {
-    if (gridGroup && g !== gridGroup) continue;
-    const ps = d.personas.filter((p) => p.group === g);
-    rows += `<tr class="grp"><td colspan="12">${esc(groupTr(g))} (${ps.length})</td></tr>`;
-    for (const p of ps) {
-      rows += `<tr><td class="pname"><a href="#/run/${enc(id)}/persona/${enc(p.id)}">${esc(p.id)}</a> <span class="small muted">${esc(p.name || "")}</span></td>
-        <td><span class="cell ${stClass(p.cobalt_role)}" title="Nov 2: ${esc(p.cobalt_role || "")}" style="cursor:default;opacity:.55"></span></td>`;
-      for (let w = 1; w <= 10; w++) {
-        const r = (W[p.id] || {})[w];
-        rows += `<td><span class="cell ${r ? stClass(r.status) : "st-none"} ${selP === p.id && selW === w ? "sel" : ""} ${r && r.round === 2 ? "diff" : ""}" data-go="#/run/${enc(id)}/haftalik/${enc(p.id)}/${w}" title="${esc(p.id)} hf ${w}: ${esc(r ? r.status + " / " + r.money + (r.complaint && r.complaint !== "none" ? " / şikayet " + r.complaint : "") + (r.app_rating ? " / " + r.app_rating + "★" : "") + (r.round === 2 ? " / 2. tur" : "") : "veri yok")}">${r ? ((MONEY_MARK[r.money] ?? "?") || "") + (r.complaint === "cfpb" ? "!" : "") : ""}</span></td>`;
-      }
-      rows += "</tr>";
-    }
-  }
-  $("#tabbody").innerHTML = `<div class="bar"><select id="grpsel"><option value="">Tüm gruplar</option>${groups.map((g) => `<option value="${esc(g)}" ${g === gridGroup ? "selected" : ""}>${esc(groupTr(g))}</option>`).join("")}</select><span class="spacer"></span>${legendHtml()}</div>
-    <div class="tablewrap" style="display:inline-block;max-width:100%"><table class="grid"><thead><tr><th class="pname">Persona</th><th title="2 Kasım">0</th>${Array.from({ length: 10 }, (_, i) => `<th>${i + 1}</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table></div>
-    <div class="small muted" style="margin-top:8px">Bir hücreye tıkla: o haftanın kararı, prompt ve yanıt. Siyah çerçeve = mesaj aldıktan sonra 2. turda yeniden düşündü · ! = CFPB şikayeti.</div>`;
-  $("#grpsel").addEventListener("change", (e) => { gridGroup = e.target.value; runGrid(d, id, rest); });
-  if (selP && selW) await cellDrawer(d, id, selP, selW);
-}
-function callHtml(c, title) {
-  const fails = (c.failed_attempts || []);
-  return `<h3 style="margin-top:24px">${esc(title)} <span class="faint small mono" style="font-weight:400">${esc(c.id)} · ${esc(c.model)} · deneme ${esc(c.attempt)}</span></h3>
-    ${fails.length ? `<div class="note small">Önceki geçersiz denemeler: ${fails.map((f) => `${esc(f.attempt)}. ${esc(f.error_type)} (${esc(f.error_stage || "")})`).join(", ")}</div>` : ""}
-    <pre>${esc(c.response)}</pre>
-    <details><summary>Prompt (${(c.prompt || "").length} karakter)</summary><pre>${esc(c.prompt)}</pre></details>`;
-}
-async function cellDrawer(d, id, pid, w) {
-  const p = d.personas.find((x) => x.id === pid) || { id: pid };
-  const r = (indexWeekly(d.weekly)[pid] || {})[w];
-  const M = Object.fromEntries((d.messages || []).map((m) => [m.id, m]));
-  const name = (x) => ((d.personas.find((q) => q.id === x) || {}).name || x);
-  $("#drawer").dataset.back = `#/run/${enc(id)}/haftalik`;
-  const nav = `<div class="bar small">${w > 1 ? `<a href="#/run/${enc(id)}/haftalik/${enc(pid)}/${w - 1}">← ${w - 1}. hafta</a>` : ""}${w < 10 ? `<a href="#/run/${enc(id)}/haftalik/${enc(pid)}/${w + 1}">${w + 1}. hafta →</a>` : ""}<span class="spacer"></span><a href="#/run/${enc(id)}/persona/${enc(pid)}">Persona sayfası</a></div>`;
-  let html = `<h2 style="margin-top:0">${esc(p.name || pid)} · ${w}. hafta</h2><div class="muted small">${esc(pid)} · ${esc(groupTr(p.group || ""))}</div>${nav}`;
-  if (!r) { openDrawer(html + `<div class="note">Bu hafta için kayıt yok.</div>`); return; }
-  const heard = (r.received_messages || []).map((i) => M[i]).filter(Boolean);
-  const sent = (d.messages || []).filter((m) => m.author === pid && m.week === w);
-  const msg = (m, who) => `<div style="margin-bottom:4px"><b>${esc(who)}</b> <span class="faint">(${esc(m.channel)}${m.target ? " → " + esc(name(m.target)) : ""}, ${m.round}. tur)</span>: ${esc(m.text)}</div>`;
-  html += `<div class="bar"><span class="badge ${stClass(r.status)}">${esc(r.status)}</span><span class="badge">${esc(r.money)}</span>${r.new_money && r.new_money !== "none" ? `<span class="badge good">yeni para: ${esc(r.new_money)}</span>` : ""}${r.app_rating ? `<span class="badge">${esc(r.app_rating)}★</span>` : ""}${r.complaint && r.complaint !== "none" ? `<span class="badge bad">şikayet: ${esc(r.complaint)}</span>` : ""}<span class="small muted">${r.active_derived ? "aktif" : "aktif değil"} · bakiye ${fmtUsd(r.balance_derived)} · ${r.round}. tur son</span></div>
-    <p style="font-size:15px;margin:4px 0 14px">${esc(r.reason)}</p>
-    <div class="kv small">
-      <div>Hafıza</div><div>${esc(r.memory) || "–"}</div>
-      <div>Aksiyonlar</div><div>${esc((r.actions || []).join(", ")) || "–"}</div>
-      <div>Haber kaynağı</div><div>${esc((r.heard_from || []).join(", ")) || "–"}</div>
-      <div>Gönderdiği</div><div>${sent.length ? sent.map((m) => msg(m, "→")).join("") : '<span class="muted">–</span>'}</div>
-      <div>Aldığı</div><div>${heard.length ? heard.map((m) => msg(m, name(m.author))).join("") : '<span class="muted">–</span>'}</div>
-    </div>
-    <div id="callbox"><p class="muted small">Çağrı yükleniyor…</p></div>`;
-  openDrawer(html);
-  try {
-    const c1 = await api(`/api/call?run=${enc(id)}&id=${enc(r.round_1_call || r.call)}`);
-    let out = callHtml(c1, r.round_2_call ? "1. tur yanıtı" : "Model yanıtı");
-    if (r.round_2_call) out = callHtml(await api(`/api/call?run=${enc(id)}&id=${enc(r.round_2_call)}`), "2. tur yanıtı (son)") + out;
-    $("#callbox").innerHTML = out;
-  } catch (e) { $("#callbox").innerHTML = `<div class="err">Çağrı okunamadı: ${esc(e.message)}</div>`; }
-}
+const fillPanel = (t, html) => { if (t === panelToken) $("#pbody").innerHTML = html; return t === panelToken; };
 
 // ------------------------------------------------------------ charts (inline SVG)
 function niceStep(raw) {
@@ -625,372 +333,441 @@ function niceStep(raw) {
   const p = Math.pow(10, Math.floor(Math.log10(raw))), f = raw / p;
   return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * p;
 }
-function lineChart({ title, series, yMin, yMax, target, unit = "", height = 220, markers = null }) {
-  const W = 460, H = height, L = 44, R = 12, T = 12, B = 26;
+const chartW = () => Math.round(Math.max(300, Math.min(1060, ($("#body").clientWidth || 800) - 38)));
+function weekMarkers(announcements, decisions) {
+  const m = {};
+  const add = (w, label, dec) => { w = +w; if (!(w >= 1 && w <= 10)) return; (m[w] ||= { labels: [], dec: false }).labels.push(label); if (dec) m[w].dec = true; };
+  add(6, "Göç");
+  (announcements || []).forEach((a) => add(a.week, annTitle(a)));
+  (decisions || []).forEach((d, i) => add(d.week, `${i + 1}. karar`, true));
+  return m;
+}
+function markerSvg(markers, xs, top, bottom, W) {
+  let g = "", k = 0;
+  const maxCh = 22, labels = W >= 560;  // narrow charts: lines only, the chips below name the events
+  for (const [w, mk] of Object.entries(markers)) {
+    const row = k++ % 2, x = xs(+w), end = +w >= 8;
+    g += `<line class="mark ${mk.dec ? "dec" : ""}" x1="${x}" x2="${x}" y1="${top - 4}" y2="${bottom}"><title>${esc(w)}. hafta: ${esc(mk.labels.join(" · "))}</title></line>`;
+    if (!labels) continue;
+    const lb = mk.labels.join(" · ");
+    g += `<text class="ml ${mk.dec ? "dec" : ""}" x="${x + (end ? -4 : 4)}" y="${10 + row * 12}" text-anchor="${end ? "end" : "start"}">${esc(lb.length > maxCh ? lb.slice(0, maxCh - 1) + "…" : lb)}</text>`;
+  }
+  return g;
+}
+// series: [{name, color, points:[[week, y]], dash}], targets: [{v, color, label}]
+function lineChart({ series, targets = [], markers = null, unit = "", height = 250, W = chartW() }) {
+  const H = height, L = 44, R = 14, T = markers && W >= 560 ? 32 : 14, B = 24;
   const xs = (w) => L + (w - 1) * (W - L - R) / 9;
-  const all = series.flatMap((s) => s.points.map((p) => p[1])).filter((v) => v != null);
-  if (yMin == null) yMin = Math.min(...all, target ?? Infinity); if (yMax == null) yMax = Math.max(...all, target ?? -Infinity);
-  if (!isFinite(yMin) || !isFinite(yMax)) return `<div class="card"><b>${esc(title)}</b><div class="muted small">Veri yok.</div></div>`;
+  const all = series.flatMap((s) => s.points.map((p) => p[1])).filter((v) => v != null).concat(targets.map((t) => t.v).filter((v) => v != null));
+  if (!series.some((s) => s.points.some((p) => p[1] != null))) return `<div class="muted small" style="padding:30px 0;text-align:center">Haftalık veri yok.</div>`;
+  let yMin = Math.min(...all), yMax = Math.max(...all);
   if (yMax - yMin < 1e-9) { yMin -= 1; yMax += 1; }
   const step = niceStep((yMax - yMin) / 4);
   yMin = Math.floor(yMin / step) * step; yMax = Math.ceil(yMax / step) * step;
-  if (yMax - yMin < step * 2) yMax += step;
   const ys = (v) => T + (yMax - v) * (H - T - B) / (yMax - yMin);
   const dec = step < 0.1 ? 2 : step < 1 ? 1 : 0;
   let g = "";
   for (let v = yMin; v <= yMax + step / 2; v += step) g += `<line class="axis" x1="${L}" x2="${W - R}" y1="${ys(v)}" y2="${ys(v)}"/><text x="${L - 6}" y="${ys(v) + 4}" text-anchor="end">${fmtNum(v, dec)}</text>`;
-  for (let w = 1; w <= 10; w++) g += `<text x="${xs(w)}" y="${H - 8}" text-anchor="middle">${w}</text>`;
-  if (target != null) g += `<line class="tgt" x1="${L}" x2="${W - R}" y1="${ys(target)}" y2="${ys(target)}"/><text x="${W - R}" y="${ys(target) - 4}" text-anchor="end" style="fill:var(--bad)">hedef ${target}${unit}</text>`;
-  if (markers) g += markerLines(markers, xs, T, H - B, false);
+  for (let w = 1; w <= 10; w++) g += `<text x="${xs(w)}" y="${H - 6}" text-anchor="middle">${w}</text>`;
+  if (markers) g += markerSvg(markers, xs, T, H - B, W);
+  for (const t of targets) if (t.v != null) g += `<line x1="${L}" x2="${W - R}" y1="${ys(t.v)}" y2="${ys(t.v)}" stroke="${t.color}" stroke-dasharray="2 4" stroke-width="1.5" opacity=".8"/><text x="${W - R}" y="${ys(t.v) - 4}" text-anchor="end" style="fill:${t.color}">${esc(t.label)}</text>`;
   for (const s of series) {
     const pts = s.points.filter((p) => p[1] != null);
-    g += `<polyline fill="none" stroke="${s.color}" stroke-width="${s.width || 2}" ${s.dash ? 'stroke-dasharray="6 4"' : ""} points="${pts.map((p) => `${xs(p[0])},${ys(p[1])}`).join(" ")}"/>`;
-    g += pts.map((p) => `<circle cx="${xs(p[0])}" cy="${ys(p[1])}" r="3" fill="${s.color}"><title>${esc(s.name)} · hf ${p[0]}: ${fmtNum(p[1], 2)}${unit}</title></circle>`).join("");
+    g += `<polyline fill="none" stroke="${s.color}" stroke-width="${s.width || 2.25}" stroke-linejoin="round" ${s.dash ? 'stroke-dasharray="6 4"' : ""} points="${pts.map((p) => `${xs(p[0])},${ys(p[1])}`).join(" ")}"/>`;
+    g += pts.map((p) => `<circle cx="${xs(p[0])}" cy="${ys(p[1])}" r="3" fill="${s.color}"><title>${esc(s.name)} · ${p[0]}. hafta: ${fmtNum(p[1], 2)}${unit}</title></circle>`).join("");
   }
-  const leg = series.length > 1 ? `<div class="legend">${series.map((s) => `<span><i style="background:${s.color}"></i>${esc(s.name)}</span>`).join("")}</div>` : "";
-  return `<div class="card"><b>${esc(title)}</b>${leg}<svg viewBox="0 0 ${W} ${H}" width="100%" role="img">${g}</svg>${markers ? markerNote(markers) : ""}</div>`;
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img">${g}</svg>`;
 }
-function stackedBars({ title, weeks, keys, colors, height = 220 }) {
-  const W = 460, H = height, L = 36, R = 12, T = 12, B = 26;
-  const max = (() => { const m = Math.max(1, ...weeks.map((w) => keys.reduce((s, k) => s + (w[k] || 0), 0))); const st = niceStep(m / 4); return Math.max(st, Math.ceil(m / st) * st); })();
-  const bw = (W - L - R) / 10;
-  const ys = (v) => T + (max - v) * (H - T - B) / max;
+const legend = (items) => `<div class="legend">${items.map((s) => `<span style="color:${s.color}"><i class="${s.sq ? "sq" : ""} ${s.dash ? "dash" : ""}" style="background:${s.color}"></i><span style="color:var(--muted)">${esc(s.name)}</span></span>`).join("")}</div>`;
+function statusBars(weekly, W = chartW()) {
+  const H = 190, L = 34, R = 14, T = 10, B = 24;
+  const weeks = Array.from({ length: 10 }, (_, i) => { const o = {}; weekly.filter((r) => r.week === i + 1).forEach((r) => { o[r.status] = (o[r.status] || 0) + 1; }); return o; });
+  const max = Math.max(1, ...weeks.map((w) => STATUSES.reduce((s, k) => s + (w[k] || 0), 0)));
+  const bw = (W - L - R) / 10, ys = (v) => T + (max - v) * (H - T - B) / max;
+  const colors = ["--s-main", "--s-second", "--s-dormant", "--s-left"].map(cssVar);
   let g = "";
-  const bst = niceStep(max / 4);
-  for (let v = 0; v <= max + bst / 2; v += bst) g += `<line class="axis" x1="${L}" x2="${W - R}" y1="${ys(v)}" y2="${ys(v)}"/><text x="${L - 6}" y="${ys(v) + 4}" text-anchor="end">${fmtNum(v)}</text>`;
+  const st = niceStep(max / 3);
+  for (let v = 0; v <= max + 1e-9; v += st) g += `<line class="axis" x1="${L}" x2="${W - R}" y1="${ys(v)}" y2="${ys(v)}"/><text x="${L - 6}" y="${ys(v) + 4}" text-anchor="end">${fmtNum(v)}</text>`;
   weeks.forEach((w, i) => {
-    let acc = 0; const x = L + i * bw + bw * 0.18;
-    keys.forEach((k, j) => { const v = w[k] || 0; if (!v) return; g += `<rect x="${x}" width="${bw * 0.64}" y="${ys(acc + v)}" height="${ys(acc) - ys(acc + v)}" fill="${colors[j]}"><title>hf ${i + 1} · ${esc(k)}: ${v}</title></rect>`; acc += v; });
-    g += `<text x="${x + bw * 0.32}" y="${H - 8}" text-anchor="middle">${i + 1}</text>`;
+    let acc = 0; const x = L + i * bw + bw * 0.2;
+    STATUSES.forEach((k, j) => { const v = w[k] || 0; if (!v) return; g += `<rect x="${x}" width="${bw * 0.6}" y="${ys(acc + v)}" height="${Math.max(0, ys(acc) - ys(acc + v) - 1)}" rx="2" fill="${colors[j]}"><title>${i + 1}. hafta · ${STATUS_TR[k]}: ${v}</title></rect>`; acc += v; });
+    g += `<text x="${x + bw * 0.3}" y="${H - 6}" text-anchor="middle">${i + 1}</text>`;
   });
-  return `<div class="card"><b>${esc(title)}</b><div class="legend">${keys.map((k, j) => `<span><i style="background:${colors[j]}"></i>${esc(k)}</span>`).join("")}</div><svg viewBox="0 0 ${W} ${H}" width="100%" role="img">${g}</svg></div>`;
+  return legend(STATUSES.map((k, j) => ({ name: STATUS_TR[k], color: colors[j], sq: true }))) + `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img">${g}</svg>`;
 }
-// ------------------------------------------------------------ trust, mood and money (from the model's weekly answers)
-const MOODS = ["calm", "hopeful", "relieved", "worried", "frustrated", "angry"];
-const MOOD_TR = { calm: "sakin", hopeful: "umutlu", relieved: "rahatlamış", worried: "endişeli", frustrated: "bıkkın", angry: "öfkeli" };
-const NO_TRUST = `<div class="note">Bu run'da güven verisi yok.</div>`;
-const STATUS_TR = { "main bank": "ana banka", "second bank": "2. banka", dormant: "uyuyan", left: "ayrıldı" };
-const MONEY_RANK = { kept: 0, "moved some": 1, "moved most": 2 };
-const NEW_RANK = { none: 0, some: 1, "a lot": 2 };
-const hasTrust = (weekly) => (weekly || []).some((r) => Number.isInteger(r.trust));
-const groupColor = (groups, g) => cssVar(`--g${(groups.indexOf(g) % 5) + 1}`);
-const variantColor = (i) => cssVar(`--g${(i % 5) + 1}`);
-const mean = (xs) => xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null;
-function meanTrust(weekly, ids) {
-  return Array.from({ length: 10 }, (_, i) => [i + 1, mean(weekly.filter((r) => r.week === i + 1 && Number.isInteger(r.trust) && (!ids || ids.has(r.persona))).map((r) => r.trust))]);
+function spark(points, target, ok) {
+  const pts = points.filter((p) => p[1] != null);
+  if (pts.length < 2) return "";
+  const W = 200, H = 34, P = 3;
+  const vals = pts.map((p) => p[1]).concat(target != null ? [target] : []);
+  let lo = Math.min(...vals), hi = Math.max(...vals); if (hi - lo < 1e-9) { lo -= 1; hi += 1; }
+  const xs = (w) => P + (w - 1) * (W - 2 * P) / 9, ys = (v) => P + (hi - v) * (H - 2 * P) / (hi - lo);
+  const col = ok == null ? "var(--accent)" : ok ? "var(--good)" : "var(--bad)";
+  return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">
+    ${target != null ? `<line x1="0" x2="${W}" y1="${ys(target)}" y2="${ys(target)}" stroke="var(--faint)" stroke-dasharray="2 3" vector-effect="non-scaling-stroke"/>` : ""}
+    <polyline fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round" vector-effect="non-scaling-stroke" points="${pts.map((p) => `${xs(p[0])},${ys(p[1])}`).join(" ")}"/></svg>`;
 }
-function weekMarkers(announcements, decisions) {
-  const m = {};
-  const add = (w, label, dec) => { if (!(w >= 1 && w <= 10)) return; (m[w] ||= { labels: [], dec: false }).labels.push(label); if (dec) m[w].dec = true; };
-  add(6, "göç (bilinen kriz)");
-  (announcements || []).forEach((a) => add(+a.week, a.title || a.id));
-  (decisions || []).forEach((d, i) => add(+d.week, `${i + 1}. karar başlar`, true));
-  return m;
+
+// ------------------------------------------------------------ shared blocks
+function annTitle(a) {
+  const m = /\*\*(.+?)\*\*/.exec(a.text || "");
+  if (m) return m[1].replace(/[.:]$/, "");
+  if (/update/i.test(a.id || "")) return "Güncelleme";
+  return a.title || a.id || "Duyuru";
 }
-function markerLines(markers, xs, top, bottom, labels, W = 0) {
-  let g = "";
-  let k = 0;
-  for (const [w, mk] of Object.entries(markers)) {
-    const row0 = (k++ % 2) * 2;  // alternate rows so labels of neighbouring weeks do not overlap
-    g += `<line class="mark ${mk.dec ? "mark-dec" : ""}" x1="${xs(+w)}" x2="${xs(+w)}" y1="${top - 6}" y2="${bottom}"><title>${esc(w)}. hafta: ${esc(mk.labels.join(" · "))}</title></line>`;
-    if (!labels) continue;
-    const anchor = +w >= 9 ? "end" : "start";
-    mk.labels.forEach((lb, j) => { g += `<text class="marklbl" x="${xs(+w) + (anchor === "end" ? -4 : 4)}" y="${top + 4 + (row0 + j) * 12}" text-anchor="${anchor}" style="${/karar/.test(lb) ? "fill:var(--accent-text)" : ""}">${esc(lb.length > 22 ? lb.slice(0, 21) + "…" : lb)}</text>`; });
-  }
-  return g;
+function runHead(rj, d, id) {
+  const tags = [`<span class="tag acc">${esc(TYPE_TR[rj.type] || rj.type || "?")}</span>`];
+  if (d.fake) tags.push(`<span class="tag warn">sahte model</span>`);
+  if (rj.complete === false) tags.push(`<span class="tag bad">tamamlanmadı · ${esc(rj.completed_weeks ?? "?")} hafta</span>`);
+  return `<div class="runhead"><h1>${esc(shortId(id))}</h1>${tags.join("")}</div>
+    <div class="meta">seed ${esc(rj.seed)} · ${esc(rj.model || "?")} · ${d.personas.length} persona · sürprizler ${rj.type === "plan_nosurprises" ? "kapalı" : "açık"}</div>`;
 }
-function markerNote(markers) {
-  const e = Object.entries(markers);
-  return e.length ? `<div class="small faint" style="margin-top:4px">Kesikli dikey: ${e.map(([w, mk]) => `${w}. hf ${esc(mk.labels.join(", "))}`).join(" · ")}</div>` : "";
+function goalCards(d) {
+  const m = d.metrics || {}, wm = (d.weekly_metrics || {}).weeks || [];
+  return `<div class="goals">${GOALS.map(([k, label, unit, dd]) => {
+    const v = m[k], ok = goalOk(k, v, d.targets);
+    const pill = ok == null ? "" : `<span class="pill ${ok ? "ok" : "no"}">${ok ? "✓ tuttu" : "✗ tutmadı"}</span>`;
+    return `<div class="goal"><div class="top"><span>${label}</span>${pill}</div>
+      <div class="val ${okCls(ok)}">${fmtNum(v, dd)}<small>${unit}</small></div>
+      <div class="tgt">hedef ${esc(tgtText(d.targets, k))}</div>
+      ${spark(wm.map((w) => [w.week, w[k] ?? null]), tgtNum(d.targets, k), ok)}</div>`;
+  }).join("")}</div>`;
 }
-// Thin line per persona (nudged a little apart so equal scores do not hide each other), bold line per group mean,
-// or (with series) one line per run / variant.
-function trustChart({ personas, weekly, markers, series }) {
-  const W = 920, H = 340, L = 34, R = 16, T = 18, B = 26;
-  const xs = (w) => L + (w - 1) * (W - L - R) / 9;
-  const ys = (v) => T + (5.3 - v) * (H - T - B) / 4.6;
-  let g = "";
-  for (let v = 1; v <= 5; v++) g += `<line class="axis" x1="${L}" x2="${W - R}" y1="${ys(v)}" y2="${ys(v)}"/><text x="${L - 8}" y="${ys(v) + 4}" text-anchor="end">${v}</text>`;
-  for (let w = 1; w <= 10; w++) g += `<text x="${xs(w)}" y="${H - 8}" text-anchor="middle">${w}</text>`;
-  g += markerLines(markers || {}, xs, T, H - B, true);
-  if (series) {
-    for (const s of series) {
-      const pts = s.points.filter((p) => p[1] != null);
-      g += `<polyline fill="none" stroke="${s.color}" stroke-width="${s.width || 2.5}" ${s.dash ? 'stroke-dasharray="6 4"' : ""} points="${pts.map((p) => `${xs(p[0])},${ys(p[1])}`).join(" ")}"/>`;
-      g += pts.map((p) => `<circle class="tp" cx="${xs(p[0])}" cy="${ys(p[1])}" r="3" fill="${s.color}"><title>${esc(s.name)} · ${p[0]}. hafta · ort. güven ${fmtNum(p[1], 2)}</title></circle>`).join("");
-    }
-    return `<div class="card"><b>Ortalama güven (1–5, personaların kendi cevabı)</b><div class="legend">${series.map((s) => `<span><i style="background:${s.color}"></i>${esc(s.name)}</span>`).join("")}</div><svg viewBox="0 0 ${W} ${H}" width="100%" role="img">${g}</svg></div>`;
-  }
-  const groups = groupsOf(personas), Wk = indexWeekly(weekly);
-  const n = personas.length;
-  personas.forEach((p, i) => {
-    const c = groupColor(groups, p.group), off = n > 1 ? (i / (n - 1) - 0.5) * 0.24 : 0;
-    const pts = [];
-    for (let w = 1; w <= 10; w++) { const r = (Wk[p.id] || {})[w]; if (r && Number.isInteger(r.trust)) pts.push([w, r]); }
-    g += `<polyline fill="none" stroke="${c}" stroke-width="1" opacity=".35" points="${pts.map(([w, r]) => `${xs(w)},${ys(r.trust + off)}`).join(" ")}"/>`;
-    g += pts.map(([w, r]) => `<circle class="tp" cx="${xs(w)}" cy="${ys(r.trust + off)}" r="2.2" fill="${c}" opacity=".6"><title>${esc(p.name || p.id)} (${esc(p.id)}) · ${w}. hafta\ngüven ${r.trust} · ${esc(MOOD_TR[r.mood] || r.mood || "–")}\n${esc((r.reason || "").slice(0, 120))}${(r.reason || "").length > 120 ? "…" : ""}</title></circle>`).join("");
-  });
-  for (const gname of groups) {
-    const c = groupColor(groups, gname);
-    const pts = meanTrust(weekly, new Set(personas.filter((p) => p.group === gname).map((p) => p.id))).filter((p) => p[1] != null);
-    g += `<polyline fill="none" stroke="${c}" stroke-width="3.5" points="${pts.map((p) => `${xs(p[0])},${ys(p[1])}`).join(" ")}"/>`;
-    g += pts.map((p) => `<circle class="tp" cx="${xs(p[0])}" cy="${ys(p[1])}" r="4" fill="${c}"><title>${esc(groupTr(gname))} ortalaması · ${p[0]}. hafta · güven ${fmtNum(p[1], 2)}</title></circle>`).join("");
-  }
-  const leg = `<div class="legend">${groups.map((gn) => `<span><i style="background:${groupColor(groups, gn)}"></i>${esc(groupTr(gn))}</span>`).join("")}<span>ince = persona, kalın = grup ortalaması · kesikli dikey = olay / karar</span></div>`;
-  return `<div class="card">${leg}<svg viewBox="0 0 ${W} ${H}" width="100%" role="img">${g}</svg></div>`;
+function decCards(decisions, budget) {
+  if (!decisions || !decisions.length) return `<div class="card muted">Karar yok — iş her zamanki gibi.</div>`;
+  const b = budget || {};
+  const cards = decisions.map((dec, i) => {
+    const bd = (b.decisions || [])[i] || {};
+    const why = whyLines(dec.why);
+    return `<div class="card dec"><div class="hd"><span class="eyebrow">${i + 1}. karar</span><b>${esc(dec.week)}. hafta</b><span class="spacer"></span><b class="cost">${fmtUsd(bd.total)}</b></div>
+      <div class="chips">${(dec.actions || []).map((a) => `<span class="chip">${esc(shortAction(a))}</span>`).join("")}${bd.sms_sends ? `<span class="chip">SMS × ${bd.sms_sends}</span>` : ""}</div>
+      <div class="small muted">Hedef: ${esc(targetText(dec.target))} · ${esc((dec.channels || []).join(", "))}</div>
+      <details style="margin-top:8px"><summary>Mesaj ve gerekçe</summary><div class="msg">${esc(dec.message)}</div><div class="small faint">${(dec.message || "").length} karakter</div>${why.length ? `<ul class="why">${why.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>` : ""}</details></div>`;
+  }).join("");
+  let foot = "";
+  if (b.available && b.total != null) {
+    const over = b.total > b.limit;
+    foot = `<div class="budget"><span>Toplam <b class="${over ? "no" : ""}" style="color:var(--text)">${fmtUsd(b.total)}</b> / ${fmtUsd(b.limit)} bütçe</span><div class="bbar"><i class="${over ? "over" : ""}" style="width:${Math.min(100, b.total / b.limit * 100).toFixed(1)}%"></i></div></div>`;
+  } else if (b.error) foot = `<div class="small faint" style="margin-top:8px">Bütçe hesaplanamadı: ${esc(b.error)}</div>`;
+  return `<div class="decs">${cards}</div>${foot}`;
 }
-// Weighted dollars per week from /api/run money_flow: inflow above zero, outflow below, net line.
-function flowChart(mf, markers) {
-  if (!mf || !mf.available) return `<div class="note">Para akışı hesaplanamadı${mf && mf.error ? ": " + esc(mf.error) : ""}.</div>`;
-  const W = 920, H = 300, L = 64, R = 16, T = 18, B = 26;
-  const wk = mf.weeks;
-  const top = Math.max(1, ...wk.map((w) => w.inflow)), bot = Math.min(-1, ...wk.map((w) => w.outflow));
-  const step = niceStep((top - bot) / 5);
-  const yMax = Math.ceil(top / step) * step, yMin = Math.floor(bot / step) * step;
-  const bw = (W - L - R) / 10, xs = (w) => L + (w - 0.5) * bw;
-  const ys = (v) => T + (yMax - v) * (H - T - B) / (yMax - yMin);
-  const usd = (v) => (v < 0 ? "−" : "") + "$" + (Math.abs(v) >= 1e6 ? fmtNum(Math.abs(v) / 1e6, 1) + "M" : Math.abs(v) >= 1e3 ? fmtNum(Math.abs(v) / 1e3, 0) + "k" : fmtNum(Math.abs(v), 0));
-  let g = "";
-  for (let v = yMin; v <= yMax + step / 2; v += step) g += `<line class="axis" x1="${L}" x2="${W - R}" y1="${ys(v)}" y2="${ys(v)}" ${Math.abs(v) < step / 2 ? 'style="stroke:var(--muted)"' : ""}/><text x="${L - 6}" y="${ys(v) + 4}" text-anchor="end">${usd(Math.round(v))}</text>`;
-  g += markerLines(markers || {}, xs, T, H - B, false);
-  for (const w of wk) {
-    const x = xs(w.week) - bw * 0.3;
-    const who = (sign) => w.items.filter((it) => sign > 0 ? it.usd > 0 : it.usd < 0).map((it) => `${it.name} (${it.persona}) ${usd(it.usd)}: ${it.from} → ${it.to}\n  "${it.reason}"`).join("\n");
-    if (w.inflow) g += `<rect x="${x}" width="${bw * 0.6}" y="${ys(w.inflow)}" height="${ys(0) - ys(w.inflow)}" fill="var(--good)" opacity=".75"><title>${w.week}. hafta giriş ${usd(w.inflow)}\n${esc(who(1))}</title></rect>`;
-    if (w.outflow) g += `<rect x="${x}" width="${bw * 0.6}" y="${ys(0)}" height="${ys(w.outflow) - ys(0)}" fill="var(--bad)" opacity=".75"><title>${w.week}. hafta çıkış ${usd(w.outflow)}\n${esc(who(-1))}</title></rect>`;
-    g += `<text x="${xs(w.week)}" y="${H - 8}" text-anchor="middle">${w.week}</text>`;
-  }
-  g += `<polyline fill="none" stroke="var(--text)" stroke-width="2" points="${wk.map((w) => `${xs(w.week)},${ys(w.net)}`).join(" ")}"/>`;
-  g += wk.map((w) => `<circle class="tp" cx="${xs(w.week)}" cy="${ys(w.net)}" r="3.5" fill="var(--text)"><title>${w.week}. hafta net ${usd(w.net)} (giriş ${usd(w.inflow)}, çıkış ${usd(w.outflow)})</title></circle>`).join("");
-  return `<div class="card"><div class="legend"><span><i style="background:var(--good)"></i>giriş (yeni para)</span><span><i style="background:var(--bad)"></i>çıkış (taşınan / ayrılan)</span><span><i style="background:var(--text)"></i>net</span><span>çubuğun üstüne gel: arkasındaki personalar ve gerekçeleri</span></div><svg viewBox="0 0 ${W} ${H}" width="100%" role="img">${g}</svg>${markerNote(markers || {})}</div>`;
+function eventChips(announcements, decisions) {
+  const items = [{ w: 6, html: `<button class="ev" data-act="crisis"><b>6. hf</b>Göç: uygulama 36 saat salt okunur</button>` }];
+  (announcements || []).forEach((a, i) => items.push({ w: +a.week, html: `<button class="ev" data-act="ann" data-i="${i}"><b>${esc(a.week)}. hf</b>${esc(annTitle(a))}</button>` }));
+  (decisions || []).forEach((d, i) => items.push({ w: +d.week, html: `<span class="ev dec"><b>${esc(d.week)}. hf</b>${i + 1}. karar başlar</span>` }));
+  items.sort((a, b) => a.w - b.w);
+  return `<div class="evs">${items.map((x) => x.html).join("")}</div>`;
 }
-// Persona x week: mood chip (when the run has one) plus what changed that week: ↓ / ↓↓ money moved out,
-// ↑ new money in, status word when the status changed.
-function personaWeekTable(personas, weekly) {
-  const groups = groupsOf(personas), Wk = indexWeekly(weekly), withMood = hasTrust(weekly);
+const CRISIS_TEXT = `**Bilinen kriz: çekirdek bankacılık göçü.** Cumartesi 12 Aralık 00:00 → Pazar 13 Aralık 12:00 CT. 36 saat boyunca uygulama salt okunur: bakiye görünür; transfer, P2P ve yeni kart yok. Kart ödemeleri çevrimdışı, ödeme başına $100'a kadar çalışır. Geçiş "birkaç saat" uzayabilir; kimse ne kadar olduğunu bilmiyor. Rakipler tarihi biliyor. Çoğu maaş müşterisi Cuma 11 Aralık'ta maaş alıyor.`;
+
+// ------------------------------------------------------------ Özet
+VIEWS.ozet = async () => {
+  if (!S.run) return noRun();
+  const d = await runApi(S.run);
+  S.data = d;
+  const rj = d.run || {};
+  const wm = d.weekly_metrics || {};
+  const pts = (k) => (wm.weeks || []).map((w) => [w.week, w[k] ?? null]);
+  const markers = weekMarkers(d.announcements, rj.decisions);
+  const cA = cssVar("--accent"), cD = cssVar("--g3");
+  const series = [{ name: "Aktif müşteri %", color: cA, points: pts("goal_1") }, { name: "Mevduat %", color: cD, points: pts("goal_2") }];
+  return `${runHead(rj, d, S.run)}
+    <div class="sec">Yönetim kurulu hedefleri <span class="hint">10 Ocak değerleri · çizgi haftalık seyir</span></div>
+    ${goalCards(d)}
+    <div class="sec">Kararlarımız</div>
+    ${decCards(rj.decisions, d.budget)}
+    <div class="sec">Hafta hafta <span class="hint">2 Kasım = 100</span></div>
+    <div class="stack"><div class="card">${legend(series)}${wm.available === false ? `<div class="note">Haftalık metrik hesaplanamadı: ${esc(wm.error)}</div>` : ""}
+      ${lineChart({ series, unit: "%", markers, targets: [{ v: tgtNum(d.targets, "goal_1"), color: cA, label: `aktif hedefi ${tgtNum(d.targets, "goal_1")}` }, { v: tgtNum(d.targets, "goal_2"), color: cD, label: `mevduat hedefi ${tgtNum(d.targets, "goal_2")}` }] })}
+      ${eventChips(d.announcements, rj.decisions)}</div>
+      <div class="card"><div class="small" style="font-weight:600;margin-bottom:6px">Personalar bankayı nasıl kullanıyor <span class="faint" style="font-weight:400">· kişi sayısı</span></div>${statusBars(d.weekly)}</div></div>`;
+};
+
+// ------------------------------------------------------------ Personalar
+VIEWS.personalar = async () => {
+  if (!S.run) return noRun();
+  const d = await runApi(S.run);
+  S.data = d;
+  if (!d.personas.length) return `<div class="card empty">Bu run'da persona yok.</div>`;
+  const groups = groupsOf(d.personas), W = indexWeekly(d.weekly);
+  const mk = weekMarkers(d.announcements, (d.run || {}).decisions);
   let rows = "";
-  for (const gname of groups) {
-    rows += `<tr class="grp"><td colspan="11" class="small muted" style="text-align:left;padding-top:10px;font-weight:600">${esc(groupTr(gname))}</td></tr>`;
-    for (const p of personas.filter((x) => x.group === gname)) {
-      rows += `<tr><td class="pname small"><span class="cell ${stClass(p.cobalt_role)}" style="display:inline-block;width:10px;height:10px;margin:0 6px 0 0;cursor:default" title="Nov 2: ${esc(p.cobalt_role || "")}"></span>${esc(p.id)} <span class="muted">${esc(p.name || "")}</span></td>`;
-      let prev = { status: p.cobalt_role || "main bank", money: "kept", new_money: "none" };
-      for (let w = 1; w <= 10; w++) {
-        const r = (Wk[p.id] || {})[w];
-        if (!r) { rows += `<td><span class="faint">·</span></td>`; continue; }
-        const dm = (MONEY_RANK[r.money] ?? 0) - (MONEY_RANK[prev.money] ?? 0), dn = (NEW_RANK[r.new_money] ?? 0) - (NEW_RANK[prev.new_money] ?? 0);
-        const marks = [];
-        if (dm > 0) marks.push(`<b class="g-bad" title="para: ${esc(prev.money)} → ${esc(r.money)}">${r.money === "moved most" ? "↓↓" : "↓"}</b>`);
-        if (dn > 0) marks.push(`<b class="g-good" title="yeni para: ${esc(r.new_money)}">↑</b>`);
-        if (r.status !== prev.status) marks.push(`<span class="badge" style="padding:0 4px;font-size:10.5px" title="${esc(prev.status)} → ${esc(r.status)}">${esc(STATUS_TR[r.status] || r.status)}</span>`);
-        const tip = `${p.id} · ${w}. hafta · ${r.status} / ${r.money} / yeni para ${r.new_money || "none"}${withMood ? ` · güven ${r.trust} · ${r.mood}` : ""}\n${(r.reason || "").slice(0, 120)}`;
-        const chip = withMood && r.mood ? `<span class="mood ${esc(r.mood)}">${esc(MOOD_TR[r.mood] || r.mood)}</span>` : "";
-        rows += `<td title="${esc(tip)}">${chip}<div style="min-height:16px;font-size:12px;line-height:16px">${marks.join(" ") || (chip ? "" : '<span class="faint">·</span>')}</div></td>`;
-        prev = r;
-      }
-      rows += "</tr>";
-    }
-  }
-  return `<div class="legend" style="margin-bottom:8px">${withMood ? MOODS.map((m) => `<span class="mood ${m}">${MOOD_TR[m]}</span>`).join("") : ""}<span><b class="g-bad">↓</b> bir kısmını taşıdı · <b class="g-bad">↓↓</b> çoğunu taşıdı · <b class="g-good">↑</b> yeni para getirdi · kelime = durum değişti</span></div>
-    <div class="tablewrap" style="display:inline-block;max-width:100%"><table class="moods"><thead><tr><th class="pname">Persona</th>${Array.from({ length: 10 }, (_, i) => `<th>${i + 1}</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table></div>`;
-}
-async function runTrust(d) {
-  const markers = weekMarkers(d.announcements, (d.run || {}).decisions);
-  const wm = d.weekly_metrics || {};
-  const pts = (k) => (wm.weeks || []).map((w) => [w.week, w[k] ?? null]);
-  $("#tabbody").innerHTML = `<h2 style="margin-top:0">Güven ve duygu</h2>
-    ${hasTrust(d.weekly) ? `<p class="small muted" style="margin-top:-4px">Her hafta modelin kendi cevabı: "Cobalt'a bu hafta ne kadar güveniyorsun?" (1 = hiç, 5 = tamamen) ve tek kelimelik duygu. Noktanın üstüne gel: persona, hafta, güven, duygu ve gerekçe. Metriklere girmez.</p>
-    ${trustChart({ personas: d.personas, weekly: d.weekly, markers })}` : NO_TRUST}
-    <h2>Kasa ve aktif müşteri, hafta hafta</h2>
-    <p class="small muted" style="margin-top:-4px">Her hafta için <span class="mono">sim/metrics.py</span> goal_2 / goal_1 formülü o haftanın satırlarıyla (ağırlık × takip payı × para faktörü + yeni para).</p>
-    ${wm.available ? "" : `<div class="note">Haftalık metrik hesaplanamadı: ${esc(wm.error)}</div>`}
-    <div class="charts">
-      ${lineChart({ title: "Mevduat (kasa), 2 Kasım'ın %'si", series: [{ name: "mevduat %", color: cssVar("--c1"), points: pts("goal_2") }], target: tgtNum(d.targets, "goal_2"), unit: "%", markers })}
-      ${lineChart({ title: "Aktif müşteri, 2 Kasım'ın %'si", series: [{ name: "aktif %", color: cssVar("--c1"), points: pts("goal_1") }], target: tgtNum(d.targets, "goal_1"), unit: "%", markers })}
-    </div>
-    <h2>Para akışı (ağırlıklı $)</h2>
-    <p class="small muted" style="margin-top:-4px">O hafta para faktörü düşen personalar çıkış (takip payı × temsil ettiği mevduat × faktör farkı), yeni para getirenler giriş. Haftaların neti toplanınca kasa çizgisini verir.</p>
-    ${flowChart(d.money_flow, markers)}
-    <h2>Persona × hafta${hasTrust(d.weekly) ? ": duygu ve" : ":"} para / durum değişimleri</h2>
-    ${personaWeekTable(d.personas, d.weekly)}`;
-}
-const cssVar = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
-function tgtNum(t, k) { const m = /([\d.]+)/.exec((t || {})[k] || ""); return m ? +m[1] : null; }
-async function runCharts(d) {
-  const wm = d.weekly_metrics || {};
-  const pts = (k) => (wm.weeks || []).map((w) => [w.week, w[k] ?? null]);
-  const stc = Array.from({ length: 10 }, (_, i) => { const o = {}; d.weekly.filter((r) => r.week === i + 1).forEach((r) => { o[r.status] = (o[r.status] || 0) + 1; }); return o; });
-  const cmp = Array.from({ length: 10 }, (_, i) => { const o = {}; d.weekly.filter((r) => r.week === i + 1 && r.complaint && r.complaint !== "none").forEach((r) => { o[r.complaint] = (o[r.complaint] || 0) + 1; }); return o; });
-  const acts = {}; d.weekly.forEach((r) => (r.actions || []).forEach((a) => { (acts[a] ||= Array(10).fill(0))[r.week - 1]++; }));
-  $("#tabbody").innerHTML = (wm.available ? "" : `<div class="note">Haftalık metrik hesaplanamadı: ${esc(wm.error)}</div>`) + `<div class="charts">
-    ${lineChart({ title: "Aktif müşteri % (ağırlıklı)", series: [{ name: "aktif %", color: cssVar("--c1"), points: pts("goal_1") }], target: tgtNum(d.targets, "goal_1"), unit: "%" })}
-    ${lineChart({ title: "Mevduat % (ağırlıklı)", series: [{ name: "mevduat %", color: cssVar("--c1"), points: pts("goal_2") }], target: tgtNum(d.targets, "goal_2"), unit: "%" })}
-    ${stackedBars({ title: "Durum sayıları", weeks: stc, keys: STATUSES, colors: ["--s-main", "--s-second", "--s-dormant", "--s-left"].map(cssVar) })}
-    ${lineChart({ title: "App Store puanı (kümülatif tahmin)", series: [{ name: "puan", color: cssVar("--c1"), points: pts("goal_3") }], target: tgtNum(d.targets, "goal_3") })}
-    ${lineChart({ title: "CFPB şikayet/ay (en kötü 4 hafta)", series: [{ name: "CFPB/ay", color: cssVar("--c1"), points: pts("goal_3b") }], target: tgtNum(d.targets, "goal_3b") })}
-    ${stackedBars({ title: "Şikayetler (persona sayısı)", weeks: cmp, keys: ["bank", "cfpb"], colors: [cssVar("--s-second"), cssVar("--s-left")] })}
-  </div>
-  <h2>Haftalık aksiyonlar</h2>
-  <div class="tablewrap"><table><thead><tr><th>Aksiyon</th>${Array.from({ length: 10 }, (_, i) => `<th class="num">${i + 1}</th>`).join("")}<th class="num">Toplam</th></tr></thead><tbody>
-  ${Object.entries(acts).sort((a, b) => b[1].reduce((x, y) => x + y) - a[1].reduce((x, y) => x + y)).map(([a, v]) => `<tr><td>${esc(a)}</td>${v.map((n) => `<td class="num ${n ? "" : "faint"}">${n || "·"}</td>`).join("")}<td class="num"><b>${v.reduce((x, y) => x + y)}</b></td></tr>`).join("")}
-  </tbody></table></div>`;
-}
-
-// ------------------------------------------------------------ personas
-async function runPersonas(d, id, rest) {
-  const pid = rest[0];
-  if (!pid) {
-    const W = indexWeekly(d.weekly);
-    $("#tabbody").innerHTML = `<div class="tablewrap tall"><table><thead><tr><th>Persona</th><th>Grup</th><th class="num">Yaş</th><th>Meslek</th><th class="num">Bakiye</th><th>2 Kasım</th><th>Son hafta</th><th class="num">Temsil ettiği</th></tr></thead><tbody>
-    ${d.personas.map((p) => { const ws = W[p.id] || {}; const rl = ws[Math.max(0, ...Object.keys(ws).map(Number))]; return `<tr class="click" data-go="#/run/${enc(id)}/persona/${enc(p.id)}"><td><b>${esc(p.name)}</b><div class="small faint">${esc(p.id)}</div></td><td class="small">${esc(groupTr(p.group))}</td><td class="num">${esc(p.age)}</td><td class="small">${esc(p.occupation)}</td><td class="num">${fmtUsd(p.balance_usd)}</td><td>${p.cobalt_role ? `<span class="badge ${stClass(p.cobalt_role)}">${esc(p.cobalt_role)}</span>` : ""}</td><td>${rl ? `<span class="badge ${stClass(rl.status)}">${esc(rl.status)}</span>` : ""}</td><td class="num small">${fmtNum(p.weight_customers)} müşteri</td></tr>`; }).join("")}
-    </tbody></table></div>`;
-    return;
-  }
-  const p = d.personas.find((x) => x.id === pid);
-  if (!p) { $("#tabbody").innerHTML = `<div class="err">Persona yok: ${esc(pid)}</div>`; return; }
-  const W = indexWeekly(d.weekly)[pid] || {};
-  const TEMPER = ["values_most", "risk_attitude", "trust_in_institutions", "price_consciousness", "brand_loyalty", "need_for_control", "baseline_anxiety", "anger_speed", "patience", "forgiveness", "financial_literacy", "influence", "sways_easily", "fear_this_quarter", "scar"];
-  const skip = new Set(["id", "name", "group", "narrative", "voice", "weight_customers", "weight_deposits_usd", ...TEMPER]);
-  const other = Object.entries(p).filter(([k]) => !skip.has(k));
-  const probe = (d.probe || []).filter((r) => r.persona === pid);
-  const pv = (when, q) => { const r = probe.find((x) => x.when === when && x.question === q); return r ? r.score : null; };
-  const idx = d.personas.findIndex((x) => x.id === pid);
-  const prev = d.personas[idx - 1], next = d.personas[idx + 1];
-  $("#tabbody").innerHTML = `<div class="bar small"><a href="#/run/${enc(id)}/persona">← Tüm personalar</a><span class="spacer"></span>${prev ? `<a href="#/run/${enc(id)}/persona/${enc(prev.id)}">← ${esc(prev.id)}</a>` : ""}${next ? `<a href="#/run/${enc(id)}/persona/${enc(next.id)}">${esc(next.id)} →</a>` : ""}</div>
-  <div class="two">
-    <div>
-      <div class="box"><h2 style="margin-top:0">${esc(p.name || p.id)}</h2><div class="muted small">${esc(p.id)} · ${esc(groupTr(p.group))} · ${fmtNum(p.weight_customers)} müşteri · ${fmtUsd(p.weight_deposits_usd)} mevduat temsil eder</div>
-        <p>${esc(p.narrative || "")}</p>
-        ${p.voice ? `<p class="muted"><i>“${esc(p.voice)}”</i></p>` : ""}
-        <div class="kv small">${TEMPER.filter((k) => p[k] != null).map((k) => `<div>${esc(k.replace(/_/g, " "))}</div><div>${esc(p[k])}</div>`).join("")}</div>
-        <details><summary>Diğer alanlar (${other.length})</summary><div class="kv small" style="margin-top:8px">${other.map(([k, v]) => `<div>${esc(k)}</div><div>${esc(typeof v === "object" && v !== null ? JSON.stringify(v) : v)}</div>`).join("")}</div></details></div>
-      ${d.probe ? `<div class="box"><h3 style="margin-top:0">Check-in: başlangıç → bitiş</h3><table><thead><tr><th>Soru</th><th class="num">Başl.</th><th class="num">Bitiş</th><th class="num">Δ</th></tr></thead><tbody>
-        ${Object.entries(PROBE_Q).map(([q, [lbl, txt, rev]]) => { const a = pv("start", q), b = pv("end", q); const dl = a != null && b != null ? b - a : null; return `<tr><td class="small" title="${esc(txt)}"><span class="mono faint">${q}</span> ${esc(lbl)}${rev ? ' <span class="badge">ters</span>' : ""}</td><td class="num">${a ?? "–"}</td><td class="num">${b ?? "–"}</td><td class="num ${dl == null || dl === 0 ? "faint" : ((dl > 0) !== !!rev ? "g-good" : "g-bad")}">${dl == null ? "–" : (dl > 0 ? "+" : "") + dl}</td></tr>`; }).join("")}
-      </tbody></table><div class="small muted">2b ve 4b ters soru: yüksek puan kötü.</div></div>` : ""}
-    </div>
-    <div class="box"><h3 style="margin-top:0">Hafta hafta</h3><div class="small muted">Canlı soru: <span class="mono">python3 code/scripts/interview.py --run ${esc(id)} --persona ${esc(pid)} "soru"</span></div><div class="timeline">
-      ${Array.from({ length: 10 }, (_, i) => { const w = i + 1, r = W[w]; return `<div class="row"><div><a href="#/run/${enc(id)}/haftalik/${enc(pid)}/${w}">${w}. hf</a></div><div>${r ? `<span class="badge ${stClass(r.status)}">${esc(r.status)}</span><div class="small faint">${esc(r.money)}</div>` : '<span class="faint">–</span>'}</div><div class="small">${r ? `${esc(r.reason)}${r.memory ? `<div class="muted"><i>${esc(r.memory)}</i></div>` : ""}${(r.actions || []).length ? `<div class="faint">${esc(r.actions.join(", "))}</div>` : ""}` : ""}</div></div>`; }).join("")}
-    </div></div>
-  </div>`;
-}
-
-// ------------------------------------------------------------ other: social + raw files
-async function runOther(d, id) {
-  const P = Object.fromEntries(d.personas.map((p) => [p.id, p]));
-  const ms = d.messages || [];
-  const soc = ms.length ? `<div class="tablewrap tall"><table><thead><tr><th class="num">Hf</th><th class="num">Tur</th><th>Kimden → kime</th><th>Metin</th></tr></thead><tbody>
-    ${ms.map((m) => `<tr><td class="num">${m.week}</td><td class="num">${m.round}</td><td class="small" style="white-space:nowrap"><a href="#/run/${enc(id)}/persona/${enc(m.author)}">${esc(m.author)}</a> → ${esc(m.channel)}${m.target ? ` <b>${esc(m.target)}</b>` : ""}<div class="faint">${esc(groupTr((P[m.author] || {}).group || ""))}</div></td><td class="small">${esc(m.text)}</td></tr>`).join("")}
-    </tbody></table></div><div class="small muted" style="margin-top:6px">1. turdaki mesajlar aynı hafta 2. turda, 2. turdakiler sonraki hafta 1. turda okunur (exposures.jsonl kimin gördüğünü kaydeder).</div>` : `<div class="muted small">Bu run'da persona mesajı yok.</div>`;
-  const dt = d.decision_targets || {};
-  $("#tabbody").innerHTML = `<h2 style="margin-top:0">Dosyalar</h2><div class="bar">${d.files.map((f) => `<a class="badge accent" href="/api/raw?run=${enc(id)}&file=${enc(f.name)}" target="_blank">${esc(f.name)} · ${fmtNum(f.size / 1024, 0)} KB</a>`).join("")}</div>
-    ${Object.keys(dt).length ? `<h2>Karar hedefleri</h2><div class="kv small">${Object.entries(dt).map(([k, v]) => `<div>${esc(k)}</div><div>${esc(v.join(", "))} <span class="muted">(${v.length})</span></div>`).join("")}</div>` : ""}
-    <h2>Ağızdan ağıza <span class="small muted" style="font-weight:400">(${ms.length})</span></h2>${soc}`;
-}
-
-// ------------------------------------------------------------ compare
-async function viewCompare(a, b) {
-  if (!a || !b) {
-    const d = await api("/api/runs");
-    const opts = d.runs.map((x) => `<option value="${esc(x.id)}">${esc(x.id)}</option>`).join("");
-    setMain(`<h1>Karşılaştır</h1><p class="lead">İki run seç.</p><div class="bar"><select id="ca" style="max-width:420px">${opts}</select><select id="cb" style="max-width:420px">${opts}</select><button class="primary" id="cgo">Karşılaştır</button></div>`);
-    if (d.runs[1]) $("#cb").value = d.runs[1].id;
-    $("#cgo").addEventListener("click", () => go(`#/compare/${enc($("#ca").value)}/${enc($("#cb").value)}`));
-    return;
-  }
-  const [A, B] = await Promise.all([api(`/api/run?id=${enc(a)}`), api(`/api/run?id=${enc(b)}`)]);
-  const ma = A.metrics || {}, mb = B.metrics || {};
-  const metr = GOALS.map(([k, lbl, , dd]) => { const x = ma[k], y = mb[k]; const dl = x != null && y != null ? y - x : null; return `<tr><td>${lbl} <span class="faint small">${esc(tgtText(A.targets, k))}</span></td><td class="num ${goalCls(k, x, A.targets)}">${fmtNum(x, dd)}</td><td class="num ${goalCls(k, y, B.targets)}">${fmtNum(y, dd)}</td><td class="num">${dl == null ? "–" : (dl > 0 ? "+" : "") + fmtNum(dl, dd)}</td></tr>`; }).join("");
-  const ser = (D, k) => ((D.weekly_metrics || {}).weeks || []).map((w) => [w.week, w[k] ?? null]);
-  const c1 = cssVar("--c1"), c2 = cssVar("--c2");
-  const la = "A: " + (A.run.name || a), lb = "B: " + (B.run.name || b);
-  const da = A.run.decisions || [], db = B.run.decisions || [];
-  const n = Math.max(da.length, db.length);
-  let ddiff = "";
-  if (!n) ddiff = `<div class="muted small">İki run'da da karar yok.</div>`;
-  for (let i = 0; i < n; i++) {
-    const x = da[i], y = db[i];
-    const fields = ["week", "target", "actions", "channels", "message", "why"];
-    const fmt = (dec, f) => dec ? (f === "actions" ? (dec.actions || []).map((q) => `${q.action} (${q.level})`).join("; ") : Array.isArray(dec[f]) ? dec[f].join(", ") : typeof dec[f] === "object" ? JSON.stringify(dec[f]) : dec[f]) : "—";
-    ddiff += `<details class="box"><summary>${i + 1}. karar</summary><table><thead><tr><th>Alan</th><th>A</th><th>B</th></tr></thead><tbody>${fields.map((f) => { const u = fmt(x, f), v = fmt(y, f); return `<tr class="${String(u) !== String(v) ? "diffmark" : ""}"><td class="small muted">${f}</td><td class="small" style="white-space:pre-wrap">${esc(u)}</td><td class="small" style="white-space:pre-wrap">${esc(v)}</td></tr>`; }).join("")}</tbody></table></details>`;
-  }
-  const WA = indexWeekly(A.weekly), WB = indexWeekly(B.weekly);
-  const pids = A.personas.map((p) => p.id).filter((pid) => B.personas.some((q) => q.id === pid));
-  let ndiff = 0, rows = "";
-  for (const g of groupsOf(A.personas)) {
-    const ps = A.personas.filter((p) => p.group === g && pids.includes(p.id));
-    if (!ps.length) continue;
-    rows += `<tr class="grp"><td colspan="11">${esc(groupTr(g))}</td></tr>`;
+  groups.forEach((g, gi) => {
+    const ps = d.personas.filter((p) => p.group === g);
+    rows += `<tr class="grp" data-g="${gi}"><td colspan="11"><span class="gh"><span class="dot" style="background:${gcol(gi)}"></span>${esc(groupTr(g))} <span class="faint">${ps.length}</span></span></td></tr>`;
     for (const p of ps) {
-      rows += `<tr><td class="pname">${esc(p.id)} <span class="small muted">${esc(p.name || "")}</span></td>`;
+      const hay = [p.id, p.name, p.occupation, p.city, groupTr(g)].join(" ").toLowerCase();
+      rows += `<tr class="pr" data-g="${gi}" data-s="${esc(hay)}"><td class="pname"><button class="plink" data-act="persona" data-pid="${esc(p.id)}"><span class="nm">${esc(p.name || p.id)}</span> <span class="faint small">${esc(p.id)}</span></button></td>`;
       for (let w = 1; w <= 10; w++) {
-        const x = (WA[p.id] || {})[w], y = (WB[p.id] || {})[w];
-        const diff = (x && x.status) !== (y && y.status) || (x && x.money) !== (y && y.money);
-        if (diff) ndiff++;
-        rows += `<td><span class="cell split ${diff ? "diff" : ""}" style="cursor:default" title="hf ${w}\nA: ${esc(x ? x.status + " / " + x.money : "–")}\nB: ${esc(y ? y.status + " / " + y.money : "–")}"><span class="${x ? stClass(x.status) : "st-none"}">${x ? MONEY_MARK[x.money] || "" : ""}</span><span class="${y ? stClass(y.status) : "st-none"}">${y ? MONEY_MARK[y.money] || "" : ""}</span></span></td>`;
+        const r = (W[p.id] || {})[w];
+        const tip = r ? `${p.name || p.id} · ${w}. hafta: ${STATUS_TR[r.status] || r.status}, ${MONEY_TR[r.money] || r.money}${r.complaint && r.complaint !== "none" ? ", şikayet: " + r.complaint : ""}${r.mood ? ", " + (MOOD_TR[r.mood] || r.mood) : ""}` : "kayıt yok";
+        rows += `<td><button class="cell ${r ? stc(r.status) : "s-none"}" data-act="persona" data-pid="${esc(p.id)}" data-w="${w}" title="${esc(tip)}">${r ? (MONEY_MARK[r.money] || "") + (r.complaint === "cfpb" ? "!" : "") : ""}</button></td>`;
       }
-      rows += "</tr>";
+      rows += `</tr>`;
     }
-  }
-  const cmpMarkers = weekMarkers(A.announcements, []);
-  [["A", da], ["B", db]].forEach(([tag, ds]) => ds.forEach((x, i) => { const w = +x.week; if (w >= 1 && w <= 10) { (cmpMarkers[w] ||= { labels: [], dec: false }).labels.push(`${tag}: ${i + 1}. karar`); cmpMarkers[w].dec = true; } }));
-  const trustCmp = hasTrust(A.weekly) || hasTrust(B.weekly)
-    ? trustChart({ markers: cmpMarkers, series: [{ name: la, color: c1, points: meanTrust(A.weekly) }, { name: lb, color: c2, points: meanTrust(B.weekly) }] })
-    : NO_TRUST;
-  setMain(`<h1>Karşılaştır</h1>
-    <div class="small" style="margin-bottom:20px"><b>A</b> <a href="#/run/${enc(a)}">${esc(a)}</a> <span class="muted">· ${esc(A.run.type)} · seed ${esc(A.run.seed)}</span><br><b>B</b> <a href="#/run/${enc(b)}">${esc(b)}</a> <span class="muted">· ${esc(B.run.type)} · seed ${esc(B.run.seed)}</span></div>
-    <div class="tablewrap" style="display:inline-block"><table style="width:auto"><thead><tr><th>Hedef</th><th class="num">A</th><th class="num">B</th><th class="num">B − A</th></tr></thead><tbody>${metr}</tbody></table></div>
-    <h2>Haftalar</h2><div class="charts">
-      ${lineChart({ title: "Aktif müşteri %", series: [{ name: la, color: c1, points: ser(A, "goal_1") }, { name: lb, color: c2, points: ser(B, "goal_1") }], target: tgtNum(A.targets, "goal_1"), unit: "%", markers: cmpMarkers })}
-      ${lineChart({ title: "Mevduat (kasa) %", series: [{ name: la, color: c1, points: ser(A, "goal_2") }, { name: lb, color: c2, points: ser(B, "goal_2") }], target: tgtNum(A.targets, "goal_2"), unit: "%", markers: cmpMarkers })}
-    </div>
-    <h2>Güven, hafta hafta</h2>${trustCmp}
-    <h2>Kararlar <span class="small muted" style="font-weight:400">A ${fmtUsd(A.budget.total)} · B ${fmtUsd(B.budget.total)}</span></h2>${ddiff}
-    <h2>Persona × hafta <span class="small muted" style="font-weight:400">üst yarı A, alt yarı B · ${ndiff} farklı hücre</span></h2>
-    ${legendHtml()}
-    <div class="tablewrap" style="display:inline-block;max-width:100%;margin-top:10px"><table class="grid"><thead><tr><th class="pname">Persona</th>${Array.from({ length: 10 }, (_, i) => `<th>${i + 1}</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table></div>`);
+  });
+  const html = `<div class="toolbar"><input type="search" id="pq" placeholder="Persona ara: ad, meslek, şehir…" value="${esc(S.q)}">
+      <span class="spacer"></span>
+      <div class="legend" style="margin:0">${STATUSES.map((s) => `<span><i class="sq ${stc(s)}"></i>${STATUS_TR[s]}</span>`).join("")}<span>↓ / ↓↓ para taşıdı · ! CFPB</span></div></div>
+    <div class="tw" style="display:inline-block"><table class="pg"><thead><tr><th class="pname">Persona</th>${Array.from({ length: 10 }, (_, i) => { const w = i + 1, m = mk[w]; return `<th class="${m ? "ev" : ""}" ${m ? `title="${esc(m.labels.join(" · "))}"` : ""}>${w}</th>`; }).join("")}</tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="small faint" style="margin-top:10px">Satıra ya da hücreye tıkla: personanın hikâyesi, check-in puanları ve modelin cevabı yan panelde açılır. Noktalı hafta = olay ya da karar.</div>`;
+  return [html, () => { filterPersonas(S.q); if (S.arg[0]) openPersona(S.run, S.arg[0], +S.arg[1] || null, true); }];
+};
+function filterPersonas(q) {
+  q = (q || "").trim().toLowerCase();
+  const seen = new Set();
+  document.querySelectorAll("table.pg tr.pr").forEach((tr) => { const on = !q || tr.dataset.s.includes(q); tr.classList.toggle("hide", !on); if (on) seen.add(tr.dataset.g); });
+  document.querySelectorAll("table.pg tr.grp").forEach((tr) => tr.classList.toggle("hide", !seen.has(tr.dataset.g)));
 }
 
-// ------------------------------------------------------------ logs (calls.jsonl attempts)
-const lf = { persona: "", week: "", round: "", failed: false, q: "" };
-async function viewLogs(run, rest) {
-  if (!run) {
-    const d = await api("/api/logs");
-    setMain(`<h1>Loglar</h1><p class="lead">Motor her model denemesini run'ın calls.jsonl dosyasına yazar (valid / attempt / error_type).</p><div class="tablewrap"><table><thead><tr><th>Run</th><th>Model</th><th class="num">Deneme</th><th class="num">Geçersiz</th><th class="num">Tekrar</th><th class="num">Ort. ms</th><th>Hatalar</th></tr></thead><tbody>
-    ${d.runs.map((s) => `<tr class="click" data-go="#/logs/${enc(s.run)}"><td><a href="#/logs/${enc(s.run)}">${esc(s.run)}</a><div class="small faint">${esc(s.type)} · seed ${esc(s.seed)}${s.complete === false ? ` · <span class="g-bad">tamamlanmadı ${esc(s.failure_type || "")}</span>` : ""} · ${fmtTime(s.mtime)}</div></td><td class="small">${esc(s.models.join(", "))}</td><td class="num">${fmtNum(s.calls)}</td><td class="num ${s.failed ? "g-bad" : ""}">${fmtNum(s.failed)}</td><td class="num">${fmtNum(s.retries)}</td><td class="num">${fmtNum(s.avg_ms)}</td><td class="small">${esc(Object.entries(s.errors).map(([k, v]) => `${k} ${v}`).join(", "))}</td></tr>`).join("") || `<tr><td colspan="7" class="empty">Run yok.</td></tr>`}
-    </tbody></table></div>`);
-    return;
+async function openPersona(runId, pid, week, inHash) {
+  const t = showPanel(`<div class="loading">Yükleniyor…</div>`, inHash ? ["personalar", pid, week || ""] : null, inHash ? ["personalar"] : null);
+  try {
+    const d = await runApi(runId);
+    if (!fillPanel(t, personaHtml(d, runId, pid, week))) return;
+    const f = week && $(`#wk-${week}`);
+    if (f) f.scrollIntoView({ block: "center" });
+  } catch (e) { fillPanel(t, `<div class="err">${esc(e.message)}</div>`); }
+}
+function personaHtml(d, runId, pid, week) {
+  const p = d.personas.find((x) => x.id === pid);
+  if (!p) return `<div class="err">Bu run'da persona yok: ${esc(pid)}</div>`;
+  const gi = groupsOf(d.personas).indexOf(p.group);
+  const Wk = indexWeekly(d.weekly)[pid] || {};
+  const M = Object.fromEntries((d.messages || []).map((m) => [m.id, m]));
+  const nm = (x) => (d.personas.find((q) => q.id === x) || {}).name || x;
+  const sub = [p.age != null ? `${p.age} yaş` : "", p.occupation, [p.city, p.state].filter(Boolean).join(", ")].filter(Boolean).join(" · ");
+  const fact = (k, v) => v == null || v === "–" ? "" : `<div><div class="k">${k}</div><div class="v">${v}</div></div>`;
+  let h = `<div class="small muted"><span class="dot" style="background:${gcol(gi)}"></span>${esc(groupTr(p.group))} · ${esc(pid)}${runId !== S.run ? ` · ${esc(shortId(runId))}` : ""}</div>
+    <h2>${esc(p.name || pid)}</h2><div class="muted small">${esc(sub)}</div>
+    <div class="pfacts">${fact("Temsil ettiği", p.weight_customers != null ? fmtNum(p.weight_customers) + " müşteri" : null)}${fact("Mevduat payı", p.weight_deposits_usd != null ? fmtUsd(p.weight_deposits_usd) : null)}${fact("Bakiye", p.balance_usd != null ? fmtUsd(p.balance_usd) : null)}${fact("2 Kasım", p.cobalt_role ? esc(STATUS_TR[p.cobalt_role] || p.cobalt_role) : null)}</div>
+    ${p.narrative ? `<p class="narr">${esc(p.narrative)}</p>` : ""}${p.voice ? `<p class="quote">“${esc(p.voice)}”</p>` : ""}`;
+  // check-in probe
+  const probe = (d.probe || []).filter((r) => r.persona === pid);
+  if (probe.length) {
+    const pv = (when, q) => { const r = probe.find((x) => x.when === when && x.question === q); return r ? r.score : null; };
+    h += `<h3>Check-in · başlangıç → bitiş</h3><table class="probe"><tbody>${Object.entries(PROBE_Q).map(([q, [lbl, txt, rev]]) => {
+      const a = pv("start", q), b = pv("end", q), dl = a != null && b != null ? b - a : null;
+      const cls = dl == null || dl === 0 ? "faint" : (dl > 0) !== !!rev ? "ok" : "no";
+      return `<tr><td class="small" title="${esc(txt)}">${esc(lbl)}${rev ? ` <span class="faint">(ters)</span>` : ""}</td><td class="num">${a ?? "–"} → <b>${b ?? "–"}</b></td><td class="num ${cls}" style="width:40px">${dl == null || dl === 0 ? "·" : (dl > 0 ? "+" : "") + dl}</td></tr>`;
+    }).join("")}</tbody></table><div class="small faint" style="margin-top:4px">1–5 puan. Ters sorularda yüksek puan kötü.</div>`;
   }
-  const L = await api(`/api/log?run=${enc(run)}&q=${enc(lf.q)}`);
-  const calls = L.calls.filter((c) => (!lf.persona || String(c.persona) === lf.persona) && (!lf.week || String(c.week) === lf.week) && (!lf.round || String(c.round) === lf.round) && (!lf.failed || c.valid === false));
-  const LIM = 500;
-  const sel = (k, opts, lbl) => `<select data-lf="${k}"><option value="">${lbl}: hepsi</option>${opts.map((o) => `<option value="${esc(o)}" ${String(o) === String(lf[k]) ? "selected" : ""}>${lbl}: ${esc(o)}</option>`).join("")}</select>`;
-  const uniq = (k) => [...new Set(L.calls.map((c) => c[k]).filter((x) => x != null))].sort((a, b) => (typeof a === "number" ? a - b : String(a).localeCompare(String(b))));
-  const fail = L.calls.filter((c) => c.valid === false).length;
-  setMain(`<div class="small"><a href="#/logs">← Loglar</a></div><h1 style="margin-top:8px">${esc(run)}</h1>
-    <div class="bar" style="margin-top:16px"><span><b>${fmtNum(L.calls.length)}</b> deneme</span><span class="${fail ? "g-bad" : "muted"}">· ${fail} geçersiz</span><span class="muted">· <a href="#/run/${enc(run)}">run sayfası</a></span></div>
-    <div class="bar">${sel("persona", uniq("persona"), "Persona")}${sel("week", uniq("week"), "Hafta")}${sel("round", uniq("round"), "Tur")}
-      <label class="small"><input type="checkbox" id="lffail" ${lf.failed ? "checked" : ""}> yalnız geçersiz</label>
-      <input type="search" id="lfq" placeholder="Prompt/yanıtta ara (Enter)" value="${esc(lf.q)}" style="min-width:220px">
-      <span class="small muted">${calls.length} deneme${calls.length > LIM ? `, ilk ${LIM}` : ""}</span></div>
-    <div class="tablewrap tall"><table><thead><tr><th>Persona</th><th class="num">Hf</th><th class="num">Tur</th><th class="num">Deneme</th><th>Durum</th><th>Model</th><th class="num">ms</th></tr></thead><tbody>
-    ${calls.slice(0, LIM).map((c) => `<tr class="click" data-go="#/logs/${enc(run)}/${enc(c.id)}"><td>${esc(c.persona ?? "–")}</td><td class="num">${esc(c.week ?? "–")}</td><td class="num">${esc(c.round ?? "–")}</td><td class="num">${esc(c.attempt ?? "–")}</td><td>${c.valid !== false ? '<span class="badge good">ok</span>' : `<span class="badge bad">${esc(c.error_type || "hata")}</span> <span class="small faint">${esc(c.error_stage || "")}</span>`}</td><td class="small">${esc(c.model)}</td><td class="num">${fmtNum((c.elapsed_seconds || 0) * 1000)}</td></tr>`).join("")}
-    </tbody></table></div>`);
-  document.querySelectorAll("[data-lf]").forEach((el) => el.addEventListener("change", () => { lf[el.dataset.lf] = el.value; viewLogs(run, []); }));
-  $("#lffail").addEventListener("change", (e) => { lf.failed = e.target.checked; viewLogs(run, []); });
-  $("#lfq").addEventListener("keydown", (e) => { if (e.key === "Enter") { lf.q = e.target.value; viewLogs(run, []); } });
-  if (rest[0]) {
-    $("#drawer").dataset.back = `#/logs/${enc(run)}`;
-    try {
-      const c = await api(`/api/call?run=${enc(run)}&id=${enc(rest[0])}`);
-      const meta = ["persona", "week", "round", "attempt", "valid", "error_type", "error_stage", "model", "seed", "elapsed_seconds"];
-      openDrawer(`<h2 style="margin-top:0" class="mono">${esc(c.id)}</h2>
-        <div class="kv small">${meta.map((k) => `<div>${k}</div><div>${esc(c[k] ?? "–")}</div>`).join("")}</div>
-        <h3 style="margin-top:24px">Yanıt</h3><pre>${esc(c.response)}</pre>
-        <details open><summary>Prompt (${(c.prompt || "").length} karakter)</summary><pre>${esc(c.prompt)}</pre></details>`);
-    } catch (e) { openDrawer(`<div class="err">${esc(e.message)}</div>`); }
+  // week by week
+  h += `<h3>Hafta hafta</h3>`;
+  for (let w = 1; w <= 10; w++) {
+    const r = Wk[w];
+    if (!r) { h += `<div class="wk" id="wk-${w}"><div class="n">${w}</div><div class="faint small">kayıt yok</div></div>`; continue; }
+    const sent = (d.messages || []).filter((m) => m.author === pid && m.week === w);
+    const heard = (r.received_messages || []).map((i) => M[i]).filter(Boolean);
+    const ids = [r.round_2_call, r.round_1_call || r.call].filter(Boolean);
+    const bits = [`<span class="st ${stc(r.status)}">${esc(STATUS_TR[r.status] || r.status)}</span>`, `<span class="muted">${esc(MONEY_TR[r.money] || r.money || "")}</span>`];
+    if (r.new_money && r.new_money !== "none") bits.push(`<span class="tag good">${esc(NEW_TR[r.new_money] || r.new_money)}</span>`);
+    if (r.mood) bits.push(`<span class="tag">${esc(MOOD_TR[r.mood] || r.mood)}${Number.isInteger(r.trust) ? ` · güven ${r.trust}/5` : ""}</span>`);
+    if (r.complaint && r.complaint !== "none") bits.push(`<span class="tag bad">şikayet: ${esc(r.complaint)}</span>`);
+    if (r.app_rating) bits.push(`<span class="tag">${esc(r.app_rating)}★</span>`);
+    h += `<div class="wk ${w === week ? "focus" : ""}" id="wk-${w}"><div class="n">${w}</div><div>
+      <div class="top">${bits.join("")}</div>
+      <p>${esc(r.reason)}</p>
+      ${heard.map((m) => `<div class="said">← <b>${esc(nm(m.author))}</b>: ${esc(m.text)}</div>`).join("")}
+      ${sent.map((m) => `<div class="said">→ <b>${m.target ? esc(nm(m.target)) : esc(m.channel)}</b>: ${esc(m.text)}</div>`).join("")}
+      ${ids.length ? `<button class="linkbtn" data-act="call" data-run="${esc(runId)}" data-ids="${esc(ids.join(","))}">Modelin cevabını göster</button><div class="callbox"></div>` : ""}
+    </div></div>`;
   }
+  const skip = new Set(["id", "name", "group", "narrative", "voice"]);
+  const other = Object.entries(p).filter(([k]) => !skip.has(k));
+  h += `<details style="margin-top:22px"><summary>Tüm profil alanları (${other.length})</summary><div class="kv" style="margin-top:10px">${other.map(([k, v]) => `<div>${esc(k.replace(/_/g, " "))}</div><div>${esc(typeof v === "object" && v !== null ? JSON.stringify(v) : v)}</div>`).join("")}</div></details>
+    <div class="small faint" style="margin-top:14px">Canlı soru: <span class="mono">python3 code/scripts/interview.py --run ${esc(runId)} --persona ${esc(pid)} "soru"</span></div>`;
+  return h;
+}
+function callHtml(c, title) {
+  const fails = c.failed_attempts || [];
+  return `<div class="callh">${esc(title)} <span class="faint mono" style="font-weight:400">${esc(c.model)} · deneme ${esc(c.attempt ?? 1)}</span></div>
+    ${fails.length ? `<div class="note small">Önceki geçersiz denemeler: ${fails.map((f) => `${esc(f.attempt)}. ${esc(f.error_type)}`).join(", ")}</div>` : ""}
+    <pre>${esc(c.response)}</pre>
+    <details><summary>Gönderilen prompt (${fmtNum((c.prompt || "").length)} karakter)</summary><pre>${esc(c.prompt)}</pre></details>`;
+}
+async function toggleCall(btn) {
+  const box = btn.nextElementSibling;
+  if (box.innerHTML) { box.innerHTML = ""; btn.textContent = "Modelin cevabını göster"; return; }
+  btn.textContent = "Gizle";
+  box.innerHTML = `<div class="faint small">Yükleniyor…</div>`;
+  const ids = btn.dataset.ids.split(",");
+  try {
+    const cs = await Promise.all(ids.map((id) => api(`/api/call?run=${enc(btn.dataset.run)}&id=${enc(id)}`)));
+    box.innerHTML = cs.map((c, i) => callHtml(c, ids.length > 1 ? (i === 0 ? "2. tur (son karar)" : "1. tur") : "Model cevabı")).join("");
+  } catch (e) { box.innerHTML = `<div class="err small">${esc(e.message)}</div>`; }
 }
 
-// ------------------------------------------------------------ docs + markdown
+// ------------------------------------------------------------ Karşılaştır
+function defaultPair() {
+  const runs = (window.TALP && TALP.runs) || [];
+  const has = (id) => runs.some((r) => r.id === id);
+  const byId = (id) => runs.find((r) => r.id === id);
+  const dir = (id) => String(id).split("/").slice(0, -1).join("/");
+  const counterpart = (id, want) => {
+    const r = byId(id); if (!r) return null;
+    const seg = id.split("/").pop();
+    const guess = dir(id) + "/" + (want === "nodecision" ? seg.replace(/^plan(_nosurprises)?/, "nodecision") : seg.replace(/^nodecision/, "plan"));
+    if (guess !== id && has(guess) && byId(guess).type === want) return guess;
+    const same = runs.filter((x) => x.type === want && dir(x.id) === dir(id));
+    return ((same.find((x) => x.seed === r.seed) || same[0] || runs.find((x) => x.type === want)) || {}).id || null;
+  };
+  const cur = byId(S.run);
+  if (cur && cur.type === "nodecision") return [counterpart(cur.id, "plan"), cur.id];
+  if (cur) return [cur.id, counterpart(cur.id, "nodecision")];
+  return [(runs.find((r) => r.type === "plan") || {}).id, (runs.find((r) => r.type === "nodecision") || {}).id];
+}
+function fmtDelta(k, v) {
+  if (v == null) return "–";
+  const d = k === "goal_3b" ? 0 : 2;
+  return (v > 0 ? "+" : v < 0 ? "−" : "±") + fmtNum(Math.abs(v), d) + (k === "goal_1" || k === "goal_2" ? " puan" : "");
+}
+VIEWS.karsilastir = async () => {
+  const runs = (window.TALP && TALP.runs) || [];
+  if (!runs.length) return noRun();
+  let [a, b] = S.arg.length >= 2 ? S.arg : defaultPair();
+  const opts = (sel) => `<option value="">— seç —</option>` + runs.map((r) => `<option value="${esc(r.id)}" ${r.id === sel ? "selected" : ""}>${esc(shortId(r.id))}${r.type ? " · " + esc(r.type) : ""}</option>`).join("");
+  const pick = `<div class="toolbar"><label class="small muted">A <select data-cmp="a" style="max-width:300px">${opts(a)}</select></label><span class="faint">vs</span><label class="small muted">B <select data-cmp="b" style="max-width:300px">${opts(b)}</select></label></div>`;
+  const sweepHtml = await sweepBlock().catch((e) => `<div class="err small">Sweep okunamadı: ${esc(e.message)}</div>`);
+  if (!a || !b) return pick + `<div class="card empty">Karşılaştırmak için iki run seç.</div>` + sweepHtml;
+  const [A, B] = await Promise.all([runApi(a), runApi(b)]);
+  const ma = A.metrics || {}, mb = B.metrics || {};
+  const rowsG = GOALS.map(([k, lbl, unit, dd, up]) => {
+    const x = ma[k], y = mb[k], dl = x != null && y != null ? x - y : null;
+    const better = dl == null || Math.abs(dl) < 1e-9 ? "faint" : (dl > 0) === up ? "ok" : "no";
+    return `<tr><td>${lbl}<div class="small faint">hedef ${esc(tgtText(A.targets, k))}</div></td><td class="num ${okCls(goalOk(k, x, A.targets))}">${fmtNum(x, dd)}${unit}</td><td class="num ${okCls(goalOk(k, y, B.targets))}">${fmtNum(y, dd)}${unit}</td><td class="num ${better}"><b>${fmtDelta(k, dl)}</b></td></tr>`;
+  }).join("");
+  const ser = (D, k) => ((D.weekly_metrics || {}).weeks || []).map((w) => [w.week, w[k] ?? null]);
+  const cA = cssVar("--accent"), cB = cssVar("--g3");
+  const nA = "A · " + shortId(a), nB = "B · " + shortId(b);
+  const markers = weekMarkers(A.announcements, (A.run || {}).decisions);
+  const chart = (k, title) => `<div class="card"><div class="small" style="font-weight:600;margin-bottom:6px">${title}</div>${legend([{ name: nA, color: cA }, { name: nB, color: cB, dash: true }])}
+    ${lineChart({ series: [{ name: nA, color: cA, points: ser(A, k) }, { name: nB, color: cB, dash: true, points: ser(B, k) }], unit: "%", markers, height: 230, targets: [{ v: tgtNum(A.targets, k), color: cssVar("--faint"), label: `hedef ${tgtNum(A.targets, k)}` }] })}</div>`;
+  // personas that end the run differently
+  const WA = indexWeekly(A.weekly), WB = indexWeekly(B.weekly), la = lastWeekOf(A.weekly), lb = lastWeekOf(B.weekly);
+  const common = A.personas.filter((p) => B.personas.some((q) => q.id === p.id));
+  const diffs = common.map((p) => {
+    const x = (WA[p.id] || {})[la], y = (WB[p.id] || {})[lb];
+    return { p, x, y, diff: (x && x.status) !== (y && y.status) || (x && x.money) !== (y && y.money) };
+  }).filter((r) => r.diff);
+  const lab = (r) => r ? `<span class="st ${stc(r.status)}">${esc(STATUS_TR[r.status] || r.status)}</span> <span class="muted small">${esc(MONEY_TR[r.money] || r.money)}</span>` : `<span class="faint">–</span>`;
+  const costA = (A.budget || {}).total, costB = (B.budget || {}).total;
+  return `${pick}
+    <div class="sec">Hedefler <span class="hint">A − B · yeşil = A daha iyi</span></div>
+    <div class="tw"><table><thead><tr><th>Hedef</th><th class="num">A</th><th class="num">B</th><th class="num">Fark</th></tr></thead><tbody>${rowsG}
+      <tr><td>Karar maliyeti</td><td class="num">${(A.run.decisions || []).length ? fmtUsd(costA) : "karar yok"}</td><td class="num">${(B.run.decisions || []).length ? fmtUsd(costB) : "karar yok"}</td><td></td></tr></tbody></table></div>
+    <div class="sec">Hafta hafta</div>
+    <div class="stack">${chart("goal_1", "Aktif müşteri %")}${chart("goal_2", "Mevduat %")}</div>
+    <div class="sec">Son haftada farklı olan personalar <span class="hint">${diffs.length} / ${common.length}</span></div>
+    ${!common.length ? `<div class="card muted small">İki run farklı persona setleri kullanıyor; persona bazında karşılaştırılamaz.</div>` : diffs.length ? `<div class="tw"><table><thead><tr><th>Persona</th><th>A</th><th>B</th></tr></thead><tbody>${diffs.map((r) => `<tr class="click" data-act="persona" data-run="${esc(a)}" data-pid="${esc(r.p.id)}"><td><b>${esc(r.p.name || r.p.id)}</b> <span class="faint small">${esc(r.p.id)}</span></td><td>${lab(r.x)}</td><td>${lab(r.y)}</td></tr>`).join("")}</tbody></table></div>` : `<div class="card muted small">Son haftada bütün personalar iki run'da aynı yerde.</div>`}
+    ${sweepHtml}`;
+};
+function ticks(met) { return GOALS.map(([k, l]) => met[k] == null ? `<span class="faint" title="${l}">·</span>` : met[k] ? `<span class="ok" title="${l}: tuttu">✓</span>` : `<span class="no" title="${l}: tutmadı">✗</span>`).join(""); }
+async function sweepBlock() {
+  const L = await api("/api/sweeps");
+  if (!L.sweeps.length) return "";
+  const name = L.sweeps.some((s) => s.name === S.sweep) ? S.sweep : L.default;
+  const SW = await api(`/api/sweep?name=${enc(name)}`);
+  const rec = SW.recommendation;
+  const recV = rec && SW.variants.find((v) => v.variant === rec.variant);
+  const picker = L.sweeps.length > 1 ? `<select data-sweep style="max-width:240px">${L.sweeps.map((s) => `<option value="${esc(s.name)}" ${s.name === name ? "selected" : ""}>${esc(s.name)}</option>`).join("")}</select>` : `<span class="hint">${esc(name)}</span>`;
+  const notes = [];
+  if (rec && rec.no_gain) notes.push("Karar vermek kararsız kalmaktan daha iyi görünmüyor.");
+  if (rec && rec.equivalent.length > 1) notes.push(`${rec.equivalent.length} plan seed gürültüsü (${fmtNum(rec.noise, 1)} puan) içinde eşdeğer; ucuz olan öneriliyor.`);
+  if (rec && rec.single_seed) notes.push("Tek seed'li varyant var, temkinli oku.");
+  const rows = SW.variants.map((v) => `<tr class="click ${recV && v.variant === recV.variant ? "hl" : ""}" data-act="variant" data-v="${esc(v.variant)}">
+    <td class="num faint">${v.rank ?? ""}</td>
+    <td><b>${esc(v.label)}</b>${recV && v.variant === recV.variant ? ` <span class="tag acc">öneri</span>` : ""}${v.baseline ? ` <span class="tag">baz</span>` : ""}<div class="small faint">${v.decisions.length ? v.decisions.map((x) => `${esc(x.week)}. hf`).join(" · ") : "karar yok"} · ${v.seeds.length} seed</div></td>
+    <td style="letter-spacing:2px;white-space:nowrap">${ticks(v.met || {})}</td>
+    <td class="num">${v.baseline ? "–" : fmtUsd(v.cost)}</td>
+    <td class="num ${okCls((v.met || {}).goal_1)}">${fmtNum((v.goals.goal_1 || {}).mean, 1)}</td>
+    <td class="num ${okCls((v.met || {}).goal_2)}">${fmtNum((v.goals.goal_2 || {}).mean, 1)}</td>
+    <td class="num"><b>${fmtNum(v.gap_total, 1)}</b></td></tr>`).join("");
+  S.sweepData = SW;
+  return `<div class="sec">Plan taraması ${picker}</div>
+    ${recV ? `<div class="card" style="margin-bottom:12px"><span class="eyebrow">Öneri</span> <b>${esc(recV.label)}</b> <span class="muted">· ${recV.met_count}/4 hedef · ${fmtUsd(recV.cost)}</span>${notes.length ? `<div class="small muted" style="margin-top:4px">${notes.map(esc).join(" ")}</div>` : ""}</div>` : ""}
+    <div class="tw"><table><thead><tr><th></th><th>Plan</th><th>Hedefler</th><th class="num">Maliyet</th><th class="num">Aktif %</th><th class="num">Mevduat %</th><th class="num" title="Hedeflere toplam uzaklık, 0 = hepsi tuttu">Açık</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="small faint" style="margin-top:8px">Seed ortalaması. Sıralama: önce tutan hedef sayısı, sonra toplam açık, sonra maliyet. Satıra tıkla: kararlar ve run'lar.</div>`;
+}
+function variantPanel(vname) {
+  const SW = S.sweepData; if (!SW) return;
+  const v = SW.variants.find((x) => x.variant === vname); if (!v) return;
+  showPanel(`<div class="small muted">Plan taraması · ${esc(SW.name)}</div><h2>${esc(v.label)}</h2>
+    <div class="muted small">${v.met_count}/4 hedef · açık ${fmtNum(v.gap_total, 1)} puan · ${v.baseline ? "kararsız baz" : fmtUsd(v.cost)}</div>
+    <h3>Hedefler (seed ortalaması, min–maks)</h3>
+    <table class="probe"><tbody>${GOALS.map(([k, l, u, dd]) => { const g = v.goals[k] || {}; return `<tr><td>${l}</td><td class="num ${okCls((v.met || {})[k])}"><b>${fmtNum(g.mean, dd)}${u}</b></td><td class="num faint">${g.n > 1 ? `${fmtNum(g.min, dd)}–${fmtNum(g.max, dd)}` : ""}</td></tr>`; }).join("")}</tbody></table>
+    <h3>Kararlar</h3>${decCards(v.decisions, null)}
+    <h3>Run'lar</h3><div class="evs">${Object.entries(v.runs).map(([s, id]) => `<button class="ev" data-act="setrun" data-id="${esc(id)}">seed ${esc(s)} → Özet'te aç</button>`).join("")}</div>`);
+}
+
+// ------------------------------------------------------------ Kayıtlar (logs, docs, files)
+const SUBS = [["loglar", "LLM çağrıları"], ["belgeler", "Belgeler"], ["dosyalar", "Run dosyaları"]];
+VIEWS.kayitlar = async () => {
+  const sub = SUBS.some(([k]) => k === S.arg[0]) ? S.arg[0] : "loglar";
+  const tabs = `<div class="seg sm" style="margin-bottom:18px">${SUBS.map(([k, t]) => `<button class="${k === sub ? "on" : ""}" data-act="sub" data-sub="${k}">${t}</button>`).join("")}</div>`;
+  if (sub === "belgeler") return tabs + await docsBody(S.arg[1] || "plan");
+  if (!S.run) return tabs + noRun();
+  if (sub === "dosyalar") return tabs + await filesBody();
+  const html = tabs + await logsBody();
+  return [html, () => { if (S.arg[1]) callPanel(S.run, S.arg[1]); }];
+};
+async function logsBody() {
+  const lf = S.lf;
+  const L = await api(`/api/log?run=${enc(S.run)}&q=${enc(lf.q)}`);
+  const calls = L.calls.filter((c) => (!lf.persona || String(c.persona) === lf.persona) && (!lf.week || String(c.week) === lf.week) && (!lf.failed || c.valid === false));
+  const uniq = (k) => [...new Set(L.calls.map((c) => c[k]).filter((x) => x != null))].sort((x, y) => typeof x === "number" ? x - y : String(x).localeCompare(String(y), "tr", { numeric: true }));
+  const sel = (k, lbl) => `<select data-lf="${k}"><option value="">${lbl}: hepsi</option>${uniq(k).map((o) => `<option value="${esc(o)}" ${String(o) === lf[k] ? "selected" : ""}>${lbl}: ${esc(o)}</option>`).join("")}</select>`;
+  const fail = L.calls.filter((c) => c.valid === false).length, LIM = 400;
+  return `<div class="toolbar">${sel("persona", "Persona")}${sel("week", "Hafta")}
+      <label class="small"><input type="checkbox" data-lf="failed" ${lf.failed ? "checked" : ""}> yalnız geçersiz</label>
+      <input type="search" id="lq" placeholder="Prompt/cevapta ara (Enter)" value="${esc(lf.q)}">
+      <span class="spacer"></span><span class="small muted">${fmtNum(calls.length)} / ${fmtNum(L.calls.length)} deneme · <span class="${fail ? "no" : ""}">${fail} geçersiz</span></span></div>
+    <div class="tw tall"><table><thead><tr><th>Persona</th><th class="num">Hafta</th><th class="num">Tur</th><th>Durum</th><th>Model</th><th class="num">sn</th></tr></thead><tbody>
+    ${calls.slice(0, LIM).map((c) => `<tr class="click" data-act="logcall" data-id="${esc(c.id)}"><td>${esc(c.persona ?? "–")}</td><td class="num">${esc(c.week ?? "–")}</td><td class="num">${esc(c.round ?? "–")}</td><td>${c.valid !== false ? `<span class="tag good">ok</span>${(c.attempt || 1) > 1 ? ` <span class="faint small">${c.attempt}. deneme</span>` : ""}` : `<span class="tag bad">${esc(c.error_type || "hata")}</span>`}</td><td class="small muted">${esc(c.model)}</td><td class="num">${fmtNum(c.elapsed_seconds, 1)}</td></tr>`).join("") || `<tr><td colspan="6" class="empty">Kayıt yok.</td></tr>`}
+    </tbody></table></div>${calls.length > LIM ? `<div class="small faint" style="margin-top:6px">İlk ${LIM} gösteriliyor; filtreyle daralt.</div>` : ""}`;
+}
+async function callPanel(runId, id) {
+  const t = showPanel(`<div class="loading">Yükleniyor…</div>`, ["kayitlar", "loglar", id], ["kayitlar", "loglar"]);
+  try {
+    const c = await api(`/api/call?run=${enc(runId)}&id=${enc(id)}`);
+    const meta = [["persona", c.persona], ["hafta", c.week], ["tur", c.round], ["deneme", c.attempt], ["geçerli", c.valid === false ? "hayır" : "evet"], ["hata", c.error_type ? `${c.error_type} (${c.error_stage || ""})` : null], ["model", c.model], ["seed", c.seed], ["süre", c.elapsed_seconds != null ? fmtNum(c.elapsed_seconds, 2) + " sn" : null]].filter(([, v]) => v != null);
+    fillPanel(t, `<div class="small muted">LLM çağrısı · ${esc(shortId(runId))}</div><h2 class="mono" style="font-size:15px">${esc(c.id)}</h2>
+      <div class="kv" style="margin:12px 0">${meta.map(([k, v]) => `<div>${k}</div><div>${esc(v)}</div>`).join("")}</div>
+      <h3>Cevap</h3><pre>${esc(c.response)}</pre>
+      <h3>Prompt <span class="faint" style="text-transform:none;letter-spacing:0;font-weight:400">${fmtNum((c.prompt || "").length)} karakter</span></h3><pre>${esc(c.prompt)}</pre>`);
+  } catch (e) { fillPanel(t, `<div class="err">${esc(e.message)}</div>`); }
+}
+async function docsBody(name) {
+  const [C, D] = await Promise.all([api("/api/config"), api("/api/docs")]);
+  const docs = Object.keys(D.docs || {}).filter((n) => D.docs[n] != null);
+  const items = [["plan", "plan.json"], ["surprises", "Sürprizler"], ...docs.map((n) => [n, n.replace(/\.md$/, "")])];
+  if (!items.some(([k]) => k === name)) name = "plan";
+  const chips = `<div class="evs" style="margin:0 0 16px">${items.map(([k, t]) => `<button class="ev ${k === name ? "dec" : ""}" data-act="doc" data-doc="${esc(k)}">${esc(t)}</button>`).join("")}</div>`;
+  let body;
+  if (name === "plan") body = C.plan == null ? `<div class="note">code/config/decisions/plan.json yok veya okunamadı.</div>` : `${decCards(C.plan, C.plan_budget)}<details style="margin-top:12px"><summary>Ham JSON</summary><pre>${esc(JSON.stringify(C.plan, null, 2))}</pre></details>`;
+  else if (name === "surprises") body = (C.surprises || []).length ? `<div class="stack">${C.surprises.map((s) => { const x = s.data || {}; return `<div class="card"><div class="runhead"><b>${esc(annTitle(x))}</b><span class="tag">${esc(x.week)}. hafta</span></div><div class="md small" style="margin-top:6px">${md(x.text)}</div>${x.update ? `<div class="small muted">Güncelleme · ${esc(x.update.week)}. hafta</div><div class="md small">${md(x.update.text)}</div>` : ""}<div class="small faint mono">${esc(s.file)}</div></div>`; }).join("")}</div>` : `<div class="card empty">Henüz dashboard duyurusu yok.</div>`;
+  else body = `<div class="card md">${md(D.docs[name])}</div>`;
+  return chips + body;
+}
+async function filesBody() {
+  const d = await runApi(S.run);
+  const ms = d.messages || [], m = d.metrics || {};
+  const nm = (x) => (d.personas.find((q) => q.id === x) || {}).name || x;
+  const dt = d.decision_targets || {};
+  return `<div class="evs" style="margin-top:0">${d.files.map((f) => `<a class="ev" href="/api/raw?run=${enc(S.run)}&file=${enc(f.name)}" target="_blank" rel="noopener">${esc(f.name)} <span class="faint">${fmtNum(f.size / 1024, 0)} KB</span></a>`).join("")}</div>
+    <div class="sec">Ağızdan ağıza <span class="hint">${ms.length} persona mesajı</span></div>
+    ${ms.length ? `<div class="tw tall"><table><thead><tr><th class="num">Hf</th><th>Kimden → kime</th><th>Metin</th></tr></thead><tbody>${ms.map((x) => `<tr><td class="num">${x.week}</td><td class="small" style="white-space:nowrap">${esc(nm(x.author))} → ${x.target ? esc(nm(x.target)) : esc(x.channel)}</td><td class="small">${esc(x.text)}</td></tr>`).join("")}</tbody></table></div>` : `<div class="muted small">Bu run'da persona mesajı yok.</div>`}
+    <div class="sec">Personalara ulaşan haftalık bilgi</div>
+    ${(d.feed || []).length ? `<div class="tw tall"><table><thead><tr><th class="num">Hf</th><th>Satır <span class="faint">(kaç persona gördü)</span></th></tr></thead><tbody>${d.feed.map((w) => `<tr><td class="num">${w.week}</td><td class="small"><div class="faint">${esc(w.title)}${w.word_of_mouth ? ` · ${w.word_of_mouth} ağızdan ağıza mesaj` : ""}</div>${w.lines.map((l) => `<div style="margin-top:3px">${esc(l.text)} <span class="faint">(${l.personas})</span></div>`).join("")}</td></tr>`).join("")}</tbody></table></div>` : `<div class="muted small">Prompt'lardan akış okunamadı.</div>`}
+    ${Object.keys(dt).length ? `<div class="sec">Karar hedefleri</div><div class="card kv">${Object.entries(dt).map(([k, v]) => `<div>${esc(k)}</div><div>${esc((v || []).join(", "))} <span class="faint">(${(v || []).length})</span></div>`).join("")}</div>` : ""}
+    <div class="sec">Metrik notları</div>
+    <div class="card small">${(m.units ? Object.entries(m.units).map(([k, v]) => `<div><b>${esc(k)}</b> <span class="muted">${esc(v)}</span></div>`).join("") : "")}
+      ${(m.assumptions || []).length ? `<details style="margin-top:8px"><summary>Varsayımlar (${m.assumptions.length})</summary><pre>${esc(m.assumptions.join("\n\n"))}</pre></details>` : ""}
+      ${(m.notes || []).length ? `<details><summary>Notlar (${m.notes.length})</summary><pre>${esc(m.notes.join("\n"))}</pre></details>` : ""}
+      <div class="faint" style="margin-top:6px">${fmtNum((d.call_stats || {}).calls)} model denemesi · ${fmtNum((d.call_stats || {}).failed)} geçersiz · ${fmtNum((d.call_stats || {}).retries)} tekrar</div></div>`;
+}
+
+// ------------------------------------------------------------ markdown (docs)
 function inlineMd(s) {
   let t = esc(s);
   const codes = [];
@@ -1013,7 +790,7 @@ function md(src) {
       const cells = (r) => r.trim().replace(/^\||\|$/g, "").split("|").map((c) => c.trim());
       const hd = cells(l); i += 2; const body = [];
       while (i < lines.length && isTable(lines[i])) body.push(cells(lines[i++]));
-      out += `<div class="tablewrap" style="margin:10px 0"><table><thead><tr>${hd.map((c) => `<th>${inlineMd(c)}</th>`).join("")}</tr></thead><tbody>${body.map((r) => `<tr>${r.map((c) => `<td>${inlineMd(c)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+      out += `<div class="tw" style="margin:10px 0"><table><thead><tr>${hd.map((c) => `<th>${inlineMd(c)}</th>`).join("")}</tr></thead><tbody>${body.map((r) => `<tr>${r.map((c) => `<td>${inlineMd(c)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
       continue;
     }
     if (/^\s*>/.test(l)) { const buf = []; while (i < lines.length && /^\s*>/.test(lines[i])) buf.push(lines[i++].replace(/^\s*>\s?/, "")); out += `<blockquote>${md(buf.join("\n"))}</blockquote>`; continue; }
@@ -1035,25 +812,58 @@ function md(src) {
   }
   return out;
 }
-async function viewDocs(name) {
-  const [C, D] = await Promise.all([api("/api/config"), api("/api/docs")]);
-  const docs = Object.keys(D.docs).filter((n) => D.docs[n] != null);
-  const tab = name || "plan";
-  const tabs = `<div class="tabs"><a href="#/docs/plan" class="${tab === "plan" ? "on" : ""}">plan.json</a><a href="#/docs/candidates" class="${tab === "candidates" ? "on" : ""}">Aday kararlar</a><a href="#/docs/surprises" class="${tab === "surprises" ? "on" : ""}">Sürprizler</a>${docs.map((n) => `<a href="#/docs/${enc(n)}" class="${tab === n ? "on" : ""}">${esc(n.replace(".md", ""))}</a>`).join("")}</div>`;
-  let body = "";
-  if (tab === "plan") {
-    body = C.plan == null ? `<div class="note">code/config/decisions/plan.json yok veya okunamadı.</div>` :
-      `<p class="lead">code/config/decisions/plan.json, şu anki hali.</p>${decisionsHtml(C.plan, C.plan_budget)}<details><summary>Ham JSON</summary><pre>${esc(JSON.stringify(C.plan, null, 2))}</pre></details>`;
-  } else if (tab === "candidates") {
-    body = (C.candidates || []).length ? C.candidates.map((c) => `<h2>${esc(c.file)}</h2>${Array.isArray(c.data) ? decisionsHtml(c.data, c.budget) : '<div class="err">Okunamadı.</div>'}`).join("") : `<div class="card empty">code/config/decisions/candidates/ boş.</div>`;
-  } else if (tab === "surprises") {
-    body = C.surprises.length ? C.surprises.map((s) => { const x = s.data || {}; return `<div class="box"><div class="bar" style="margin:0 0 6px"><b>${esc(x.title || s.file)}</b><span class="badge">${esc(x.week)}. hafta</span></div><pre>${esc(x.text)}</pre>${x.update ? `<div class="small muted">Güncelleme · ${esc(x.update.week)}. hafta</div><pre>${esc(x.update.text)}</pre>` : ""}<div class="small faint mono">${esc(s.file)}</div></div>`; }).join("") : `<div class="card empty">Henüz dashboard duyurusu yok.</div>`;
-  } else if (D.docs[tab] != null) body = `<div class="card md">${md(D.docs[tab])}</div>`;
-  else body = `<div class="note">docs/${esc(tab)} yok.</div>`;
-  setMain(`<h1>Belgeler</h1>${tabs}${body}`);
-}
 
-render();
+// ------------------------------------------------------------ events
+document.addEventListener("click", (e) => {
+  const el = e.target.closest("[data-act]");
+  if (!el) return;
+  const act = el.dataset.act;
+  if (act === "close") closePanel();
+  else if (act === "sec") go([el.dataset.sec]);
+  else if (act === "refresh") { cache.clear(); render(true); }
+  else if (act === "persona") openPersona(el.dataset.run || S.run, el.dataset.pid, +el.dataset.w || null, S.sec === "personalar" && !el.dataset.run);
+  else if (act === "call") toggleCall(el);
+  else if (act === "crisis") showPanel(`<div class="small muted">6. hafta · 7–13 Aralık</div><div class="md">${md(CRISIS_TEXT)}</div>`);
+  else if (act === "ann") {
+    const a = ((S.data || {}).announcements || [])[+el.dataset.i]; if (!a) return;
+    showPanel(`<div class="small muted">${esc(a.week)}. hafta · dashboard duyurusu</div><h2>${esc(annTitle(a))}</h2><div class="md">${md(a.text)}</div>${a.published_at ? `<div class="small faint">Yayın: ${esc(a.published_at)}</div>` : ""}`);
+  }
+  else if (act === "variant") variantPanel(el.dataset.v);
+  else if (act === "setrun") { hidePanel(); setHash(["ozet"]); if (window.TALP) TALP.setRun(el.dataset.id); }
+  else if (act === "sub") go(["kayitlar", el.dataset.sub]);
+  else if (act === "doc") go(["kayitlar", "belgeler", el.dataset.doc], true);
+  else if (act === "logcall") callPanel(S.run, el.dataset.id);
+});
+document.addEventListener("change", (e) => {
+  const t = e.target;
+  if (t.dataset.cmp) {
+    const a = $('[data-cmp="a"]').value, b = $('[data-cmp="b"]').value;
+    if (a && b) go(["karsilastir", a, b], true);
+  } else if (t.dataset.sweep != null && t.matches("select[data-sweep]")) { S.sweep = t.value; render(true); }
+  else if (t.dataset.lf) { S.lf[t.dataset.lf] = t.type === "checkbox" ? t.checked : t.value; render(true); }
+});
+document.addEventListener("input", (e) => { if (e.target.id === "pq") { S.q = e.target.value; filterPersonas(S.q); } });
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closePanel();
+  if (e.key === "Enter" && e.target.id === "lq") { S.lf.q = e.target.value; render(true); }
+});
+window.addEventListener("hashchange", () => render());
+let resizeT = 0;
+window.addEventListener("resize", () => {
+  clearTimeout(resizeT);
+  resizeT = setTimeout(() => {
+    const w = $("#body").clientWidth;
+    if ((S.sec === "ozet" || S.sec === "karsilastir") && Math.abs(w - S.width) > 60) render(true);
+  }, 200);
+});
+window.addEventListener("talp:run", (e) => {
+  S.run = e.detail.run;
+  S.lf = { persona: "", week: "", failed: false, q: "" };
+  if (S.sec === "karsilastir" || S.sec === "personalar") setHash([S.sec]);
+  else if (S.sec === "kayitlar") setHash(["kayitlar", S.arg[0] || "loglar"]);
+  render();
+});
+(window.TALP ? TALP.ready : Promise.resolve({ run: null })).then(({ run }) => { S.run = run; render(); });
 </script>
 </body>
 </html>
