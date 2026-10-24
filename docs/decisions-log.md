@@ -7,7 +7,10 @@ together, paid messages included: **$4.0M**. Costs are the CFO's estimates from
 Locking rules: a decision takes effect at the start of its week and must be locked before that week
 starts; nothing can be locked after 17:30. It can be replaced until its week starts.
 
-**Week-3 surprise C1 (unrecognized charges):** the earliest answer is week 4 → lock before **14:30**.
+**Week-3 surprise C1 (unrecognized charges):** the earliest answer was week 4 (lock before 14:30);
+we did not lock then. The week-4 update (14:30) gave the causes and the scale (about 9,000 customers,
+Cobalt not breached), so any answer now goes in **week 5 → lock before 15:00** and must use those
+facts: "we do not know the cause yet" would now be a misleading statement.
 
 **Deadlines that matter:** a decision that answers the week-6 migration must start in week 5 at the
 latest → lock it **before 15:00**. A decision for week 6 itself → before 15:30. The last moment for
@@ -27,7 +30,7 @@ answer to a surprise.
 | B2 | 7 | savers with large balances | Savings rate boost, new money only (+0.5 points) | push, email, in-app | $0.8M | Keep rate-chasing savers after the weekend at half the cost |
 | C1 | 5 | savers with large balances | Savings rate boost (+0.5 points) | push, email, in-app | $1.6M | Close the 0.5-point rate gap for the 4 weeks around the switch |
 | C2 | 7 | paycheck customers | Goodwill credit ($10 each) + Instant dispute credit (on) | push, in-app | $1.4M | Concrete sorry to those hit hardest, plus instant dispute credit |
-| D1 | 4 | everyone | Security pack (on) + Instant dispute credit (on) | push, email, in-app | $0.7M | Answer the week-3 unrecognized charges (C1) at once: say what we know and don't, instant credit, alerts, free card |
+| D1 | 5 | everyone | Security pack (on) + Instant dispute credit (on) | push, email, in-app | $0.7M | Answer C1 with the week-4 facts (processor double charges, fraud test charges on cards stolen elsewhere, not breached, ~9,000 customers), instant credit, alerts, free card; nothing promised about refunds |
 | D2 | 5 | everyone | Higher offline card limit (on) + Extra support staff (+50) | push, email, in-app | $0.35M | Migration notice with $250 offline and more support |
 
 | Plan | Decisions | Total |
@@ -35,7 +38,7 @@ answer to a surprise.
 | A: inform, cheap | A1 + A2 | $0.8M |
 | B: protect paycheck customers | B1 + B2 | $2.1M |
 | C: defend deposits | C1 + C2 | $3.0M |
-| D: fraud first (after C1, week 3) | D1 + D2 | $1.05M |
+| D: fraud first (after C1 and its week-4 update) | D1 + D2, both week 5 | $1.05M |
 
 ## How we test them (real model; each run is one engine run of 24 personas × 10 weeks)
 

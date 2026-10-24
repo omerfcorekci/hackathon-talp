@@ -1,6 +1,6 @@
 [
   {
-    "week": 4,
+    "week": 5,
     "target": "everyone",
     "actions": [
       {
@@ -12,13 +12,13 @@
         "level": "on"
       }
     ],
-    "message": "Some customers have seen small card charges they do not recognize. The charges are real and our security team is investigating with our card processor; we do not yet know the cause or how many accounts are affected, and we will tell you as soon as we do. Starting today: if you dispute a card charge, we credit up to $100 right away while we investigate, for the next 8 weeks. You can turn on an alert for every card payment and order a free new card in the app.",
+    "message": "Update on the card charges from Nov 16-17: our card processor confirmed a fault that charged some payments twice, and a small number of cards had fraud test charges of $0.50 to $2 after card numbers were stolen elsewhere, for example on a fake shopping site. Cobalt's own systems were not breached. About 9,000 customers were affected. Starting today, for 8 weeks: if you dispute a card charge, we credit up to $100 right away while we investigate. In the app you can turn on an alert for every card payment and order a free new card.",
     "channels": [
       "push",
       "email",
       "in-app"
     ],
-    "why": "The unrecognized charges and the 'Cobalt got hacked' post hit trust three weeks before the migration.\nInstant dispute credit and payment alerts give every customer a concrete way to protect themselves today.\nSaying what we know and do not know keeps us inside the no-misleading red line."
+    "why": "The week-4 facts are far smaller than the 'Cobalt got hacked' rumor, but many customers only heard the rumor.\nInstant dispute credit and payment alerts give every customer a concrete way to protect themselves before the migration.\nWe repeat only what the processor confirmed and promise nothing about refunds we cannot yet confirm."
   },
   {
     "week": 5,
