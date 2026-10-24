@@ -310,7 +310,7 @@ class MetricsTests(unittest.TestCase):
         self.assertEqual(result["follow_share"], {"a": 0.25, "b": 0.25, "c": 0.25})
         self.assertEqual(result["goal_1"], 76.19)  # (2.1M - 0.25 × 500k - 0.25 × 1.5M) / 2.1M
         self.assertEqual(result["goal_2"], 85.0)   # (4000 - 0.25 × 1000 × 0.4 - 0.25 × 2000) / 4000
-        self.assertEqual(result["goal_3"], 4.26)   # (966,000 + 1,000 + 60,000) / (210,000 + 1,000 + 30,000)
+        self.assertEqual(result["goal_3"], 4.41)   # c's two ratings count once: (966,000 + 1,000 + 30,000) / 226,000
         self.assertEqual(result["goal_3b"], 15_186.7)  # window 2-5: 120 + c once (1% × 1.5M) + a (1% × 100k / 15)
         self.assertEqual(result["weeks_completed"], 10)
         # Window 1-4: b took a complaint to the CFPB, a complained to Cobalt (1/15 of it reaches the CFPB).
@@ -419,6 +419,16 @@ class MetricsTests(unittest.TestCase):
                         row.update(change)
                 value = metrics.compute_metrics(personas, weekly)[goal]
                 self.assertTrue(low <= value <= high, (person["id"], change, value))  # E1 is the extreme
+
+    def test_a_persona_counts_with_its_latest_rating_only(self):
+        personas = self.real_personas()
+        weekly = [row for p in personas for row in week_rows(p["id"])]
+        for row in weekly:
+            if row["persona"] == "E1" and row["week"] in (6, 7, 8):
+                row["app_rating"] = {6: 1, 7: 1, 8: 5}[row["week"]]
+        result = metrics.compute_metrics(personas, weekly)
+        self.assertEqual(result["goal_3"], 4.61)  # (966,000 + 4,000 × 5) / 214,000: the week-8 5 replaces the 1s
+        self.assertEqual(result["series"]["rated_personas"], 1)
 
     def test_a_bank_wide_wave_crosses_the_board_lines(self):
         personas = self.real_personas()
