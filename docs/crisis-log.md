@@ -118,3 +118,49 @@ Who hears the text is the engine's seeded reach draw (app-daily users, social-me
 - the week-4 update is an `update` on the same file: its text reaches personas by the same reach draw
   from week 4, so some keep the week-3 rumor without hearing the correction.
 
+---
+
+## C0 outcome: the switch ran about four hours late (announced week 7, 16:00)
+
+**Announcement (verbatim, "Known crisis outcome, week 7, 16:00"):** The core banking switch ended on Sunday, December 13 at 16:10 Central Time, about four hours late. Card payments kept working offline. Transfers queued on Saturday went through by Sunday night.
+
+**Our reading:** a moderate overrun. The harm is concrete for anyone whose weekend commitment needed the
+system back by Sunday noon: an autopay or payout due on Sunday now lands at 16:00, past some payees'
+cutoffs. Offline card payments and queued transfers limit the damage. Customers who were told
+"some hours" got roughly what was promised.
+
+**Simulation input:** it is the outcome of the known crisis, so it sits in `code/config/world.json` and
+is in all five runs, `plan_nosurprises` included: `migration.overrun_hours` = 4 (the engine states
+each persona's weekend facts with the system back at Sunday 16:00) and a week-7 calendar event with the
+text word for word.
+
+---
+
+## C2: Government shutdown (announced week 7, 16:00)
+
+**Announcement (verbatim):** **Government shutdown.** Overnight, Congress missed its funding deadline, and parts of the federal government shut down. Some federal workers have been sent home; others, such as air traffic controllers and TSA officers, must keep working without pay. Nobody knows how long it will last.
+
+Known: Social Security payments and the Postal Service continue.
+Not known: how long it will last; when federal workers will be paid; which services will slow down.
+
+Some of Cobalt's paycheck customers work for the federal government or its contractors. Their next federal paycheck is due on December 30.
+
+**What is known / unknown:** a shutdown of unknown length; federal and contractor pay at risk; the next
+federal paycheck is Dec 30 (week 9). Unknown: how many Cobalt customers, how long, back pay.
+
+**Our reading:**
+- Size: federal civilians and contractors are a few percent of US workers, so roughly 10–15k of
+  Cobalt's 310k paycheck customers. Small for the bank, severe for them: paycheck-to-paycheck people
+  with rent and Christmas bills and no pay date.
+- How people act: they cut spending, look for short-term credit, ask the bank for help; anger turns
+  on the bank only if it charges fees or says nothing. Everyone else mostly hears it as news.
+- Earliest answer: a decision in **week 8 (lock before 16:30)**. Matching menu item: the zero-interest
+  advance up to $500 (≤ 20k customers, $0.4M), which fits the group's size.
+
+**Simulation input:** `code/config/surprises/c2_week7_government_shutdown.json`, text word for word,
+reaching personas by the seeded reach draw. None of our 24 personas is a federal worker; `effects`
+make one of them hit: P2 Marcus Bell (HVAC technician at a contractor, paycheck to paycheck) is sent
+home without pay from federal jobs in week 7, marked as something that went wrong. P2 stands for
+55,000 customers, about four times our estimate of those affected; the follow share brings his
+weight in the metrics closer. With surprises off, the text and the effect vanish.
+

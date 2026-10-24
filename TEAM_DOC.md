@@ -94,6 +94,12 @@ Details and the verbatim texts: [`docs/crisis-log.md`](docs/crisis-log.md).
   and 7 minutes in weeks 3–4, and one persona (B5, standing for 7,000 customers) who finds a double
   charge. We first had three personas hit; they stood for about 307,000 customers, so we cut them to
   match the 9,000 in the update. With surprises off, texts and effects vanish together.
+- **C0 outcome (week 7).** The switch ended about four hours late; offline card payments worked and
+  queued transfers went through by Sunday night. As the known crisis's outcome it is in all five runs:
+  `overrun_hours` = 4 in `world.json` plus the text as a week-7 event.
+- **C2, government shutdown (week 7).** Small for the bank (roughly 10–15k paycheck customers), severe
+  for those hit: no pay date before Christmas bills. None of our personas is federal, so the effects
+  send P2 (a contractor's technician) home without pay. Earliest answer: week 8.
 - _Later announcements: add here as they arrive._
 
 ## Experiments
