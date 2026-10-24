@@ -1,0 +1,48 @@
+[
+  {
+    "week": 5,
+    "target": "everyone",
+    "actions": [
+      {
+        "action": "Security pack",
+        "level": "on"
+      },
+      {
+        "action": "Instant dispute credit",
+        "level": "on"
+      }
+    ],
+    "message": "Update on the card charges from Nov 16-17: our card processor confirmed a fault that charged some payments twice, and a small number of cards had fraud test charges of $0.50 to $2 after card numbers were stolen elsewhere, for example on a fake shopping site. Cobalt's own systems were not breached. About 9,000 customers were affected. Starting today, for 8 weeks: if you dispute a card charge, we credit up to $100 right away while we investigate. In the app you can turn on an alert for every card payment and order a free new card.",
+    "channels": [
+      "push",
+      "email",
+      "in-app"
+    ],
+    "why": "The week-4 facts are far smaller than the 'Cobalt got hacked' rumor, but many customers only heard the rumor.\nInstant dispute credit and payment alerts give every customer a concrete way to protect themselves before the migration.\nWe repeat only what the processor confirmed and promise nothing about refunds we cannot yet confirm."
+  },
+  {
+    "week": 5,
+    "target": "everyone",
+    "actions": [
+      {
+        "action": "Higher offline card limit during the migration",
+        "level": "on"
+      },
+      {
+        "action": "Extra support staff",
+        "level": "+50"
+      },
+      {
+        "action": "Savings rate boost, new money only",
+        "level": "+0.5 points"
+      }
+    ],
+    "message": "On Sat Dec 12, 00:00 to Sun Dec 13, 12:00 CT, Cobalt moves to a new core banking system. For those 36 hours the app is read-only: you can see your balance, but transfers, P2P payments and new cards are paused. Your card keeps working offline up to $250 per payment that weekend, and we added support staff. If something goes wrong the switch can take some hours longer; we will post updates in the app. For the next 4 weeks, new money you add to savings earns 0.5 points more, on balances up to $50,000.",
+    "channels": [
+      "push",
+      "email",
+      "in-app"
+    ],
+    "why": "Tell customers early and plainly what the migration weekend means.\nThe $250 offline limit covers most weekend card spending while transfers are paused.\nDeposits are the goal at risk: a new-money rate boost answers rivals' 'switch before December 12' offers at half the cost."
+  }
+]
