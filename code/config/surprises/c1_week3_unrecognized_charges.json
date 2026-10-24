@@ -17,6 +17,14 @@
           "id": "B5"
         },
         "text": "A $4.50 payment on your Cobalt business card shows up twice; you only paid once and do not know why. A market customer asked you whether paying on your Cobalt card reader is safe."
+      },
+      {
+        "week": 3,
+        "unless": {
+          "id": "B5"
+        },
+        "went_wrong": false,
+        "text": "Your own recent Cobalt card payments are all ones you made: none of the unrecognized charges is on your card."
       }
     ]
   },
