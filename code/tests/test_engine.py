@@ -187,6 +187,16 @@ class WorldTests(unittest.TestCase):
             self.assertIn("migration-window", prompt)
             self.assertNotIn("early_pay_days", prompt)
 
+    def test_history_shows_stretches_of_status_not_a_column_of_weeks(self):
+        world = World(WORLD, self.plan, decisions_enabled=False)
+        ledger = [{"week": w, "status": s, "money": m, "balance": None, "actions": ["UNIQUE_ACTION"], "call": "x"}
+                  for w, s, m in ((1, "main bank", "kept"), (2, "main bank", "kept"), (3, "second bank", "moved some"))]
+        prompt = build_prompt(persona=self.people[0], week=4, round_number=1, prior_state=None, ledger=ledger,
+                              world=world, network=self.network, inbox=[])
+        self.assertIn("- Weeks 1-2: main bank, money kept.\n- Week 3: second bank, money moved some.", prompt)
+        self.assertNotIn("UNIQUE_ACTION", prompt)
+        self.assertNotIn("Most weeks little changes", prompt)
+
     def test_surprise_updates_do_not_arrive_early(self):
         surprise = {"id": "s", "week": 3, "text": "ORIGINAL_UNIQUE_NOTICE",
                     "update": {"week": 4, "text": "UPDATED_UNIQUE_NOTICE"}}
@@ -279,6 +289,17 @@ class SchemaTests(unittest.TestCase):
         for value in cases:
             with self.subTest(value=value), self.assertRaises(ValueError):
                 self.parse(value)
+
+    def test_money_moved_out_cannot_come_back_as_kept(self):
+        for so_far, ok, refused in (("moved some", ("moved some", "moved most"), ("kept",)),
+                                    ("moved most", ("moved most",), ("kept", "moved some")),
+                                    (None, ("kept",), ())):
+            for money in ok:
+                self.assertEqual(parse_turn(json.dumps(answer(money=money)), contacts=set(), groups=set(),
+                                            money_so_far=so_far)["money"], money)
+            for money in refused:
+                with self.assertRaises(ValueError):
+                    parse_turn(json.dumps(answer(money=money)), contacts=set(), groups=set(), money_so_far=so_far)
 
     def test_second_round_cannot_erase_completed_actions(self):
         previous = answer(actions=["called_support"], complaint="bank", app_rating=2)

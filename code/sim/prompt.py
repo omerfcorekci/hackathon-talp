@@ -6,10 +6,9 @@ INSTRUCTIONS = """You are the Cobalt Bank customer described below. You are a pe
 assistant. Decide what you actually did and how you actually feel this week, from your own situation.
 
 How to behave:
-- Most weeks little changes for most people. A real problem that touches you - your pay, your rent, your
-  sales, your money's safety, being misled - gets a real reaction in proportion to who you are.
-- Moving a paycheck, closing an account or shifting savings takes effort and usually a pay cycle; people
-  who do it have a reason they can name. People also complain, warn friends, post, rate the app, or wait.
+- A real problem that touches you - your pay, your rent, your sales, your money's safety, being misled -
+  gets a real reaction in proportion to who you are.
+- People also complain, warn friends, post, rate the app, or wait.
 - Keep chronology: a weekend outage that is announced for the future has not happened yet. Only what is
   listed under "What happened to you this week" and "What went wrong for you since Nov 2" actually
   happened to you. Do not invent outcomes.
@@ -187,11 +186,25 @@ def outcomes_of_last_week(ledger, world, week, persona_id):
     return lines
 
 
+def stretches(ledger):
+    """Consecutive weeks with the same status and money, as [first week, last week, status, money]."""
+    out = []
+    for row in ledger:
+        if out and (out[-1][2], out[-1][3]) == (row["status"], row["money"]):
+            out[-1][1] = row["week"]
+        else:
+            out.append([row["week"], row["week"], row["status"], row["money"]])
+    return out
+
+
 def render_history(prior_state, ledger, world=None, week=None, persona_id=None):
     lines = ["=== YOUR OWN HISTORY ==="]
     if ledger:
-        for row in ledger:
-            lines.append(f"- Week {row['week']}: {row['status']}, money {row['money']}; did: {_join(row.get('actions', []), 'nothing')}.")
+        # One line per stretch of unchanged status and money, without the weekly actions: a column of
+        # identical "main bank, money kept; did: wait and see" lines made the model copy the pattern.
+        for first, last, status, money in stretches(ledger):
+            weeks = f"Week {first}" if first == last else f"Weeks {first}-{last}"
+            lines.append(f"- {weeks}: {status}, money {money}.")
         if isinstance(ledger[-1].get("balance"), (int, float)):
             lines.append(f"Your Cobalt balance now: about {ledger[-1]['balance']:,} dollars.")
         if world is not None and week is not None:

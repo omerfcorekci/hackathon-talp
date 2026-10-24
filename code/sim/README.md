@@ -220,6 +220,10 @@ persona reported), with week and dates. It is recomputed from the same rules as 
 so it differs between plan and no-decision runs only through the decisions, and a grievance does not
 vanish when the persona's one-week memory moves on. The end check-in (week 11) gets the same list for
 the weeks the run covered, as `what_went_wrong_for_you_since_nov_2`.
+The response schema carries `propertyOrdering` with `reason` first, so the model says what happened
+before it picks a status (Gemini ignores the order of `properties`). The persona's own history shows one
+line per stretch of unchanged status and money, not one line per week with its actions. `money` is
+cumulative: an answer below the persona's previous week is rejected with the reason and retried.
 Validation also enforces: `heard_from` uses only bank / friend / rival / news / social
 media / none; `actions` uses the persona's listed wording; a persona that lists "post on
 social media" or "tell friends or family" must put what it said in `messages` (otherwise

@@ -64,11 +64,11 @@ class SimulationEngine:
         self.settings = settings
         self.transport = transport
 
-    def _validate(self, raw, persona, previous):
+    def _validate(self, raw, persona, previous, money_so_far=None):
         allowed = self.by_id[persona].get("actions_available") or None
         result = parse_turn(raw, contacts=self.network.contacts(persona),
                             groups=set(self.network.context(persona)["whatsapp_groups"]), previous=previous,
-                            allowed_actions=allowed)
+                            allowed_actions=allowed, money_so_far=money_so_far)
         if any(not self.network.enabled(persona, message["channel"]) for message in result["messages"]):
             raise ValueError("Cannot send through a disabled channel")
         return result
@@ -168,11 +168,12 @@ class SimulationEngine:
         async def evaluate(person):
             pid = person["id"]
             previous = first[pid].data if first is not None else None
+            money_so_far = ledgers[pid][-1]["money"] if ledgers[pid] else None
             prompt = build_prompt(persona=person, week=week, round_number=round_number,
                                   prior_state=states[pid], ledger=ledgers[pid], world=self.world,
                                   network=self.network, inbox=inboxes[pid], first_turn=previous)
             result = await model.turn(persona=pid, week=week, round_number=round_number, prompt=prompt,
-                                      validate=lambda raw: self._validate(raw, pid, previous))
+                                      validate=lambda raw: self._validate(raw, pid, previous, money_so_far))
             return pid, result
 
         return dict(await gather_or_cancel([evaluate(person) for person in people]))
