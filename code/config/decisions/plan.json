@@ -1,0 +1,23 @@
+[
+  {
+    "week": 5,
+    "target": "everyone",
+    "actions": [
+      {"action": "Security pack", "level": "on"},
+      {"action": "Higher offline card limit during the migration", "level": "on"}
+    ],
+    "message": "On Sat Dec 12, 00:00 to Sun Dec 13, 12:00 CT, Cobalt moves to a new core banking system. For those 36 hours the app is read-only: you can see your balance, but transfers, P2P payments and new cards are paused. Your card keeps working offline: we raised the limit to $250 per payment for that weekend. If something goes wrong the switch can take some hours longer; we will post updates in the app. Starting today you can turn on an alert for every card payment and order a free new card in the app.",
+    "channels": ["push", "email", "in-app"],
+    "why": "PLACEHOLDER, not locked: tell customers early and plainly what the migration weekend means.\nThe $250 offline limit covers most weekend card spending while transfers are paused.\nPayment alerts and a free card reassure fraud-wary customers before rivals' ads land."
+  },
+  {
+    "week": 7,
+    "target": "everyone",
+    "actions": [
+      {"action": "Instant dispute credit", "level": "on"}
+    ],
+    "message": "Thank you for your patience during our system move. For the next 8 weeks, if you dispute a card charge, we credit up to $100 to your account right away while we investigate. Open the transaction in the app and tap Dispute.",
+    "channels": ["push", "in-app"],
+    "why": "PLACEHOLDER, not locked: card disputes are the top complaint driver.\nInstant credit after the migration week targets App Store and CFPB complaints.\nCheap ($0.4M), leaving room in the $4M budget for a response to surprises."
+  }
+]

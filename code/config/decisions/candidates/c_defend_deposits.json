@@ -1,0 +1,39 @@
+[
+  {
+    "week": 5,
+    "target": "savers with large balances",
+    "actions": [
+      {
+        "action": "Savings rate boost",
+        "level": "+0.5 points"
+      }
+    ],
+    "message": "On Sat Dec 12, 00:00 to Sun Dec 13, 12:00 CT, Cobalt moves to a new core banking system. For those 36 hours the app is read-only: you can see your balance, but transfers, P2P payments and new cards are paused. To thank you for your patience, for the next 4 weeks we add 0.5 points to your savings rate on balances up to $50,000. The switch can run some hours longer; we will post updates in the app.",
+    "channels": [
+      "push",
+      "email",
+      "in-app"
+    ],
+    "why": "Half of deposits sit with large-balance savers, and our rate is 0.5 points below the best rivals.\nRivals know the migration date and will advertise that weekend.\nClosing the rate gap for 4 weeks covers the weeks around the switch."
+  },
+  {
+    "week": 7,
+    "target": "paycheck customers",
+    "actions": [
+      {
+        "action": "Goodwill credit",
+        "level": "$10 each"
+      },
+      {
+        "action": "Instant dispute credit",
+        "level": "on"
+      }
+    ],
+    "message": "We know the system move came right after payday. We have added $10 to your account as a thank you. For the next 8 weeks, if you dispute a card charge, we credit up to $100 right away while we investigate.",
+    "channels": [
+      "push",
+      "in-app"
+    ],
+    "why": "Paycheck customers felt the freeze most: paid Friday, locked out Saturday.\nA concrete credit says sorry without big promises.\nInstant dispute credit cuts the complaints most likely to reach the CFPB."
+  }
+]

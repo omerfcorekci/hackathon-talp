@@ -1,0 +1,44 @@
+[
+  {
+    "week": 5,
+    "target": "paycheck customers",
+    "actions": [
+      {
+        "action": "Early pay",
+        "level": "on"
+      },
+      {
+        "action": "Higher offline card limit during the migration",
+        "level": "on"
+      },
+      {
+        "action": "Extra support staff",
+        "level": "+150"
+      }
+    ],
+    "message": "On Sat Dec 12, 00:00 to Sun Dec 13, 12:00 CT, Cobalt moves to a new core banking system. For those 36 hours the app is read-only: you can see your balance, but transfers, P2P payments and new cards are paused. From this week your paycheck shows up in Cobalt up to 2 days early, so a Friday Dec 11 paycheck arrives by Wednesday Dec 9 and you can move it before the weekend. Card payments work offline up to $250 each that weekend, and we added support staff for the coming weeks. The switch can run some hours longer; we will post updates in the app.",
+    "channels": [
+      "push",
+      "email",
+      "in-app"
+    ],
+    "why": "Paycheck customers are paid Fri Dec 11, the day before the app freezes.\nEarly pay lets them move that money before the weekend; permanent, so it also builds loyalty.\nMore support staff keeps waits short when questions peak."
+  },
+  {
+    "week": 7,
+    "target": "savers with large balances",
+    "actions": [
+      {
+        "action": "Savings rate boost, new money only",
+        "level": "+0.5 points"
+      }
+    ],
+    "message": "Thank you for staying with Cobalt through our system move. For the next 4 weeks we add 0.5 points to the savings rate on new money you add, on balances up to $50,000. Money already in savings earns the usual rate.",
+    "channels": [
+      "push",
+      "email",
+      "in-app"
+    ],
+    "why": "Half of deposits sit with large-balance savers, who compare rates every week.\nRivals will target them after the migration weekend.\nNew money only halves the cost and rewards those who add rather than all balances."
+  }
+]
