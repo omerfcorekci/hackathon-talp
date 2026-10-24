@@ -43,9 +43,15 @@
   .cap b { display: block; font-size: 17px; }
   .cap span { color: var(--muted); font-size: 14px; }
   .ctrl { display: flex; align-items: center; gap: 10px; padding: 12px 18px 16px; }
-  .ctrl button.pp { flex: 0 0 auto; width: 40px; height: 40px; border-radius: 50%; border: 0; background: var(--accent); color: #fff;
-    display: grid; place-items: center; cursor: pointer; }
-  .ctrl button.pp:focus-visible, .dots button:focus-visible, .pipe button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .stagewrap { position: relative; padding: 0 64px; }
+  .arrow { position: absolute; top: 50%; transform: translateY(-50%); width: 44px; height: 44px; border-radius: 50%;
+    border: 1px solid var(--line); background: var(--panel); color: var(--text); display: grid; place-items: center; cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+  .arrow:hover:not(:disabled) { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .arrow:disabled { opacity: .3; cursor: default; }
+  .arrow.prev { left: 12px; } .arrow.next { right: 12px; }
+  .arrow:focus-visible, .dots button:focus-visible, .pipe button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  @media (max-width: 560px) { .stagewrap { padding: 0 40px; } .arrow { width: 34px; height: 34px; } .arrow.prev { left: 4px; } .arrow.next { right: 4px; } }
   .dots { flex: 1; display: flex; gap: 5px; min-width: 0; }
   .dots button { flex: 1; min-width: 0; height: 30px; border: 0; padding: 0; background: none; cursor: pointer;
     display: flex; flex-direction: column; justify-content: center; gap: 5px; }
@@ -150,15 +156,18 @@
 
   <section class="player" aria-label="Animation of one week" tabindex="-1">
     <div class="top"><h2>One week, step by step</h2><span class="src" id="src">Sample data</span></div>
+    <div class="stagewrap">
+    <button class="arrow prev" id="prev" aria-label="Previous step"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
     <svg id="stage" class="final" viewBox="0 0 640 340" role="img" aria-labelledby="capTitle">
       <defs>
         <marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--faint)"/></marker>
       </defs>
       <g id="scene"></g>
     </svg>
+    <button class="arrow next" id="next" aria-label="Next step"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+    </div>
     <div class="cap" aria-live="polite"><b id="capTitle"></b><span id="capLine"></span></div>
     <div class="ctrl">
-      <button class="pp" id="pp" aria-label="Play"></button>
       <div class="dots" id="dots"></div>
     </div>
   </section>
@@ -470,25 +479,23 @@
   ];
 
   /* ---------- Player ---------- */
-  // Playing: CSS animations run from the scene's start. Not playing (or reduced motion): `final`
-  // turns animations off, so every element shows its final frame.
+  // Each step plays its animation once and stops; the arrows (or ←/→, or a step label) move between steps.
+  // Reduced motion: `final` turns animations off, so every element shows its final frame.
   const stage = document.getElementById("stage"), host = document.getElementById("scene");
-  const pp = document.getElementById("pp"), dotsBox = document.getElementById("dots");
+  const prev = document.getElementById("prev"), next = document.getElementById("next"), dotsBox = document.getElementById("dots");
   const capTitle = document.getElementById("capTitle"), capLine = document.getElementById("capLine");
-  const ICON_PLAY = '<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5v11l9-5.5z" fill="#fff"/></svg>';
-  const ICON_PAUSE = '<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5h3v11H4zM9 2.5h3v11H9z" fill="#fff"/></svg>';
   let cur = 0, t = 0, playing = false, last = 0, tick = null, raf = 0;
   const dots = SCENES.map((s, i) => {
     const b = document.createElement("button");
     b.innerHTML = `<i></i><em>${i + 1} · ${s.title}</em>`;
-    b.setAttribute("aria-label", `Scene ${i + 1}: ${s.title}`);
-    b.addEventListener("click", () => { pause(); go(i); if (!reduce) play(); });
+    b.setAttribute("aria-label", `Step ${i + 1}: ${s.title}`);
+    b.addEventListener("click", () => show(i));
     dotsBox.appendChild(b);
     return b;
   });
 
   function go(i) {
-    cur = (i + SCENES.length) % SCENES.length; t = 0;
+    cur = i; t = 0;
     const still = reduce || !playing;
     stage.classList.toggle("final", still);
     host.replaceChildren();
@@ -500,49 +507,39 @@
       d.classList.toggle("on", k === cur);
       d.firstChild.style.setProperty("--p", k < cur || (still && k === cur) ? "100%" : "0%");
     });
+    prev.disabled = cur === 0;
+    next.disabled = cur === SCENES.length - 1;
   }
   function frame(now) {
     const dt = Math.min(.1, (now - last) / 1000); last = now;
     t += dt;
-    if (tick && !reduce) tick(t);
+    if (tick) tick(t);
     const s = SCENES[cur];
     dots[cur].firstChild.style.setProperty("--p", Math.min(100, t / s.dur * 100) + "%");
-    if (t >= s.dur) go(cur + 1);
+    if (t >= s.dur) { playing = false; return; }  // stay on this step until an arrow is clicked
     raf = requestAnimationFrame(frame);
   }
-  function play() {
-    if (playing) return;
-    const fresh = stage.classList.contains("final");
-    playing = true;
-    stage.classList.remove("paused");
-    if (fresh) go(cur);  // restart the scene from its first frame
-    pp.innerHTML = ICON_PAUSE; pp.setAttribute("aria-label", "Pause");
-    last = performance.now(); raf = requestAnimationFrame(frame);
+  function show(i) {
+    cancelAnimationFrame(raf);
+    playing = !reduce;
+    go(Math.max(0, Math.min(SCENES.length - 1, i)));
+    if (playing) { last = performance.now(); raf = requestAnimationFrame(frame); }
   }
-  function pause() {
-    if (!playing) return;
-    playing = false; cancelAnimationFrame(raf); stage.classList.add("paused");
-    pp.innerHTML = ICON_PLAY; pp.setAttribute("aria-label", "Play");
-  }
-  pp.innerHTML = ICON_PLAY;
-  pp.addEventListener("click", () => (playing ? pause() : play()));
+  function still() { cancelAnimationFrame(raf); playing = false; go(cur); }
+  prev.addEventListener("click", () => show(cur - 1));
+  next.addEventListener("click", () => show(cur + 1));
   document.querySelector(".player").addEventListener("keydown", (e) => {
     if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
     e.preventDefault();
-    const was = playing; pause(); stage.classList.add("final");
-    go(cur + (e.key === "ArrowRight" ? 1 : -1));
-    if (was) play();
+    show(cur + (e.key === "ArrowRight" ? 1 : -1));
   });
   go(0);
-  if (!reduce) {
-    if ("IntersectionObserver" in window) {
-      // Autoplay when the stage first scrolls into view; pause off-screen and resume only if we paused it.
-      let started = false, offscreen = false;
-      new IntersectionObserver((es) => es.forEach((e) => {
-        if (e.isIntersecting && (!started || offscreen)) { started = true; offscreen = false; play(); }
-        else if (!e.isIntersecting && playing) { offscreen = true; pause(); }
-      }), { threshold: .4 }).observe(stage);
-    } else play();
+  if (!reduce && "IntersectionObserver" in window) {
+    // Play the first step once when the stage first scrolls into view.
+    const io = new IntersectionObserver((es) => es.forEach((e) => {
+      if (e.isIntersecting) { io.disconnect(); if (cur === 0) show(0); }
+    }), { threshold: .4 });
+    io.observe(stage);
   }
 
   /* ---------- Step cards ---------- */
@@ -580,7 +577,7 @@
     card.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "center" });
     card.classList.remove("flash"); void card.offsetWidth; card.classList.add("flash");
     setTimeout(() => card.classList.remove("flash"), 1600);
-    pause(); go(+b.dataset.scene);
+    cur = +b.dataset.scene; still();
   }));
 
   /* ---------- Live data (optional; the page works without the API) ---------- */
@@ -620,7 +617,7 @@
       src.classList.remove("live");
     }
     netCard();
-    if (cur >= 3) { const was = playing; pause(); stage.classList.add("final"); go(cur); if (was) play(); }
+    if (cur >= 3) still();
   }
   // shell.js loads after this script; its TALP object exists by DOMContentLoaded.
   document.addEventListener("DOMContentLoaded", () => {
