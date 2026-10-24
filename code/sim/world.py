@@ -43,8 +43,9 @@ def validate_effects(effects):
             raise ValueError("Each experience effect needs a week in 1-10")
         if not isinstance(item.get("text"), str) or not item["text"].strip():
             raise ValueError("Each experience effect needs text")
-        if "if" in item and not isinstance(item["if"], dict):
-            raise ValueError("An experience effect's 'if' must map persona attributes to required values")
+        for name in ("if", "unless"):
+            if name in item and not isinstance(item[name], dict):
+                raise ValueError(f"An experience effect's '{name}' must map persona attributes to values")
         prob = item.get("probability", 1.0)
         if isinstance(prob, bool) or not isinstance(prob, (int, float)) or not 0 <= prob <= 1:
             raise ValueError("An experience effect's 'probability' must be between 0 and 1")
@@ -180,10 +181,12 @@ class World:
                     continue
                 if not all(p.get(key) == value for key, value in item.get("if", {}).items()):
                     continue
+                if any(p.get(key) == value for key, value in item.get("unless", {}).items()):
+                    continue
                 prob = item.get("probability", 1.0)
                 if prob < 1.0 and draw(self.seed, "experience", event["id"], item.get("key", item["text"]), p.get("id")) >= prob:
                     continue
-                personal = "if" in item or "probability" in item
+                personal = "if" in item or "unless" in item or "probability" in item
                 lines.append((item["text"], item.get("went_wrong", personal)))
         return lines
 
