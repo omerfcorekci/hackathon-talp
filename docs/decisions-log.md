@@ -85,9 +85,14 @@ reaches 32% of the paycheck group (100k-customer cap), i.e. one of the six paych
 ## Locked on the dashboard
 
 Copy the exact text locked on the dashboard into `code/config/decisions/plan.json`.
-`plan.json` today holds plan A as a PLACEHOLDER; nothing is locked yet.
+`plan.json` holds decision 1 as locked. Decision 2 is not locked: until it is, `plan.json` carries
+D2 (migration notice, week 5) as a PLACEHOLDER so plan runs have two decisions; its `why` starts with
+"PLACEHOLDER". Replace it word for word when decision 2 is locked.
 
-| Decision | Week | Locked at (clock time) | Replaced? |
-|---|---|---|---|
-| 1 | | | |
-| 2 | | | |
+| Decision | Week | Actions | Cost | Locked at (clock time) | Replaced? |
+|---|---|---|---|---|---|
+| 1 | 5 | Security pack (on) + Instant dispute credit (on), everyone, push/email/in-app | $0.7M | before 14:51 (week 4) | no |
+| 2 | | not locked; options in `docs/decision-1-lock.md` | ≤ $3.3M | | |
+
+Decision 1's action labels are the dossier's menu wording, as picked on the dashboard. Reasons and
+simulation evidence: `docs/decision-1-lock.md` (sweep `c1_plans`).
