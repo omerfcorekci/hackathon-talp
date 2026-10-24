@@ -80,18 +80,26 @@ posts may still reach strangers with 5% probability. No graph is generated.
 
 **Decisions JSON:** use the dashboard's exact locked list. Empty list means BAU;
 otherwise exactly two decisions are required. Preserve `week`, `target`, `actions`,
-`message`, `channels` and `why`. `everyone` and exact persona-group names resolve
-automatically. For a descriptive target, pass a separate `--targets` file:
+`message`, `channels` and `why` word for word; `run.json` carries the list unchanged.
 
-```json
-{"decision-1": ["YOUR_ID_1", "YOUR_ID_3"]}
+The engine reads dashboard wording directly: action labels are matched by keywords
+("Higher offline card limit during the migration ($100 → $250 per payment)" →
+`higher_offline_card_limit`), levels by their number ("+0.25", "0.25 pt", "$10 each",
+"2 weeks", "1%", "+150"; "yes"/"on"/empty for actions without levels), channels by
+keyword ("Push notification", "E-mail", "In-app message", "Text message", "CEO video").
+`--print-menu` lists the identifiers; `--action-aliases` still overrides a label that
+the keywords misread. Targets: `everyone`, a persona group name, or add to the decision
+object a `target_filter` (`{"paid_fri_dec11": true}` or `{"group": [..]}`; persona
+attributes equal to the value, a list means any) or `target_ids`. A separate
+`--targets` file (`{"decision-1": ["ID", ...]}`) overrides both. Preflight with:
+
+```bash
+PYTHONPATH=code python3 -m sim --personas ... --network ... --decisions plan.json --show-plan
 ```
 
-The numbers refer to the decisions' original positions, starting at one. This
-mapping does not modify the locked decision. `--print-menu` lists engine action
-identifiers and supported level strings. If the dashboard uses a different action
-name, supply `--action-aliases` mapping that exact label to an engine identifier,
-instead of rewriting the locked action. Level strings must match the printed menu.
+It prints the cost, who each decision reaches by name, the resolved action/level/channel
+identifiers, and for capped offers the share and the recipients drawn. Check it before
+locking on the dashboard.
 Menu costs, action durations, the $4M total and $25k per SMS send are validated.
 Capped goodwill/advance audiences require external `weight_customers`. A target
 larger than the cap ("up to 100,000 customers" offered to a 310,000-customer group)
@@ -202,6 +210,19 @@ weekend card tickets above the offline limit, a single large purchase, settlemen
 The world resolves it against the offline card limit and any overrun into plain facts:
 "your rent autopay ran at Sunday 20:00, after the payee's cutoff, so a $50 late fee was
 charged"; "5 of your weekend tickets were above $100: about $1,400 you could not charge".
+Validation also enforces: `heard_from` uses only bank / friend / rival / news / social
+media / none; `actions` uses the persona's listed wording; a persona that lists "post on
+social media" or "tell friends or family" must put what it said in `messages` (otherwise
+the answer is rejected with the reason and retried). `new_money` (none / some / a lot)
+records money brought into Cobalt, so new-money offers can show growth in goal 2. In
+round two the week's `actions` is the union of both rounds; the raw round-two list is
+kept as `actions_reported`.
+
+`code/scripts/run_all.sh` produces the five runs in a staging folder and replaces
+`runs/<name>` only after all five succeed; the previous set is moved to
+`experiments/runs-backup/<timestamp>/`. A run shorter than ten weeks is refused into
+`runs/` (use `--out-root experiments/<name>`).
+
 `sim/metrics.py` turns the weekly rows and the personas' weights into `metrics.json`
 (`goal_1`–`goal_3b`, `units`, stated assumptions, a by-group breakdown); `sim/probe.py`
 asks the eight check-in questions at week 0 and week 11 when `--probe` is set and writes

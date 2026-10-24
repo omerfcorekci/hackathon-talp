@@ -107,26 +107,30 @@ for name in "${names[@]}"; do
   fi
 done
 
-if [[ "$out_root" == runs && "$weeks" != 10 ]]; then
-  echo "WARNING: writing a $weeks-week smoke run into runs/ replaces the official runs." >&2
+if [[ "$out_root" == runs && "$weeks" != 10 && "${ALLOW_SHORT_RUNS:-0}" != 1 ]]; then
+  echo "A $weeks-week run must not replace the official runs; use --out-root experiments/<name> (or ALLOW_SHORT_RUNS=1)." >&2
+  exit 2
 fi
 
-log_dir="experiments/run_all-logs/$(date +%Y%m%d-%H%M%S)"
-mkdir -p "$out_root" "$log_dir"
+# New runs are produced in a staging folder; the existing runs/<name> are replaced only after all
+# five succeed, and the previous set is kept under experiments/runs-backup/<timestamp>/.
+stamp="$(date +%Y%m%d-%H%M%S)"
+log_dir="experiments/run_all-logs/$stamp"
+stage="$out_root/.staging-$stamp"
+mkdir -p "$out_root" "$log_dir" "$stage"
 started=$SECONDS
 pids=()
 for name in "${names[@]}"; do
   build_args "$name"
-  rm -rf "${out_root:?}/$name"
   (
     begin=$SECONDS
     status=0
-    "$py" -m sim "${run_args[@]}" --out "$out_root/$name" >"$log_dir/$name.log" 2>&1 || status=$?
+    "$py" -m sim "${run_args[@]}" --out "$stage/$name" >"$log_dir/$name.log" 2>&1 || status=$?
     echo "$status $((SECONDS - begin))" >"$log_dir/$name.status"
     exit "$status"
   ) &
   pids+=("$!")
-  echo "Started $name (pid $!): $out_root/$name, log $log_dir/$name.log"
+  echo "Started $name (pid $!): $stage/$name, log $log_dir/$name.log"
 done
 
 failed=0
@@ -145,9 +149,20 @@ for i in "${!names[@]}"; do
 done
 echo "Total wall time: $((SECONDS - started))s"
 if (( failed )); then
-  echo "At least one run failed; not packaging." >&2
+  echo "At least one run failed; previous runs in $out_root/ are untouched. New outputs: $stage/" >&2
   exit 1
 fi
+backup="experiments/runs-backup/$stamp"
+for name in "${names[@]}"; do
+  if [[ -d "$out_root/$name" ]]; then
+    mkdir -p "$backup"
+    mv "$out_root/$name" "$backup/$name"
+  fi
+  mv "$stage/$name" "$out_root/$name"
+done
+rmdir "$stage" 2>/dev/null || true
+[[ -d "$backup" ]] && echo "Previous runs moved to $backup/"
+echo "Runs are in $out_root/"
 
 if [[ "$out_root" != runs ]]; then
   echo "Runs are in $out_root/, not runs/: skipping make_submission.sh (it packages runs/)."
