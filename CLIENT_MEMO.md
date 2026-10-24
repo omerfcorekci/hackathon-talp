@@ -38,6 +38,9 @@ move, no layoffs, no product closed.
   3.21 vs 2.96, would recommend 3.04 vs 2.79, thinking about leaving 1.92 vs 2.17.
 - **The migration week is the low point in every run** (customers' app rating falls to about 3.2–3.4 that
   week). In earlier tests a $250 offline card limit softened it; it is not in our final plan.
+- **The store rating hides the drop.** It stays at 4.58 because it averages about 210,000 earlier
+  ratings; the ratings customers give during these ten weeks average about 3.9. At that pace the
+  store score would take years to reach 4.3; a wave of 1-star reviews would move it much faster.
 - **The advance reaches who it is meant for, and is not enough on its own.** Our customer sent home
   by the shutdown asks for it in both plan runs and it lands, but his trust stays low, and in one run
   he moves most of his money to his credit union: one persona, so a story, not a measurement.
