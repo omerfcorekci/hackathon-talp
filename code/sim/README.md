@@ -37,16 +37,17 @@ Close friendship takes precedence over following; probabilities are not added.
 These are experimental assumptions, not estimates from observed banking customers.
 Configuration lives in `code/config/engine.json`; `Settings` has identical defaults.
 
-Each persona can receive **two peer messages total per week**, shared between both
-rounds. Excess eligible messages are dropped, not retried indefinitely. Eligible
+Each persona can receive **three group-chat or public messages per week**, shared between both
+rounds; direct and phone messages from a contact always arrive and do not count. Excess eligible
+messages are dropped, not retried indefinitely. Eligible
 messages compete in a seeded random order. A draw depends on run seed, week, round,
 message ID and recipient, so async completion order cannot change exposure.
 Audit call IDs are excluded from model prompts. Reusing a seed does not guarantee
 that the external model service itself returns identical text.
 
 Set `max_peer_messages` to `0` in a settings file for an exposure-off comparison.
-The model may still choose to post, but nobody receives peer messages or gets a
-second call. All other facts and official delivery remain the same.
+The model may still choose to post, but nobody receives peer messages (direct ones included) or
+gets a second call. All other facts and official delivery remain the same.
 
 ## External inputs
 

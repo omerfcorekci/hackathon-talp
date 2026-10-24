@@ -5,7 +5,7 @@
   "attempts": 5,
   "transport_backoff_seconds": 3,
   "timeout_seconds": 60,
-  "max_peer_messages": 2,
+  "max_peer_messages": 3,
   "stranger_probability": 0.05,
   "following_probability": 0.35,
   "close_friend_probability": 0.65,

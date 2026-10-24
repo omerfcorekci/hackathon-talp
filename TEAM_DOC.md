@@ -72,7 +72,8 @@ picks; the engine only validates the answer against a JSON schema and retries in
 
 **How a week runs (two rounds):** every persona is called once in parallel; their messages are routed
 over the network (5% stranger post, 35% followed account, 65% close friend, 80% group chat, 100%
-direct), at most two peer messages per persona per week; only recipients get a second call. A
+direct), at most three group-chat or public messages per persona per week (direct and phone messages
+always arrive); only recipients get a second call. A
 persona's quote of the bank's message is never forwarded, so the decision text cannot leak outside its
 target. Status, money and memory carry over to the next week.
 
