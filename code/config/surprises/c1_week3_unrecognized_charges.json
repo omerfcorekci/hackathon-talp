@@ -6,12 +6,29 @@
   "dashboard_id": "35d73c101e9a5520732b76a5d4d2281d",
   "published_at": "2026-10-24T14:00:00+03:00",
   "effects": {
-    "support_wait_by_week": {"3": 9, "4": 7},
+    "support_wait_by_week": {
+      "3": 9,
+      "4": 7
+    },
     "experience": [
-      {"week": 3, "text": "Cobalt posted a holding statement on social media within 24 hours: it is aware of reports of small card charges customers do not recognize and is investigating with its card processor; customers who see a charge they do not recognize can dispute it in the app."},
-      {"week": 3, "if": {"id": "P5"}, "text": "You found a $1.99 card charge on your Cobalt card that you do not recognize."},
-      {"week": 3, "if": {"id": "E4"}, "text": "You found two card charges of $0.89 and $3.49 on your Cobalt card that you do not recognize."},
-      {"week": 3, "if": {"id": "B5"}, "text": "You found a $4.50 charge on your Cobalt business card that you do not recognize, and a market customer asked you whether paying on your Cobalt card reader is safe."}
+      {
+        "week": 3,
+        "text": "Cobalt posted a holding statement on social media within 24 hours: it is aware of reports of small card charges customers do not recognize and is investigating with its card processor; customers who see a charge they do not recognize can dispute it in the app."
+      },
+      {
+        "week": 3,
+        "if": {
+          "id": "B5"
+        },
+        "text": "A $4.50 payment on your Cobalt business card shows up twice; you only paid once and do not know why. A market customer asked you whether paying on your Cobalt card reader is safe."
+      }
     ]
+  },
+  "update": {
+    "week": 4,
+    "title": "Company update — week 4",
+    "text": "The card processor confirmed a fault that charged some payments twice on November 16 and 17. Separately, a small number of cards were used for test charges of $0.50 to $2 by fraudsters, a common pattern after card numbers are stolen elsewhere, for example on a fake shopping site. Cobalt's own systems were not breached. About 9,000 customers were affected in total.",
+    "dashboard_id": "6ad60f15a854a1f4929a6c8e0cbce8a5",
+    "published_at": "2026-10-24T14:30:00+03:00"
   }
 }
