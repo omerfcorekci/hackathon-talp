@@ -74,6 +74,35 @@ class SurpriseEffectTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             expand_surprises([{**event, "effects": {"pay_paused": [{"from_week": 7, "text": ""}]}}])
 
+    def test_open_business_with_cobalt_follows_the_bank_s_rules(self):
+        person = {"id": "p", "group": "g", "weight_customers": 10_000, "pay_weeks": [2, 4, 10], "pay_schedule": "every other Friday"}
+        decisions = [{"week": 5, "target": "everyone", "actions": [{"action": "Instant dispute credit", "level": "on"}],
+                      "message": "MSG ONE", "channels": ["push"], "why": "w"},
+                     {"week": 8, "target": "everyone", "actions": [{"action": "Zero-interest advance", "level": "on"}],
+                      "message": "MSG TWO", "channels": ["push"], "why": "w"}]
+        w = World(WORLD, DecisionPlan(decisions, [person]), decisions_enabled=True)
+        row = lambda week, *actions: {"week": week, "status": "main bank", "actions": list(actions)}
+        # A dispute before the instant credit: provisional credit two weeks later, closed after seven.
+        bau = [row(2, "dispute a card charge"), row(3, "dispute a card charge")]
+        self.assertIn("due within 10 business days", w.issues("p", 3, bau)[0])
+        self.assertIn("provisional credit landed in your account this week", w.issues("p", 4, bau)[0])
+        self.assertIn("closed and the credit is final", w.issues("p", 9, bau)[0])
+        self.assertEqual(w.issues("p", 10, bau), [])
+        # Under the instant dispute credit the amount is credited at once.
+        self.assertIn("credited right away", w.issues("p", 7, [row(6, "dispute a card charge")])[0])
+        # The advance: offered from week 8, paid the week after it is asked for, repaid from the next pay.
+        self.assertIn("to take it", " ".join(w.context("p", 9, [row(8)])["experience"]))
+        asked = [row(8), row(9, "ask Cobalt for a refund or a credit")]
+        self.assertIn("$500 landed in your account in week 10", w.issues("p", 10, asked)[0])
+        self.assertNotIn("to take it", " ".join(w.context("p", 10, asked)["experience"]))
+        self.assertIn("repaid from this week's pay", w.issues("p", 10, asked[:1] + [row(8, "ask Cobalt for a refund or a credit")])[0])
+        # A regulator complaint is answered within 15 days.
+        cfpb = [row(3, "file a complaint with the CFPB or BBB")]
+        self.assertIn("within 15 days", w.issues("p", 4, cfpb)[0])
+        self.assertIn("written answer", w.issues("p", 5, cfpb)[0])
+        off = World(WORLD, DecisionPlan(decisions, [person]), decisions_enabled=False)
+        self.assertEqual(off.issues("p", 10, asked), [])
+
     def test_weekend_transfers_are_queued_not_failed(self):
         person = {"id": "a", "group": "g", "migration_weekend": {"type": "p2p", "what": "the babysitter's pay", "amount": 120,
                                                                  "scheduled": "Saturday 10:00"}}

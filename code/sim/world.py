@@ -7,10 +7,12 @@ reacts. Who hears an announcement is a seeded draw per persona, identical across
 same seed, so plan and no-decision runs differ only through the decisions.
 """
 
+import math
 from copy import deepcopy
 
 from .settings import draw
 
+REQUEST_ACTION = "ask Cobalt for a refund or a credit"
 SOCIAL_SOURCES_DEFAULT = ["Instagram", "X", "TikTok", "Reddit", "Facebook", "YouTube", "LinkedIn"]
 
 
@@ -370,10 +372,79 @@ class World:
                 add(f"A {_money(eff['goodwill_credit'])} goodwill credit from Cobalt landed in your account this week.")
             if "advance_cap" in eff and week == item["starts_week"]:
                 add(f"Cobalt offered you a zero-interest advance of up to {_money(eff['advance_cap'])}, repaid from your next deposit.")
+        offer = self.advance_offer(p.get("id"), week)
+        if offer and not any(REQUEST_ACTION in row.get("actions", []) and self.advance_offer(p.get("id"), row["week"])
+                             for row in ledger if row["week"] < week):
+            add(f"Cobalt's zero-interest advance of up to {_money(offer)} is open to you; to take it, put "
+                f"\"{REQUEST_ACTION}\" in your actions.")
             if eff.get("free_replacement_card"):
                 add("You can request a free replacement card and receive an alert for every card payment.")
         if cal.get("note"):
             lines.insert(0, (cal["note"], False))
+        return lines
+
+    def advance_offer(self, person, week):
+        """The cap of a zero-interest advance this persona was offered by a decision in force since an earlier
+        or this week (the offer stays open: "request it in the app"), or None."""
+        if not self.decisions_enabled:
+            return None
+        for index, decision in enumerate(self.plan.raw, 1):
+            key = f"decision-{index}"
+            for _, spec in self.plan.actions[key]:
+                cap = spec.effect.get("advance_cap")
+                if cap and decision["week"] <= week and person in self.plan.recipients(key, "zero_interest_advance"):
+                    return cap
+        return None
+
+    def issues(self, person, week, ledger=()):
+        """Where the persona's own business with Cobalt stands this week, from what it did in earlier weeks and
+        the bank's rules. A dispute: provisional credit after 10 business days, at once under instant dispute
+        credit; the investigation closes after about 45 days. A CFPB complaint: Cobalt answers in writing within
+        15 days. A request for credit while an advance is offered: the advance is paid and stays outstanding
+        until pay lands at Cobalt. The world states where things stand; the model decides how it feels."""
+        p = self.person(person)
+        base = self.config["baseline"]
+        provisional = math.ceil(base.get("dispute_provisional_credit_business_days", 10) / 5)
+        closes = math.ceil(base.get("dispute_investigation_max_days", 45) / 7)
+        earlier = [row for row in ledger if row["week"] < week]
+        lines = []
+        filed = None  # one dispute at a time: repeating the action while it is open is the same dispute
+        for row in earlier:
+            if "dispute a card charge" in row.get("actions", []) and (filed is None or row["week"] > filed + closes):
+                filed = row["week"]
+        if filed is not None and week - filed <= closes:
+            effects = self.plan.for_person(person, filed)[1] if self.decisions_enabled else []
+            instant = any("instant_dispute_credit_cap" in item["effect"] for item in effects)
+            age = week - filed
+            if age == closes:
+                state = "the investigation is closed and the credit is final."
+            elif instant:
+                state = "the amount was credited right away under Cobalt's instant dispute credit; the investigation is still open."
+            elif age < provisional:
+                state = "open; the provisional credit is due within 10 business days."
+            elif age == provisional:
+                state = "the provisional credit landed in your account this week; the investigation is still open."
+            else:
+                state = "credited provisionally; the investigation is still open."
+            lines.append(f"Your card dispute from week {filed}: {state}")
+        for row in earlier:
+            if "file a complaint with the CFPB or BBB" in row.get("actions", []) and week - row["week"] in (1, 2):
+                lines.append(f"Your regulator complaint from week {row['week']}: "
+                             + ("logged; Cobalt must answer in writing within 15 days." if week - row["week"] == 1
+                                else "Cobalt sent its written answer through the regulator's portal."))
+        taken = next((row["week"] for row in earlier if REQUEST_ACTION in row.get("actions", [])
+                      and self.advance_offer(person, row["week"])), None)
+        if taken is not None:
+            cap = self.advance_offer(person, taken)
+            repaid = next((w for w in range(taken + 2, week + 1) if w in (p.get("pay_weeks") or [])
+                           and not self.pay_paused(p, w) and not self.pay_elsewhere(ledger, w)), None)
+            if repaid is None:
+                state = (f"{_money(cap)} landed in your account in week {taken + 1}" if week == taken + 1 else
+                         f"{_money(cap)} paid in week {taken + 1}, still outstanding")
+                lines.append(f"Your zero-interest advance requested in week {taken}: {state}; it is repaid from the next "
+                             "pay that lands at Cobalt.")
+            elif repaid == week:
+                lines.append(f"Your zero-interest advance from week {taken}: repaid from this week's pay.")
         return lines
 
     def went_wrong_before(self, person, week, ledger=()):
