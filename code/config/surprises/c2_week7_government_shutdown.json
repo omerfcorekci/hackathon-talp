@@ -1,0 +1,20 @@
+{
+  "id": "c2_week7_government_shutdown",
+  "week": 7,
+  "title": "Government shutdown",
+  "text": "**Government shutdown.** Overnight, Congress missed its funding deadline, and parts of the federal government shut down. Some federal workers have been sent home; others, such as air traffic controllers and TSA officers, must keep working without pay. Nobody knows how long it will last.\n\nKnown: Social Security payments and the Postal Service continue.\nNot known: how long it will last; when federal workers will be paid; which services will slow down.\n\nSome of Cobalt's paycheck customers work for the federal government or its contractors. Their next federal paycheck is due on December 30.",
+  "dashboard_id": "dcd0721e6145582d1add2c800752e114",
+  "published_at": "2026-10-24T16:00:00+03:00",
+  "effects": {
+    "experience": [
+      {
+        "week": 7,
+        "if": {
+          "id": "P2"
+        },
+        "went_wrong": true,
+        "text": "Your employer, a contractor, told the crew that its federal building jobs are paused for the shutdown. You are sent home from those jobs without pay until it ends, and nobody can say when that will be."
+      }
+    ]
+  }
+}
