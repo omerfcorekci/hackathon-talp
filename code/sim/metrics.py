@@ -48,12 +48,16 @@ ASSUMPTIONS = [
     "the customers it stands for (weight_customers) do the same that month: roughly the rate TSB saw "
     "after its failed 2018 core banking migration (95,613 complaints in about six weeks from about 5 "
     "million customers). a is a modelling judgement anchored on that one case, not fitted to Cobalt.",
-    "goal_3 (App Store rating) = (4.6 × 210,000 + Σ a × weight_customers × app_rating) / "
-    "(210,000 + Σ a × weight_customers), summed over the personas that rated, each with its latest "
-    "rating in weeks 1-10: an App Store user has one rating and can change it, so a later rating "
-    "replaces an earlier one. The existing ratings are taken as 10% of customers (210,000) at 4.6. "
-    "One everyday persona's 1-star rating lowers goal_3 by 0.02-0.07; every persona giving 1 star once "
-    "brings it to 4.27. Rounded to 2 decimals.",
+    "goal_3 (App Store rating) = (4.6 × 210,000 + Σ n × app_rating) / (210,000 + Σ n). app_rating is "
+    "the stars a persona would give if the app asked it that week. Two kinds of new ratings: (1) prompted: "
+    "every week the app asks a share p of its customers, so each persona-week with status \"main bank\" "
+    "or \"second bank\" adds n = p × weight_customers ratings at that week's app_rating; p = 2,500 a month "
+    "/ 2,100,000 customers / 4.35 weeks, because the existing 210,000 ratings (taken as 10% of customers) "
+    "built up over about 84 months since the 2019 launch, i.e. about 2,500 a month; (2) written reviews: a "
+    "persona whose actions include \"post a review (App Store / Google / Trustpilot)\" stands for "
+    "n = a × weight_customers reviews at its app_rating, once per persona (its latest review). Prompted "
+    "ratings move goal_3 slowly (all of them 1-2 stars for ten weeks: about -0.1), a review wave fast "
+    "(every persona writing a 1-star review once: 4.27). Rounded to 2 decimals.",
     "goal_3b (CFPB complaints in the worst month) = 120 + the maximum over the sliding 4-week windows "
     "(weeks 1-4, 2-5, ..., 7-10) of Σ a × weight_customers × e over the personas that complained in "
     "that window, where e = 120 / 1,800 (the dossier's share of complaints that reach the CFPB) when "
@@ -95,6 +99,10 @@ ACTIVE_STATUSES = ("main bank", "second bank")
 MONEY_FACTOR = {"kept": 1.0, "moved some": 0.6, "moved most": 0.1}
 NEW_MONEY_FACTOR = {"none": 0.0, "some": 0.1, "a lot": 0.3}  # money brought into Cobalt, as a share of Nov 2 deposits
 REVIEW_MASS = 210_000
+PROMPTED_PER_MONTH = 2_500       # REVIEW_MASS built up over about 84 months since the 2019 launch
+WEEKS_PER_MONTH = 4.35
+PROMPTED_SHARE = PROMPTED_PER_MONTH / 2_100_000 / WEEKS_PER_MONTH  # share of customers asked to rate, per week
+REVIEW_ACTION = "post a review (App Store / Google / Trustpilot)"
 BASE_RATING = 4.6
 ACT_SHARE = 0.01                 # share of a persona's customers who also complain / rate that month
 COMPLAINTS_PER_MONTH = 1_800
@@ -192,13 +200,24 @@ def _goals(ids, rows, last, customers, deposits, follow, start_ids, notes, label
         if missing:
             notes.append(f"{label}: no week-{last} row for {', '.join(missing)}; counted as unchanged")
 
-    latest = {}  # one App Store rating per persona: a later rating replaces an earlier one
+    mass = score = 0.0
+    opinion = {}  # week -> [customers asked, stars given]: what the prompted ratings look like that week
+    latest_review = {}  # a written review stands once per persona: its latest
     for (pid, week), row in sorted(rows.items(), key=lambda item: item[0][1]):
-        if pid in ids and 1 <= week <= last and row.get("app_rating") is not None:
-            latest[pid] = row["app_rating"]
-    rated = list(latest.items())
-    mass = sum(ACT_SHARE * customers[pid] for pid, _ in rated)
-    score = sum(ACT_SHARE * customers[pid] * rating for pid, rating in rated)
+        rating = row.get("app_rating")
+        if pid not in ids or not 1 <= week <= last or rating is None:
+            continue
+        if row.get("status") in ACTIVE_STATUSES:
+            asked = PROMPTED_SHARE * customers[pid]
+            mass += asked
+            score += asked * rating
+            totals = opinion.setdefault(week, [0.0, 0.0])
+            totals[0] += customers[pid]
+            totals[1] += customers[pid] * rating
+        if REVIEW_ACTION in row.get("actions", []):
+            latest_review[pid] = rating
+    mass += sum(ACT_SHARE * customers[pid] for pid in latest_review)
+    score += sum(ACT_SHARE * customers[pid] * rating for pid, rating in latest_review.items())
     goal_3 = round((BASE_RATING * REVIEW_MASS + score) / (REVIEW_MASS + mass), 2)
 
     extra = {}
@@ -220,7 +239,9 @@ def _goals(ids, rows, last, customers, deposits, follow, start_ids, notes, label
               "goal_2_by_week": {str(week): round(100 * value / base_deposits, 2) if base_deposits else 0.0
                                  for week, value in deposit_series.items()},
               "cfpb_extra_by_window": {key: round(value, 1) for key, value in extra.items()},
-              "rated_personas": len(rated)}
+              "prompted_rating_by_week": {str(week): round(stars / asked, 2) for week, (asked, stars)
+                                          in sorted(opinion.items()) if asked},
+              "reviewing_personas": len(latest_review)}
     return goals, detail
 
 
