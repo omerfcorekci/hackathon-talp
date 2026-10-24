@@ -165,6 +165,21 @@ class World:
             hours = max(hours, eff.get("migration_overrun_hours", 0) or 0)
         return hours
 
+    def back_time(self):
+        """(hour, minute) on Sunday Dec 13 when the system returned. world.json may give the announced end to
+        the minute (overrun_minutes); a longer overrun from a surprise is whole hours."""
+        hours = self.overrun_hours()
+        minutes = self.migration.get("overrun_minutes", 0) if hours == (self.migration.get("overrun_hours", 0) or 0) else 0
+        return 12 + hours, minutes
+
+    def overrun_text(self):
+        """How late the switch ended, in words ("4 hours and 10 minutes"); empty when it ended on time."""
+        hour, minute = self.back_time()
+        parts = [f"{hour - 12} hours"] if hour > 12 else []
+        if minute:
+            parts.append(f"{minute} minutes")
+        return " and ".join(parts)
+
     def _surprise_experience(self, p, week):
         """(fact, went_wrong) pairs a surprise adds to this persona's week. `probability` makes it hit a
         seeded share of personas; items sharing a `key` hit the same personas (so a week-3 charge is still
@@ -207,26 +222,25 @@ class World:
             limit = max(limit, item["effect"].get("migration_offline_card_limit", limit))
         return limit
 
-    def weekend_outcome(self, item, limit, overrun):
+    def weekend_outcome(self, item, limit, back):
         """What the migration window did to one persona's own weekend commitment (see generate.py), as
         (fact, went_wrong) pairs: a delayed, failed or declined payment went wrong; a sale that went through did not."""
         if not item or item.get("type") in (None, "none"):
             return []
-        back = 12 + overrun  # hour on Sunday when the system returned
-        back_text = f"Sunday {back:02d}:00"
+        back_text = f"Sunday {back[0]:02d}:{back[1]:02d}"  # back: (hour, minute) on Sunday when the system returned
         kind = item["type"]
         lines = []
         if kind == "autopay":
             text = (f"Your {item['what']} autopay of {_money(item['amount'])}, scheduled {item['scheduled']}, could not run "
                     f"during the window; it went through at {back_text}.")
-            if back > item.get("late_after_hour", 99) and item.get("late_fee"):
+            if back > (item.get("late_after_hour", 99), 0) and item.get("late_fee"):
                 text += f" That was after the payee's cutoff, so a {_money(item['late_fee'])} late fee was charged."
             lines.append((text, True))
         elif kind in ("p2p", "transfer"):
             hour = int(item["scheduled"].split()[1].split(":")[0]) + (24 if item["scheduled"].startswith("Sunday") else 0)
-            late = back + 24 - hour
+            late = round(back[0] + back[1] / 60 + 24 - hour)
             lines.append((f"{item['what'][0].upper() + item['what'][1:]} ({_money(item['amount'])}) failed at {item['scheduled']} with "
-                          f"'service unavailable'; you could only send it at {back_text}, {late} hours later.", True))
+                          f"'service unavailable'; you could only send it at {back_text}, {'about ' if back[1] else ''}{late} hours later.", True))
         elif kind == "card_sales":
             count = item.get("tickets_over_100", 0) if limit <= 100 else item.get("tickets_over_250", 0)
             avg = item.get("over_100_avg", 0) if limit <= 100 else item.get("over_250_avg", 0)
@@ -243,7 +257,7 @@ class World:
         elif kind == "settlement_delay":
             lines.append(("Your Saturday and Sunday card sales settled into your account on Monday instead of the same day.", True))
         if item.get("then"):
-            lines += self.weekend_outcome(item["then"], limit, overrun)
+            lines += self.weekend_outcome(item["then"], limit, back)
         return lines
 
     def experience(self, p, week, effects, ledger=()):
@@ -272,7 +286,7 @@ class World:
         pay_weeks = p.get("pay_weeks") or []
         early = any(item["effect"].get("early_pay_days") for item in effects)
         migration_week = self.migration.get("week", 6)
-        overrun = self.overrun_hours()
+        back, overrun = self.back_time(), self.overrun_text()
         elsewhere = self.pay_elsewhere(ledger, week)
         if week in pay_weeks and elsewhere:
             add(f"Money that used to land at Cobalt ({p.get('pay_schedule', 'your usual schedule')}) now goes to "
@@ -291,11 +305,11 @@ class World:
             limit = self.offline_limit(effects)
             end = "Sunday Dec 13 12:00 Central Time"
             if overrun:
-                end = f"Sunday Dec 13 {12 + overrun:02d}:00 Central Time, {overrun} hours later than announced,"
+                end = f"Sunday Dec 13 {back[0]:02d}:{back[1]:02d} Central Time, {overrun} later than announced,"
             add(f"From Saturday Dec 12 00:00 until {end} the Cobalt app was read-only: you could see "
                 f"balances but could not send transfers or P2P payments or get a new card. "
                 f"Card payments worked offline up to {_money(limit)} per payment.", bool(overrun))
-            lines += self.weekend_outcome(p.get("migration_weekend"), limit, overrun)
+            lines += self.weekend_outcome(p.get("migration_weekend"), limit, back)
             if not p.get("migration_weekend"):
                 if p.get("uses_p2p"):
                     add("Any P2P payment or transfer you tried during that window failed with 'service unavailable'; it could only go out after the system returned.")
@@ -303,7 +317,7 @@ class World:
                     add(f"Your Cobalt card reader accepted payments up to {_money(limit)} each during the window; a larger ticket could not be charged to a card.")
             add(self.migration.get("scheduled_payments", "Payments due during the window were processed once the system returned."))
         if week == migration_week + 1:
-            finish = "on schedule at Sunday Dec 13 12:00" if not overrun else f"{overrun} hours late, at Sunday Dec 13 {12 + overrun:02d}:00"
+            finish = "on schedule at Sunday Dec 13 12:00" if not overrun else f"{overrun} late, at Sunday Dec 13 {back[0]:02d}:{back[1]:02d}"
             add(f"The migration finished {finish}. Transfers, P2P and new cards are available again on the new system.")
         lines += self._surprise_experience(p, week)
         wait = self.support_wait(week, effects)

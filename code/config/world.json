@@ -60,6 +60,7 @@
     "week": 6,
     "window": "Saturday December 12 00:00 to Sunday December 13 12:00 Central Time",
     "overrun_hours": 4,
+    "overrun_minutes": 10,
     "offline_card_limit_default": 100,
     "scheduled_payments": "Other scheduled payments due during the window were processed once the system returned."
   },
