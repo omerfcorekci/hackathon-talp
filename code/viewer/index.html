@@ -480,8 +480,20 @@ VIEWS.overview = async () => {
     <div class="stack"><div class="card">${legend(series)}${wm.available === false ? `<div class="note">Weekly metrics could not be computed: ${esc(wm.error)}</div>` : ""}
       ${lineChart({ series, unit: "%", markers, targets: [{ v: tgtNum(d.targets, "goal_1"), color: cA, label: `active target ${tgtNum(d.targets, "goal_1")}` }, { v: tgtNum(d.targets, "goal_2"), color: cD, label: `deposits target ${tgtNum(d.targets, "goal_2")}` }] })}
       ${eventChips(d.announcements, rj.decisions)}</div>
-      <div class="card"><div class="small" style="font-weight:600;margin-bottom:6px">How personas use the bank <span class="faint" style="font-weight:400">· number of personas</span></div>${statusBars(d.weekly)}</div></div>`;
+      <div class="card"><div class="small" style="font-weight:600;margin-bottom:6px">How personas use the bank <span class="faint" style="font-weight:400">· number of personas</span></div>${statusBars(d.weekly)}</div></div>
+    <div class="sec">With more time, we would build <span class="hint">what the simulation does not model yet</span></div>
+    <div class="tw"><table><thead><tr><th>Not modelled yet</th><th>What we would build</th></tr></thead>
+      <tbody>${MORE_TIME.map(([gap, build]) => `<tr><td><b>${gap}</b></td><td>${build}</td></tr>`).join("")}</tbody></table></div>`;
 };
+const MORE_TIME = [
+  ["Channels", "Reach per channel (push, email, SMS, in-app); a credibility cost for a CEO video"],
+  ["Support load", "Waits computed from the number of customers calling that week"],
+  ["Rivals", "Rival offers that react to our decisions and to the migration date"],
+  ["Virality", "Reach that grows with shares instead of a fixed network"],
+  ["Rumor belief", "Track which claim each persona believes, and who corrected it"],
+  ["Activity", "Per-persona 30-day activity, so small drops in active customers show"],
+  ["Students and variants", "Add the student group and seeded variants of each persona"],
+];
 
 // ------------------------------------------------------------ Personas
 VIEWS.personas = async () => {

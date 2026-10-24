@@ -5,9 +5,9 @@
   "use strict";
   const PAGES = [
     ["/", "Overview"],
-    ["/interview.html", "Interview"],
     ["/network.html", "Network"],
     ["/algorithms.html", "Algorithm"],
+    ["/interview.html", "Interview"],
   ];
   const KEY = "talp.run";
   const store = {
