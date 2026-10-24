@@ -14,6 +14,10 @@
   --s-main: #4a7fd8; --s-second: #b9d1f3; --s-dormant: #e3dfd4; --s-left: #e0675a; --s-none: #f1f2f4;
   --s-main-t: #fff; --s-second-t: #17365f; --s-dormant-t: #4a4538; --s-left-t: #fff;
   --c1: #2f6fde; --c2: #e08a2e;
+  --g1: #2f6fde; --g2: #e08a2e; --g3: #1f9a6a; --g4: #9b59b6; --g5: #c8463c;
+  --m-calm: #dde8f7; --m-calm-t: #1d4fa8; --m-hopeful: #e3f3e8; --m-hopeful-t: #1f7a4d;
+  --m-relieved: #d4f0f0; --m-relieved-t: #1b6b6b; --m-worried: #fff1cc; --m-worried-t: #7a5200;
+  --m-frustrated: #fde3cf; --m-frustrated-t: #9a4a10; --m-angry: #f8d3cf; --m-angry-t: #9b2a20;
   color-scheme: light;
 }
 * { box-sizing: border-box; }
@@ -150,6 +154,17 @@ table.grid tr.grp td { padding: 14px 10px 4px; font-weight: 600; font-size: 12px
 .charts { display: grid; grid-template-columns: repeat(auto-fill, minmax(440px, 1fr)); gap: 16px; }
 svg text { fill: var(--muted); font-size: 11px; font-family: system-ui, sans-serif; }
 svg .axis { stroke: var(--line-soft); }
+svg .mark { stroke: var(--muted); stroke-dasharray: 3 4; opacity: .8; }
+svg .mark-dec { stroke: var(--accent); stroke-dasharray: 6 3; }
+svg text.marklbl { font-size: 10.5px; }
+svg circle.tp { cursor: help; }
+svg circle.tp:hover { r: 5; }
+.mood { display: inline-block; min-width: 62px; padding: 1px 6px; border-radius: 10px; font-size: 11px; text-align: center; white-space: nowrap; }
+.mood.calm { background: var(--m-calm); color: var(--m-calm-t); } .mood.hopeful { background: var(--m-hopeful); color: var(--m-hopeful-t); }
+.mood.relieved { background: var(--m-relieved); color: var(--m-relieved-t); } .mood.worried { background: var(--m-worried); color: var(--m-worried-t); }
+.mood.frustrated { background: var(--m-frustrated); color: var(--m-frustrated-t); } .mood.angry { background: var(--m-angry); color: var(--m-angry-t); }
+table.moods td, table.moods th { padding: 3px 4px; text-align: center; }
+table.moods td.pname, table.moods th.pname { text-align: left; padding-right: 12px; white-space: nowrap; }
 svg .tgt { stroke: var(--bad); stroke-dasharray: 4 3; opacity: .7; }
 .md { line-height: 1.6; }
 .md table { width: auto; margin: 10px 0; border: 1px solid var(--line); border-radius: 8px; }
@@ -371,6 +386,23 @@ function recCard(S, ranked, base) {
     ${openVariants.has(chosen.variant) ? `<div style="margin-top:14px">${decisionCards(chosen.decisions)}</div>` : ""}
   </div>`;
 }
+function sweepWeekly(S, chosenV) {
+  const vs = S.variants.filter((v) => v.series);
+  if (!vs.length) return "";
+  const markers = weekMarkers(S.announcements, chosenV ? chosenV.decisions : []);
+  const ser = (key) => vs.map((v, i) => ({
+    name: v.label + (v.varied ? ` (${v.varied.decision}. karar → ${v.varied.week}. hf)` : ""),
+    color: v.baseline ? cssVar("--muted") : variantColor(i), dash: v.baseline,
+    width: chosenV && v.variant === chosenV.variant ? 3.5 : v.baseline ? 2 : 1.5,
+    points: (v.series[key] || []).map((y, w) => [w + 1, y]),
+  }));
+  const trust = vs.some((v) => v.series.trust) ? trustChart({ markers, series: ser("trust").filter((x) => x.points.some((p) => p[1] != null)) }) : NO_TRUST;
+  return `<h2>Hafta hafta: varyantlar <span class="small muted" style="font-weight:400">seed ortalaması · kesikli gri = kararsız baz · kalın = önerilen · dikey = olaylar ve önerilen planın kararları</span></h2>
+    <div class="charts">
+      ${lineChart({ title: "Mevduat (kasa) %", series: ser("deposits"), target: tgtNum(S.targets, "goal_2"), unit: "%", markers })}
+      ${lineChart({ title: "Aktif müşteri %", series: ser("active"), target: tgtNum(S.targets, "goal_1"), unit: "%", markers })}
+    </div>${trust}`;
+}
 async function viewAdvice(name) {
   const L = await api("/api/sweeps");
   if (!L.sweeps.length) {
@@ -413,6 +445,7 @@ async function viewAdvice(name) {
       ${GOALS.map(([k, l]) => `<th class="num" title="hedef ${esc(tgtText(S.targets, k))}">${l}<div class="faint" style="font-weight:400">${esc(tgtText(S.targets, k))}</div></th>`).join("")}
       <th class="num">Hedef açığı<div class="faint" style="font-weight:400">puan, 0 = hepsi tuttu</div></th></tr></thead><tbody>${rows}</tbody></table></div>
     <div class="score">Sıralama: <b>${esc(S.score)}</b>. Gri küçük sayılar = seed'ler arası min–maks. Satıra tıkla: kararların tam metni ve gruplara etkisi.</div>
+    ${sweepWeekly(S, chosenV)}
     ${chosenV && base ? `<h2>Önerilen planın gruplara etkisi <span class="small muted" style="font-weight:400">(${esc(chosenV.label)} − kararsız baz, 10. hafta)</span></h2><div class="card">${groupBars(chosenV, base)}</div>` : ""}`);
   document.querySelectorAll("[data-toggle]").forEach((el) => el.addEventListener("click", (e) => {
     if (e.target.closest("a")) return;
@@ -453,7 +486,7 @@ async function viewRuns() {
 }
 
 // ------------------------------------------------------------ run detail
-const RUN_TABS = [["ozet", "Özet"], ["haftalik", "Haftalık"], ["persona", "Personalar"], ["grafik", "Grafikler"], ["diger", "Diğer"]];
+const RUN_TABS = [["ozet", "Özet"], ["haftalik", "Haftalık"], ["persona", "Personalar"], ["guven", "Güven ve para"], ["grafik", "Grafikler"], ["diger", "Diğer"]];
 let gridGroup = "";
 function groupsOf(personas) { const g = []; personas.forEach((p) => { if (!g.includes(p.group)) g.push(p.group); }); return g; }
 function indexWeekly(weekly) { const m = {}; weekly.forEach((r) => { (m[r.persona] ||= {})[r.week] = r; }); return m; }
@@ -466,7 +499,7 @@ async function viewRun(id, tab, rest) {
     <h1 style="margin-top:8px">${esc(rj.name || id.split("/").pop())} <span class="badge">${esc(rj.type)}</span></h1>
     <div class="muted small">${esc(id)} · seed ${esc(rj.seed)} · ${esc(rj.model)} · sürpriz ${rj.type === "plan_nosurprises" ? "kapalı" : "açık"} · ${esc(rj.engine || "")}${rj.complete === false ? " · <b>tamamlanmadı</b>" : ""}</div>
     <div class="tabs">${RUN_TABS.map(([k, t]) => `<a href="#/run/${enc(id)}/${k}" class="${k === tab ? "on" : ""}">${t}</a>`).join("")}</div>`;
-  const body = { ozet: runSummary, haftalik: runGrid, grafik: runCharts, persona: runPersonas, diger: runOther }[tab] || runSummary;
+  const body = { ozet: runSummary, haftalik: runGrid, grafik: runCharts, guven: runTrust, persona: runPersonas, diger: runOther }[tab] || runSummary;
   setMain(head + `<div id="tabbody"></div>`);
   await body(d, id, rest);
 }
@@ -592,7 +625,7 @@ function niceStep(raw) {
   const p = Math.pow(10, Math.floor(Math.log10(raw))), f = raw / p;
   return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * p;
 }
-function lineChart({ title, series, yMin, yMax, target, unit = "", height = 220 }) {
+function lineChart({ title, series, yMin, yMax, target, unit = "", height = 220, markers = null }) {
   const W = 460, H = height, L = 44, R = 12, T = 12, B = 26;
   const xs = (w) => L + (w - 1) * (W - L - R) / 9;
   const all = series.flatMap((s) => s.points.map((p) => p[1])).filter((v) => v != null);
@@ -608,13 +641,14 @@ function lineChart({ title, series, yMin, yMax, target, unit = "", height = 220 
   for (let v = yMin; v <= yMax + step / 2; v += step) g += `<line class="axis" x1="${L}" x2="${W - R}" y1="${ys(v)}" y2="${ys(v)}"/><text x="${L - 6}" y="${ys(v) + 4}" text-anchor="end">${fmtNum(v, dec)}</text>`;
   for (let w = 1; w <= 10; w++) g += `<text x="${xs(w)}" y="${H - 8}" text-anchor="middle">${w}</text>`;
   if (target != null) g += `<line class="tgt" x1="${L}" x2="${W - R}" y1="${ys(target)}" y2="${ys(target)}"/><text x="${W - R}" y="${ys(target) - 4}" text-anchor="end" style="fill:var(--bad)">hedef ${target}${unit}</text>`;
+  if (markers) g += markerLines(markers, xs, T, H - B, false);
   for (const s of series) {
     const pts = s.points.filter((p) => p[1] != null);
-    g += `<polyline fill="none" stroke="${s.color}" stroke-width="2" points="${pts.map((p) => `${xs(p[0])},${ys(p[1])}`).join(" ")}"/>`;
+    g += `<polyline fill="none" stroke="${s.color}" stroke-width="${s.width || 2}" ${s.dash ? 'stroke-dasharray="6 4"' : ""} points="${pts.map((p) => `${xs(p[0])},${ys(p[1])}`).join(" ")}"/>`;
     g += pts.map((p) => `<circle cx="${xs(p[0])}" cy="${ys(p[1])}" r="3" fill="${s.color}"><title>${esc(s.name)} · hf ${p[0]}: ${fmtNum(p[1], 2)}${unit}</title></circle>`).join("");
   }
   const leg = series.length > 1 ? `<div class="legend">${series.map((s) => `<span><i style="background:${s.color}"></i>${esc(s.name)}</span>`).join("")}</div>` : "";
-  return `<div class="card"><b>${esc(title)}</b>${leg}<svg viewBox="0 0 ${W} ${H}" width="100%" role="img">${g}</svg></div>`;
+  return `<div class="card"><b>${esc(title)}</b>${leg}<svg viewBox="0 0 ${W} ${H}" width="100%" role="img">${g}</svg>${markers ? markerNote(markers) : ""}</div>`;
 }
 function stackedBars({ title, weeks, keys, colors, height = 220 }) {
   const W = 460, H = height, L = 36, R = 12, T = 12, B = 26;
@@ -630,6 +664,154 @@ function stackedBars({ title, weeks, keys, colors, height = 220 }) {
     g += `<text x="${x + bw * 0.32}" y="${H - 8}" text-anchor="middle">${i + 1}</text>`;
   });
   return `<div class="card"><b>${esc(title)}</b><div class="legend">${keys.map((k, j) => `<span><i style="background:${colors[j]}"></i>${esc(k)}</span>`).join("")}</div><svg viewBox="0 0 ${W} ${H}" width="100%" role="img">${g}</svg></div>`;
+}
+// ------------------------------------------------------------ trust, mood and money (from the model's weekly answers)
+const MOODS = ["calm", "hopeful", "relieved", "worried", "frustrated", "angry"];
+const MOOD_TR = { calm: "sakin", hopeful: "umutlu", relieved: "rahatlamış", worried: "endişeli", frustrated: "bıkkın", angry: "öfkeli" };
+const NO_TRUST = `<div class="note">Bu run'da güven verisi yok.</div>`;
+const STATUS_TR = { "main bank": "ana banka", "second bank": "2. banka", dormant: "uyuyan", left: "ayrıldı" };
+const MONEY_RANK = { kept: 0, "moved some": 1, "moved most": 2 };
+const NEW_RANK = { none: 0, some: 1, "a lot": 2 };
+const hasTrust = (weekly) => (weekly || []).some((r) => Number.isInteger(r.trust));
+const groupColor = (groups, g) => cssVar(`--g${(groups.indexOf(g) % 5) + 1}`);
+const variantColor = (i) => cssVar(`--g${(i % 5) + 1}`);
+const mean = (xs) => xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null;
+function meanTrust(weekly, ids) {
+  return Array.from({ length: 10 }, (_, i) => [i + 1, mean(weekly.filter((r) => r.week === i + 1 && Number.isInteger(r.trust) && (!ids || ids.has(r.persona))).map((r) => r.trust))]);
+}
+function weekMarkers(announcements, decisions) {
+  const m = {};
+  const add = (w, label, dec) => { if (!(w >= 1 && w <= 10)) return; (m[w] ||= { labels: [], dec: false }).labels.push(label); if (dec) m[w].dec = true; };
+  add(6, "göç (bilinen kriz)");
+  (announcements || []).forEach((a) => add(+a.week, a.title || a.id));
+  (decisions || []).forEach((d, i) => add(+d.week, `${i + 1}. karar başlar`, true));
+  return m;
+}
+function markerLines(markers, xs, top, bottom, labels, W = 0) {
+  let g = "";
+  let k = 0;
+  for (const [w, mk] of Object.entries(markers)) {
+    const row0 = (k++ % 2) * 2;  // alternate rows so labels of neighbouring weeks do not overlap
+    g += `<line class="mark ${mk.dec ? "mark-dec" : ""}" x1="${xs(+w)}" x2="${xs(+w)}" y1="${top - 6}" y2="${bottom}"><title>${esc(w)}. hafta: ${esc(mk.labels.join(" · "))}</title></line>`;
+    if (!labels) continue;
+    const anchor = +w >= 9 ? "end" : "start";
+    mk.labels.forEach((lb, j) => { g += `<text class="marklbl" x="${xs(+w) + (anchor === "end" ? -4 : 4)}" y="${top + 4 + (row0 + j) * 12}" text-anchor="${anchor}" style="${/karar/.test(lb) ? "fill:var(--accent-text)" : ""}">${esc(lb.length > 22 ? lb.slice(0, 21) + "…" : lb)}</text>`; });
+  }
+  return g;
+}
+function markerNote(markers) {
+  const e = Object.entries(markers);
+  return e.length ? `<div class="small faint" style="margin-top:4px">Kesikli dikey: ${e.map(([w, mk]) => `${w}. hf ${esc(mk.labels.join(", "))}`).join(" · ")}</div>` : "";
+}
+// Thin line per persona (nudged a little apart so equal scores do not hide each other), bold line per group mean,
+// or (with series) one line per run / variant.
+function trustChart({ personas, weekly, markers, series }) {
+  const W = 920, H = 340, L = 34, R = 16, T = 18, B = 26;
+  const xs = (w) => L + (w - 1) * (W - L - R) / 9;
+  const ys = (v) => T + (5.3 - v) * (H - T - B) / 4.6;
+  let g = "";
+  for (let v = 1; v <= 5; v++) g += `<line class="axis" x1="${L}" x2="${W - R}" y1="${ys(v)}" y2="${ys(v)}"/><text x="${L - 8}" y="${ys(v) + 4}" text-anchor="end">${v}</text>`;
+  for (let w = 1; w <= 10; w++) g += `<text x="${xs(w)}" y="${H - 8}" text-anchor="middle">${w}</text>`;
+  g += markerLines(markers || {}, xs, T, H - B, true);
+  if (series) {
+    for (const s of series) {
+      const pts = s.points.filter((p) => p[1] != null);
+      g += `<polyline fill="none" stroke="${s.color}" stroke-width="${s.width || 2.5}" ${s.dash ? 'stroke-dasharray="6 4"' : ""} points="${pts.map((p) => `${xs(p[0])},${ys(p[1])}`).join(" ")}"/>`;
+      g += pts.map((p) => `<circle class="tp" cx="${xs(p[0])}" cy="${ys(p[1])}" r="3" fill="${s.color}"><title>${esc(s.name)} · ${p[0]}. hafta · ort. güven ${fmtNum(p[1], 2)}</title></circle>`).join("");
+    }
+    return `<div class="card"><b>Ortalama güven (1–5, personaların kendi cevabı)</b><div class="legend">${series.map((s) => `<span><i style="background:${s.color}"></i>${esc(s.name)}</span>`).join("")}</div><svg viewBox="0 0 ${W} ${H}" width="100%" role="img">${g}</svg></div>`;
+  }
+  const groups = groupsOf(personas), Wk = indexWeekly(weekly);
+  const n = personas.length;
+  personas.forEach((p, i) => {
+    const c = groupColor(groups, p.group), off = n > 1 ? (i / (n - 1) - 0.5) * 0.24 : 0;
+    const pts = [];
+    for (let w = 1; w <= 10; w++) { const r = (Wk[p.id] || {})[w]; if (r && Number.isInteger(r.trust)) pts.push([w, r]); }
+    g += `<polyline fill="none" stroke="${c}" stroke-width="1" opacity=".35" points="${pts.map(([w, r]) => `${xs(w)},${ys(r.trust + off)}`).join(" ")}"/>`;
+    g += pts.map(([w, r]) => `<circle class="tp" cx="${xs(w)}" cy="${ys(r.trust + off)}" r="2.2" fill="${c}" opacity=".6"><title>${esc(p.name || p.id)} (${esc(p.id)}) · ${w}. hafta\ngüven ${r.trust} · ${esc(MOOD_TR[r.mood] || r.mood || "–")}\n${esc((r.reason || "").slice(0, 120))}${(r.reason || "").length > 120 ? "…" : ""}</title></circle>`).join("");
+  });
+  for (const gname of groups) {
+    const c = groupColor(groups, gname);
+    const pts = meanTrust(weekly, new Set(personas.filter((p) => p.group === gname).map((p) => p.id))).filter((p) => p[1] != null);
+    g += `<polyline fill="none" stroke="${c}" stroke-width="3.5" points="${pts.map((p) => `${xs(p[0])},${ys(p[1])}`).join(" ")}"/>`;
+    g += pts.map((p) => `<circle class="tp" cx="${xs(p[0])}" cy="${ys(p[1])}" r="4" fill="${c}"><title>${esc(groupTr(gname))} ortalaması · ${p[0]}. hafta · güven ${fmtNum(p[1], 2)}</title></circle>`).join("");
+  }
+  const leg = `<div class="legend">${groups.map((gn) => `<span><i style="background:${groupColor(groups, gn)}"></i>${esc(groupTr(gn))}</span>`).join("")}<span>ince = persona, kalın = grup ortalaması · kesikli dikey = olay / karar</span></div>`;
+  return `<div class="card">${leg}<svg viewBox="0 0 ${W} ${H}" width="100%" role="img">${g}</svg></div>`;
+}
+// Weighted dollars per week from /api/run money_flow: inflow above zero, outflow below, net line.
+function flowChart(mf, markers) {
+  if (!mf || !mf.available) return `<div class="note">Para akışı hesaplanamadı${mf && mf.error ? ": " + esc(mf.error) : ""}.</div>`;
+  const W = 920, H = 300, L = 64, R = 16, T = 18, B = 26;
+  const wk = mf.weeks;
+  const top = Math.max(1, ...wk.map((w) => w.inflow)), bot = Math.min(-1, ...wk.map((w) => w.outflow));
+  const step = niceStep((top - bot) / 5);
+  const yMax = Math.ceil(top / step) * step, yMin = Math.floor(bot / step) * step;
+  const bw = (W - L - R) / 10, xs = (w) => L + (w - 0.5) * bw;
+  const ys = (v) => T + (yMax - v) * (H - T - B) / (yMax - yMin);
+  const usd = (v) => (v < 0 ? "−" : "") + "$" + (Math.abs(v) >= 1e6 ? fmtNum(Math.abs(v) / 1e6, 1) + "M" : Math.abs(v) >= 1e3 ? fmtNum(Math.abs(v) / 1e3, 0) + "k" : fmtNum(Math.abs(v), 0));
+  let g = "";
+  for (let v = yMin; v <= yMax + step / 2; v += step) g += `<line class="axis" x1="${L}" x2="${W - R}" y1="${ys(v)}" y2="${ys(v)}" ${Math.abs(v) < step / 2 ? 'style="stroke:var(--muted)"' : ""}/><text x="${L - 6}" y="${ys(v) + 4}" text-anchor="end">${usd(Math.round(v))}</text>`;
+  g += markerLines(markers || {}, xs, T, H - B, false);
+  for (const w of wk) {
+    const x = xs(w.week) - bw * 0.3;
+    const who = (sign) => w.items.filter((it) => sign > 0 ? it.usd > 0 : it.usd < 0).map((it) => `${it.name} (${it.persona}) ${usd(it.usd)}: ${it.from} → ${it.to}\n  "${it.reason}"`).join("\n");
+    if (w.inflow) g += `<rect x="${x}" width="${bw * 0.6}" y="${ys(w.inflow)}" height="${ys(0) - ys(w.inflow)}" fill="var(--good)" opacity=".75"><title>${w.week}. hafta giriş ${usd(w.inflow)}\n${esc(who(1))}</title></rect>`;
+    if (w.outflow) g += `<rect x="${x}" width="${bw * 0.6}" y="${ys(0)}" height="${ys(w.outflow) - ys(0)}" fill="var(--bad)" opacity=".75"><title>${w.week}. hafta çıkış ${usd(w.outflow)}\n${esc(who(-1))}</title></rect>`;
+    g += `<text x="${xs(w.week)}" y="${H - 8}" text-anchor="middle">${w.week}</text>`;
+  }
+  g += `<polyline fill="none" stroke="var(--text)" stroke-width="2" points="${wk.map((w) => `${xs(w.week)},${ys(w.net)}`).join(" ")}"/>`;
+  g += wk.map((w) => `<circle class="tp" cx="${xs(w.week)}" cy="${ys(w.net)}" r="3.5" fill="var(--text)"><title>${w.week}. hafta net ${usd(w.net)} (giriş ${usd(w.inflow)}, çıkış ${usd(w.outflow)})</title></circle>`).join("");
+  return `<div class="card"><div class="legend"><span><i style="background:var(--good)"></i>giriş (yeni para)</span><span><i style="background:var(--bad)"></i>çıkış (taşınan / ayrılan)</span><span><i style="background:var(--text)"></i>net</span><span>çubuğun üstüne gel: arkasındaki personalar ve gerekçeleri</span></div><svg viewBox="0 0 ${W} ${H}" width="100%" role="img">${g}</svg>${markerNote(markers || {})}</div>`;
+}
+// Persona x week: mood chip (when the run has one) plus what changed that week: ↓ / ↓↓ money moved out,
+// ↑ new money in, status word when the status changed.
+function personaWeekTable(personas, weekly) {
+  const groups = groupsOf(personas), Wk = indexWeekly(weekly), withMood = hasTrust(weekly);
+  let rows = "";
+  for (const gname of groups) {
+    rows += `<tr class="grp"><td colspan="11" class="small muted" style="text-align:left;padding-top:10px;font-weight:600">${esc(groupTr(gname))}</td></tr>`;
+    for (const p of personas.filter((x) => x.group === gname)) {
+      rows += `<tr><td class="pname small"><span class="cell ${stClass(p.cobalt_role)}" style="display:inline-block;width:10px;height:10px;margin:0 6px 0 0;cursor:default" title="Nov 2: ${esc(p.cobalt_role || "")}"></span>${esc(p.id)} <span class="muted">${esc(p.name || "")}</span></td>`;
+      let prev = { status: p.cobalt_role || "main bank", money: "kept", new_money: "none" };
+      for (let w = 1; w <= 10; w++) {
+        const r = (Wk[p.id] || {})[w];
+        if (!r) { rows += `<td><span class="faint">·</span></td>`; continue; }
+        const dm = (MONEY_RANK[r.money] ?? 0) - (MONEY_RANK[prev.money] ?? 0), dn = (NEW_RANK[r.new_money] ?? 0) - (NEW_RANK[prev.new_money] ?? 0);
+        const marks = [];
+        if (dm > 0) marks.push(`<b class="g-bad" title="para: ${esc(prev.money)} → ${esc(r.money)}">${r.money === "moved most" ? "↓↓" : "↓"}</b>`);
+        if (dn > 0) marks.push(`<b class="g-good" title="yeni para: ${esc(r.new_money)}">↑</b>`);
+        if (r.status !== prev.status) marks.push(`<span class="badge" style="padding:0 4px;font-size:10.5px" title="${esc(prev.status)} → ${esc(r.status)}">${esc(STATUS_TR[r.status] || r.status)}</span>`);
+        const tip = `${p.id} · ${w}. hafta · ${r.status} / ${r.money} / yeni para ${r.new_money || "none"}${withMood ? ` · güven ${r.trust} · ${r.mood}` : ""}\n${(r.reason || "").slice(0, 120)}`;
+        const chip = withMood && r.mood ? `<span class="mood ${esc(r.mood)}">${esc(MOOD_TR[r.mood] || r.mood)}</span>` : "";
+        rows += `<td title="${esc(tip)}">${chip}<div style="min-height:16px;font-size:12px;line-height:16px">${marks.join(" ") || (chip ? "" : '<span class="faint">·</span>')}</div></td>`;
+        prev = r;
+      }
+      rows += "</tr>";
+    }
+  }
+  return `<div class="legend" style="margin-bottom:8px">${withMood ? MOODS.map((m) => `<span class="mood ${m}">${MOOD_TR[m]}</span>`).join("") : ""}<span><b class="g-bad">↓</b> bir kısmını taşıdı · <b class="g-bad">↓↓</b> çoğunu taşıdı · <b class="g-good">↑</b> yeni para getirdi · kelime = durum değişti</span></div>
+    <div class="tablewrap" style="display:inline-block;max-width:100%"><table class="moods"><thead><tr><th class="pname">Persona</th>${Array.from({ length: 10 }, (_, i) => `<th>${i + 1}</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+async function runTrust(d) {
+  const markers = weekMarkers(d.announcements, (d.run || {}).decisions);
+  const wm = d.weekly_metrics || {};
+  const pts = (k) => (wm.weeks || []).map((w) => [w.week, w[k] ?? null]);
+  $("#tabbody").innerHTML = `<h2 style="margin-top:0">Güven ve duygu</h2>
+    ${hasTrust(d.weekly) ? `<p class="small muted" style="margin-top:-4px">Her hafta modelin kendi cevabı: "Cobalt'a bu hafta ne kadar güveniyorsun?" (1 = hiç, 5 = tamamen) ve tek kelimelik duygu. Noktanın üstüne gel: persona, hafta, güven, duygu ve gerekçe. Metriklere girmez.</p>
+    ${trustChart({ personas: d.personas, weekly: d.weekly, markers })}` : NO_TRUST}
+    <h2>Kasa ve aktif müşteri, hafta hafta</h2>
+    <p class="small muted" style="margin-top:-4px">Her hafta için <span class="mono">sim/metrics.py</span> goal_2 / goal_1 formülü o haftanın satırlarıyla (ağırlık × takip payı × para faktörü + yeni para).</p>
+    ${wm.available ? "" : `<div class="note">Haftalık metrik hesaplanamadı: ${esc(wm.error)}</div>`}
+    <div class="charts">
+      ${lineChart({ title: "Mevduat (kasa), 2 Kasım'ın %'si", series: [{ name: "mevduat %", color: cssVar("--c1"), points: pts("goal_2") }], target: tgtNum(d.targets, "goal_2"), unit: "%", markers })}
+      ${lineChart({ title: "Aktif müşteri, 2 Kasım'ın %'si", series: [{ name: "aktif %", color: cssVar("--c1"), points: pts("goal_1") }], target: tgtNum(d.targets, "goal_1"), unit: "%", markers })}
+    </div>
+    <h2>Para akışı (ağırlıklı $)</h2>
+    <p class="small muted" style="margin-top:-4px">O hafta para faktörü düşen personalar çıkış (takip payı × temsil ettiği mevduat × faktör farkı), yeni para getirenler giriş. Haftaların neti toplanınca kasa çizgisini verir.</p>
+    ${flowChart(d.money_flow, markers)}
+    <h2>Persona × hafta${hasTrust(d.weekly) ? ": duygu ve" : ":"} para / durum değişimleri</h2>
+    ${personaWeekTable(d.personas, d.weekly)}`;
 }
 const cssVar = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 function tgtNum(t, k) { const m = /([\d.]+)/.exec((t || {})[k] || ""); return m ? +m[1] : null; }
@@ -748,13 +930,19 @@ async function viewCompare(a, b) {
       rows += "</tr>";
     }
   }
+  const cmpMarkers = weekMarkers(A.announcements, []);
+  [["A", da], ["B", db]].forEach(([tag, ds]) => ds.forEach((x, i) => { const w = +x.week; if (w >= 1 && w <= 10) { (cmpMarkers[w] ||= { labels: [], dec: false }).labels.push(`${tag}: ${i + 1}. karar`); cmpMarkers[w].dec = true; } }));
+  const trustCmp = hasTrust(A.weekly) || hasTrust(B.weekly)
+    ? trustChart({ markers: cmpMarkers, series: [{ name: la, color: c1, points: meanTrust(A.weekly) }, { name: lb, color: c2, points: meanTrust(B.weekly) }] })
+    : NO_TRUST;
   setMain(`<h1>Karşılaştır</h1>
     <div class="small" style="margin-bottom:20px"><b>A</b> <a href="#/run/${enc(a)}">${esc(a)}</a> <span class="muted">· ${esc(A.run.type)} · seed ${esc(A.run.seed)}</span><br><b>B</b> <a href="#/run/${enc(b)}">${esc(b)}</a> <span class="muted">· ${esc(B.run.type)} · seed ${esc(B.run.seed)}</span></div>
     <div class="tablewrap" style="display:inline-block"><table style="width:auto"><thead><tr><th>Hedef</th><th class="num">A</th><th class="num">B</th><th class="num">B − A</th></tr></thead><tbody>${metr}</tbody></table></div>
     <h2>Haftalar</h2><div class="charts">
-      ${lineChart({ title: "Aktif müşteri %", series: [{ name: la, color: c1, points: ser(A, "goal_1") }, { name: lb, color: c2, points: ser(B, "goal_1") }], target: tgtNum(A.targets, "goal_1"), unit: "%" })}
-      ${lineChart({ title: "Mevduat %", series: [{ name: la, color: c1, points: ser(A, "goal_2") }, { name: lb, color: c2, points: ser(B, "goal_2") }], target: tgtNum(A.targets, "goal_2"), unit: "%" })}
+      ${lineChart({ title: "Aktif müşteri %", series: [{ name: la, color: c1, points: ser(A, "goal_1") }, { name: lb, color: c2, points: ser(B, "goal_1") }], target: tgtNum(A.targets, "goal_1"), unit: "%", markers: cmpMarkers })}
+      ${lineChart({ title: "Mevduat (kasa) %", series: [{ name: la, color: c1, points: ser(A, "goal_2") }, { name: lb, color: c2, points: ser(B, "goal_2") }], target: tgtNum(A.targets, "goal_2"), unit: "%", markers: cmpMarkers })}
     </div>
+    <h2>Güven, hafta hafta</h2>${trustCmp}
     <h2>Kararlar <span class="small muted" style="font-weight:400">A ${fmtUsd(A.budget.total)} · B ${fmtUsd(B.budget.total)}</span></h2>${ddiff}
     <h2>Persona × hafta <span class="small muted" style="font-weight:400">üst yarı A, alt yarı B · ${ndiff} farklı hücre</span></h2>
     ${legendHtml()}

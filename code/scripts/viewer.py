@@ -18,6 +18,9 @@ sim.metrics.compute_metrics; cost comes from sim.decisions.DecisionPlan(...).tot
 "Loglar" page lists every attempt logged in each run's calls.jsonl (valid / attempt / error_type).
 Nothing else is readable (no .env, no traversal). No LLM calls are made.
 
+/api/run also returns money_flow (weighted $ in/out per week, same weights and factors as goal_2) and
+trust_by_week; /api/sweep variants carry series (deposits, active, trust per week, mean over seeds).
+
 Endpoints: /api/sweeps, /api/sweep?name=, /api/runs, /api/run?id=, /api/call?run=&id=,
 /api/raw?run=&file=, /api/logs, /api/log?run=, /api/config, /api/docs.
 """
@@ -203,6 +206,66 @@ def weekly_metrics(personas: list[dict], weekly: list[dict]) -> dict:
         return {"available": False, "error": repr(e), "weeks": out}
 
 
+def trust_by_week(weekly: list[dict]) -> list | None:
+    """Mean of the model's own weekly trust answers (1-5), unweighted over personas; None if the run has none."""
+    vals = [[r["trust"] for r in weekly if r.get("week") == w and type(r.get("trust")) is int] for w in range(1, 11)]
+    if not any(vals):
+        return None
+    return [round(sum(v) / len(v), 3) if v else None for v in vals]
+
+
+def money_flow(personas: list[dict], weekly: list[dict]) -> dict:
+    """Weighted dollars that left / came into Cobalt each week, with the same weights and factors as goal_2
+    in sim.metrics: f x weight_deposits_usd x change in the money factor (kept 1.0 / some 0.6 / most 0.1,
+    left 0) is an outflow when it falls; the change in the new-money factor (some 0.1 / a lot 0.3) is an
+    inflow when it rises. Week 1 is compared with Nov 2 (kept, no new money). Summed over weeks 1..w the
+    net equals goal_2's deposits at week w minus the Nov 2 deposits."""
+    m = SIM["metrics"]
+    if m is None:
+        return {"available": False, "error": SIM["error"] or "sim.metrics not importable", "weeks": []}
+    try:
+        deposits = m._weights(personas, "weight_deposits_usd", [])
+        follow = {p["id"]: m.follow_share(p) for p in personas}
+        names = {p["id"]: p.get("name") or p["id"] for p in personas}
+        rows = {(r["persona"], r["week"]): r for r in weekly
+                if r.get("persona") in deposits and type(r.get("week")) is int and 1 <= r["week"] <= 10}
+
+        def parts(r):
+            if r is None:
+                return None
+            if r.get("status") == "left":
+                return 0.0, 0.0
+            return m.MONEY_FACTOR[r["money"]], m.NEW_MONEY_FACTOR.get(r.get("new_money", "none"), 0.0)
+
+        out = []
+        prev = {pid: (1.0, 0.0) for pid in deposits}
+        prev_row = {pid: None for pid in deposits}
+        for w in range(1, 11):
+            inflow = outflow = 0.0
+            items = []
+            for pid in sorted(deposits):
+                cur = parts(rows.get((pid, w)))
+                if cur is None:
+                    continue
+                scale = follow[pid] * deposits[pid]
+                dm, dn = (cur[0] - prev[pid][0]) * scale, (cur[1] - prev[pid][1]) * scale
+                delta = dm + dn
+                if dm or dn:
+                    inflow += max(dm, 0) + max(dn, 0)
+                    outflow += min(dm, 0) + min(dn, 0)
+                    r, before = rows[(pid, w)], prev_row[pid] or {"status": "Nov 2", "money": "kept", "new_money": "none"}
+                    items.append({"persona": pid, "name": names[pid], "usd": round(delta),
+                                  "from": f"{before.get('status')} / {before.get('money')} / new {before.get('new_money', 'none')}",
+                                  "to": f"{r.get('status')} / {r.get('money')} / new {r.get('new_money', 'none')}",
+                                  "reason": (r.get("reason") or "")[:140]})
+                prev[pid], prev_row[pid] = cur, rows[(pid, w)]
+            out.append({"week": w, "inflow": round(inflow), "outflow": round(outflow),
+                        "net": round(inflow + outflow), "items": sorted(items, key=lambda x: x["usd"])})
+        return {"available": True, "weeks": out}
+    except Exception as e:
+        return {"available": False, "error": repr(e), "weeks": []}
+
+
 SECTION_RE = {
     "events": re.compile(r"=== THIS WEEK: week (\d+) of 10, ([^=]*?) ===\n(.*?)(?:\n\n|\Z)", re.S),
     "experience": re.compile(r"What happened to you this week:\n(.*?)(?:\n\n|\Z)", re.S),
@@ -367,6 +430,18 @@ def shortfall(key: str, v) -> float | None:
     return round(max(0.0, raw) / GAP_UNIT[key], 3)
 
 
+def variant_series(seeds: dict, goals: dict) -> dict:
+    """Mean over seeds, per week 1-10: deposits (goal_2) and actives (goal_1) as sim.metrics computes them
+    for each week, and the mean of the personas' own trust answers (None for runs without trust)."""
+    out = {}
+    for key, name in (("goal_2_by_week", "deposits"), ("goal_1_by_week", "active")):
+        per = [((x.get("full") or {}).get("series") or {}).get(key) or {} for x in goals.values()]
+        out[name] = [stats([d.get(str(w)) for d in per])["mean"] for w in range(1, 11)]
+    trusts = [t for t in (trust_by_week(read_jsonl(p / "weekly.jsonl")) for p in seeds.values()) if t]
+    out["trust"] = [stats([t[w] for t in trusts])["mean"] for w in range(10)] if trusts else None
+    return out
+
+
 def api_sweep(q) -> dict:
     """Rank a sweep's variants and recommend one. Three ranking keys, in order:
     1. goals met (of 4), on the mean over seeds;
@@ -427,6 +502,7 @@ def api_sweep(q) -> dict:
                 e["deposits"].append(gv.get("deposits"))
         row["groups"] = {n: dict(e, active=stats(e["active"])["mean"], deposits=stats(e["deposits"])["mean"])
                          for n, e in grp.items()}
+        row["series"] = variant_series(seeds, g)
         variants.append(row)
 
     def key(r):
@@ -467,7 +543,10 @@ def api_sweep(q) -> dict:
             rows.append({"plan": plan, "label": plan_label(plan), "decision": int(k), "cells": cells, "best_week": best_w})
         matrix = {"weeks": weeks, "rows": rows}
 
+    any_run = next((p for seeds in runs.values() for p in seeds.values()), None)
+    announcements = (read_json(any_run / "announcements.json", []) or []) if any_run else []
     return {"name": d.name, "targets": targets(), "variants": ranked + ([baseline] if baseline else []),
+            "announcements": announcements,
             "baseline": baseline is not None, "recommendation": rec, "matrix": matrix,
             "score": "önce tutan hedef sayısı (4 üzerinden), sonra toplam hedef açığı "
                      "(1 puan = 1 yüzde puan aktif/mevduat, 0.1 App Store puanı, 24 CFPB şikayeti), sonra maliyet; "
@@ -533,6 +612,8 @@ def api_run(q) -> dict:
         "call_stats": call_stats(p),
         "files": files, "budget": budget_info(rj.get("decisions") or [], personas),
         "weekly_metrics": weekly_metrics(personas, weekly),
+        "money_flow": money_flow(personas, weekly),
+        "trust_by_week": trust_by_week(weekly),
         "feed": feed_by_week(p / "calls.jsonl", weekly),
         "targets": targets(),
         "fake": str(rj.get("model", "")).startswith("fake:"),
