@@ -86,11 +86,14 @@ Details and the verbatim texts: [`docs/crisis-log.md`](docs/crisis-log.md).
   move that weekend and from any gap between what we promised and what happened. Modelled through each
   persona's own weekend commitment, longer support waits (25 min in week 6, 12 in week 7) and a rival
   rate offer that targets the date.
-- **C1, small unrecognized charges (week 3).** Little money, big trust hit, three weeks before the
-  freeze. The text reaches people by the reach draw; our reading of what really happened sits in the
-  announcement's `effects`: the business-as-usual holding statement, support waits of 9 and 7 minutes
-  in weeks 3–4, and three personas (P5, E4, B5) who find charges themselves. With surprises off, text
-  and effects vanish together.
+- **C1, small unrecognized charges (week 3, update in week 4).** Little money, big trust hit, three
+  weeks before the freeze. The week-4 update gave the facts: a processor fault that double-charged,
+  plus fraud test charges on cards stolen elsewhere; Cobalt not breached; about 9,000 customers. Both
+  texts reach people by the reach draw, so some hear the rumor but not the correction. Our reading of
+  what really happened sits in `effects`: the business-as-usual holding statement, support waits of 9
+  and 7 minutes in weeks 3–4, and one persona (B5, standing for 7,000 customers) who finds a double
+  charge. We first had three personas hit; they stood for about 307,000 customers, so we cut them to
+  match the 9,000 in the update. With surprises off, texts and effects vanish together.
 - _Later announcements: add here as they arrive._
 
 ## Experiments

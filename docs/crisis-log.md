@@ -64,10 +64,13 @@ declined above the limit, autopay delayed) and the model reacts. An overrun is t
 Known: the charges are real; the security team is investigating with the card processor.
 Not known: how many customers; what caused it; whether customer data was exposed.
 
-**Update (week 4, verbatim):** _none yet_
+**Update (week 4, 14:30, verbatim):** The card processor confirmed a fault that charged some payments twice on November 16 and 17. Separately, a small number of cards were used for test charges of $0.50 to $2 by fraudsters, a common pattern after card numbers are stolen elsewhere, for example on a fake shopping site. Cobalt's own systems were not breached. About 9,000 customers were affected in total.
 
-**What is known / unknown:** charges are real and small ($0.50–$5); cause, scale and data exposure
-unknown. A viral "Cobalt got hacked" post is already out.
+**What is known / unknown:** week 3: charges are real and small ($0.50–$5); cause, scale and data
+exposure unknown; a viral "Cobalt got hacked" post is already out. Week 4: two causes (a processor
+fault that double-charged on Nov 16–17, and fraud test charges on cards stolen elsewhere), Cobalt not
+breached, about 9,000 customers affected (0.4% of 2.1M). Still unknown: whether duplicates are already
+refunded, and whether the stolen cards get replaced.
 
 **Our reading:**
 - Size: small money per customer, big trust hit. The rumor ("hacked") is worse than the facts, and it
@@ -83,13 +86,21 @@ unknown. A viral "Cobalt got hacked" post is already out.
   money, more on trust.
 - Earliest answer: a decision in **week 4** (lock before 14:30). Matching menu items: Security pack
   (free new card + alert on every card payment), Instant dispute credit, Extra support staff.
+- After the week-4 update: the facts are far smaller than the rumor. The risk shifts from "hacked" to
+  "will they fix my double charge": people who were hit and those who heard the rumor but not the
+  correction. "Not breached" and "about 9,000" calm many; "cards stolen elsewhere" still worries
+  fraud-wary customers before the freeze. The earliest decision is now week 5 (lock before 15:00), and
+  any message must use the new facts: saying the cause is unknown would now be misleading.
 
 **Simulation input:** `code/config/surprises/c1_week3_unrecognized_charges.json`, text word for word.
 Who hears the text is the engine's seeded reach draw (app-daily users, social-media users, others).
 `effects` hold our reading of what really happened, and vanish in `plan_nosurprises`:
 - the business-as-usual holding statement on social media in week 3 (everyone sees it);
 - support waits of 9 minutes in week 3 and 7 in week 4 (dispute calls; BAU is 4);
-- three personas find charges themselves in week 3: P5 Ashley Nguyen ($1.99, a past fraud victim),
-  E4 Tyler Brooks ($0.89 and $3.49), B5 Diego Alvarez ($4.50 on the business card, and a customer asks
-  whether his card reader is safe). Three of 24 is our guess at "some customers"; the scale is unknown.
+- one persona finds a charge himself in week 3: B5 Diego Alvarez, a $4.50 payment on his business
+  card shows up twice, and a market customer asks whether his card reader is safe. Before the update we
+  had three (P5, E4, B5), but together they stand for about 307,000 customers; the update says about
+  9,000 were hit, so we kept only B5 (7,000 customers);
+- the week-4 update is an `update` on the same file: its text reaches personas by the same reach draw
+  from week 4, so some keep the week-3 rumor without hearing the correction.
 
