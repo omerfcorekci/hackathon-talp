@@ -49,8 +49,9 @@ ASSUMPTIONS = [
     "after its failed 2018 core banking migration (95,613 complaints in about six weeks from about 5 "
     "million customers). a is a modelling judgement anchored on that one case, not fitted to Cobalt.",
     "goal_3 (App Store rating) = (4.6 × 210,000 + Σ a × weight_customers × app_rating) / "
-    "(210,000 + Σ a × weight_customers), summed over every persona-week (weeks 1-10) whose "
-    "app_rating is not null. The existing ratings are taken as 10% of customers (210,000) at 4.6. "
+    "(210,000 + Σ a × weight_customers), summed over the personas that rated, each with its latest "
+    "rating in weeks 1-10: an App Store user has one rating and can change it, so a later rating "
+    "replaces an earlier one. The existing ratings are taken as 10% of customers (210,000) at 4.6. "
     "One everyday persona's 1-star rating lowers goal_3 by 0.02-0.07; every persona giving 1 star once "
     "brings it to 4.27. Rounded to 2 decimals.",
     "goal_3b (CFPB complaints in the worst month) = 120 + the maximum over the sliding 4-week windows "
@@ -191,8 +192,11 @@ def _goals(ids, rows, last, customers, deposits, follow, start_ids, notes, label
         if missing:
             notes.append(f"{label}: no week-{last} row for {', '.join(missing)}; counted as unchanged")
 
-    rated = [(pid, row["app_rating"]) for (pid, week), row in rows.items()
-             if pid in ids and 1 <= week <= last and row.get("app_rating") is not None]
+    latest = {}  # one App Store rating per persona: a later rating replaces an earlier one
+    for (pid, week), row in sorted(rows.items(), key=lambda item: item[0][1]):
+        if pid in ids and 1 <= week <= last and row.get("app_rating") is not None:
+            latest[pid] = row["app_rating"]
+    rated = list(latest.items())
     mass = sum(ACT_SHARE * customers[pid] for pid, _ in rated)
     score = sum(ACT_SHARE * customers[pid] * rating for pid, rating in rated)
     goal_3 = round((BASE_RATING * REVIEW_MASS + score) / (REVIEW_MASS + mass), 2)
@@ -216,7 +220,7 @@ def _goals(ids, rows, last, customers, deposits, follow, start_ids, notes, label
               "goal_2_by_week": {str(week): round(100 * value / base_deposits, 2) if base_deposits else 0.0
                                  for week, value in deposit_series.items()},
               "cfpb_extra_by_window": {key: round(value, 1) for key, value in extra.items()},
-              "rated_persona_weeks": len(rated)}
+              "rated_personas": len(rated)}
     return goals, detail
 
 
