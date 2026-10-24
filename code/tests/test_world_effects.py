@@ -99,6 +99,16 @@ class WentWrongHistoryTests(unittest.TestCase):
         self.assertIn("EVERYONE_NEWS_LINE", w.context("u", 3)["experience"])
         self.assertIn("PERSONAL_GOOD_LINE", w.context("d", 3)["experience"])
 
+    def test_unless_leaves_out_matching_personas(self):
+        event = {"id": "u", "week": 3, "text": "Cobalt Bank: an incident.",
+                 "effects": {"experience": [{"week": 3, "text": "NOT_FOR_D", "unless": {"id": "d"}, "went_wrong": False}]}}
+        w = history_world([event])
+        self.assertIn("NOT_FOR_D", w.context("u", 3)["experience"])
+        self.assertNotIn("NOT_FOR_D", w.context("d", 3)["experience"])
+        self.assertEqual(w.went_wrong_before("u", 5), [])
+        with self.assertRaises(ValueError):
+            expand_surprises([{**event, "effects": {"experience": [{"week": 3, "text": "x", "unless": "d"}]}}])
+
     def test_went_wrong_flag_is_validated(self):
         bad = {**NEWS, "effects": {"experience": [{"week": 3, "text": "x", "went_wrong": "yes"}]}}
         with self.assertRaises(ValueError):
