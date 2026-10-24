@@ -54,3 +54,4 @@ class VertexTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(config["temperature"], 0.8)
         self.assertEqual(config["responseMimeType"], "application/json")
         self.assertIn("status", config["responseJsonSchema"]["properties"])
+        self.assertEqual(config["responseJsonSchema"]["propertyOrdering"][0], "reason")

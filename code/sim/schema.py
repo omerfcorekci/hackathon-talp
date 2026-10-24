@@ -46,9 +46,15 @@ TURN_SCHEMA = {
     "additionalProperties": False,
 }
 TURN_SCHEMA["required"] = list(TURN_SCHEMA["properties"])
+# Gemini writes the fields in this order (it ignores the order of "properties"). With status first the model
+# committed to "main bank, kept" and then justified it; with the reason first it says what happened before
+# it decides. Re-asking logged week-6/7 prompts this way gave 6 ratings instead of 2 and 8 non-routine
+# actions instead of 2 (experiments/inertia-ablation-1532).
+TURN_SCHEMA["propertyOrdering"] = ["reason"] + [name for name in TURN_SCHEMA["properties"] if name != "reason"]
 
 
-def parse_turn(raw: str, *, contacts: set[str], groups: set[str], previous=None, allowed_actions=None):
+def parse_turn(raw: str, *, contacts: set[str], groups: set[str], previous=None, allowed_actions=None,
+               money_so_far=None):
     def reject_constant(value):
         raise ValueError(f"Non-JSON numeric constant: {value}")
 
@@ -76,6 +82,10 @@ def parse_turn(raw: str, *, contacts: set[str], groups: set[str], previous=None,
             raise ValueError(f"Invalid {field}")
     if result["new_money"] not in NEW_MONEY:
         raise ValueError(f"new_money must be one of {', '.join(NEW_MONEY)}")
+    if money_so_far in MONEY and MONEY.index(result["money"]) < MONEY.index(money_so_far):
+        # money counts everything moved out since Nov 2; the model sometimes reads it as "this week".
+        raise ValueError(f"money is cumulative since Nov 2 and you have already {money_so_far} of your Cobalt money, "
+                         f"so answer \"{money_so_far}\" or more; money you bring back into Cobalt goes in new_money")
     unknown_sources = [h for h in result["heard_from"] if h not in HEARD_FROM]
     if unknown_sources:
         raise ValueError(f"heard_from must use only: {', '.join(HEARD_FROM)} (got {unknown_sources})")
