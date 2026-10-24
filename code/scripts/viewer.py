@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Local, read-only web viewer for simulation runs, their LLM calls, config and docs.
 
-    python3 code/scripts/viewer.py [--root PATH] [--port 8765] [--show-fake]
+    .venv/bin/python code/scripts/viewer.py [--root PATH] [--port 8765] [--show-fake] [--fake-interview]
 
 Binds 127.0.0.1 only. Stdlib only. Serves the pages under code/viewer/ (html/css/js and media/, from this checkout) and a small
 JSON API that reads, on every request, from an allowlist under --root:
@@ -16,12 +16,15 @@ Runs whose run.json model starts with "fake:" are hidden everywhere unless --sho
 Goals are always recomputed from weekly.jsonl + personas.jsonl with the current
 sim.metrics.compute_metrics; cost comes from sim.decisions.DecisionPlan(...).total_cost. The
 "Loglar" page lists every attempt logged in each run's calls.jsonl (valid / attempt / error_type).
-Nothing else is readable (no .env, no traversal). No LLM calls are made.
+Nothing else is readable (no .env, no traversal). The only LLM call is the Konuşma page's
+POST /api/interview (code/scripts/interview.py, logged to logs/interviews.jsonl): the run's model,
+TALP_KEY from the environment or .env (needs google-genai, i.e. .venv/bin/python). --fake-interview
+gives canned answers instead.
 
 /api/run also returns money_flow (weighted $ in/out per week, same weights and factors as goal_2) and
 trust_by_week; /api/sweep variants carry series (deposits, active, trust per week, mean over seeds).
 
-Endpoints: /api/network?run=, /api/sweeps, /api/sweep?name=, /api/runs, /api/run?id=, /api/call?run=&id=,
+Endpoints: /api/interview?run= (GET personas, POST {run, persona, question, earlier}), /api/network?run=, /api/sweeps, /api/sweep?name=, /api/runs, /api/run?id=, /api/call?run=&id=,
 /api/raw?run=&file=, /api/logs, /api/log?run=, /api/config, /api/docs.
 """
 from __future__ import annotations
@@ -56,6 +59,7 @@ STATIC_TYPES = {".html": "text/html; charset=utf-8", ".css": "text/css; charset=
 
 ROOT: Path = CODE_DIR.parent
 SHOW_FAKE = False
+FAKE_INTERVIEW = False   # --fake-interview: canned answers on the Konuşma page instead of the real model
 SIM = {"metrics": None, "decisions": None, "error": None, "from": None}
 
 
@@ -755,7 +759,87 @@ def api_network(q) -> dict:
     }
 
 
-ROUTES = {"/api/network": api_network,
+# ---------------------------------------------------------------- interview (Konuşma page)
+
+def interview_mod():
+    sys.path.insert(0, str(HERE))
+    try:
+        import interview  # noqa: E402  (code/scripts/interview.py)
+    finally:
+        sys.path.remove(str(HERE))
+    return interview
+
+
+def live_problem(model) -> str | None:
+    """Why the real model cannot answer right now, in Turkish for the page; None when it can."""
+    if FAKE_INTERVIEW:
+        return None
+    if not model or str(model).startswith("fake:"):
+        return f"bu run'ın modeli {model!r}; gerçek bir run seçin"
+    try:
+        import google.genai  # noqa: F401
+    except ImportError:
+        return "bu Python'da google-genai yok; görüntüleyiciyi .venv/bin/python ile başlatın"
+    if not interview_mod().load_key(ROOT):
+        return "TALP_KEY bulunamadı (ortam değişkeni ya da .env)"
+    return None
+
+
+def api_interview(q) -> dict:
+    """Personas of a run, for the Konuşma page, and whether the real model can answer."""
+    p = run_path(q.get("run", [""])[0])
+    rj = read_json(p / "run.json", {}) or {}
+    last = {}
+    for r in read_jsonl(p / "weekly.jsonl"):
+        if isinstance(r.get("week"), int) and r["week"] >= last.get(r.get("persona"), {}).get("week", 0):
+            last[r.get("persona")] = r
+    probe = defaultdict(dict)
+    for r in read_jsonl(p / "probe.jsonl"):
+        probe[r.get("persona")][f"{r.get('when')}_{r.get('question')}"] = r.get("score")
+    keep = ("id", "name", "group", "age", "occupation", "city", "state", "narrative", "voice")
+    return {"fake": FAKE_INTERVIEW, "problem": live_problem(rj.get("model")), "model": rj.get("model"),
+            "personas": [{**{k: x.get(k) for k in keep},
+                          "last": {k: last.get(x.get("id"), {}).get(k) for k in ("week", "status", "money")},
+                          "probe": probe.get(x.get("id"), {})}
+                         for x in read_jsonl(p / "personas.jsonl")]}
+
+
+def post_interview(body: dict) -> dict:
+    """One question to one persona, answered by the run's model (canned with --fake-interview)."""
+    rid, pid = str(body.get("run") or ""), str(body.get("persona") or "")
+    question = str(body.get("question") or "").strip()
+    if not question or len(question) > 600:
+        raise ValueError("question must be 1-600 characters")
+    earlier = [(str(t.get("q", ""))[:600], str(t.get("a", ""))[:2000])
+               for t in (body.get("earlier") or [])[-8:] if isinstance(t, dict)]
+    p = run_path(rid)
+    if not any(x.get("id") == pid for x in read_jsonl(p / "personas.jsonl")):
+        raise LookupError(f"unknown persona: {pid}")
+    iv = interview_mod()
+    data = iv.load_run(p, pid)
+    prompt = iv.build_prompt(data, question, earlier)
+    model = data["meta"].get("model")
+    fake = FAKE_INTERVIEW
+    problem = live_problem(model)
+    if problem:
+        raise ValueError(problem)
+    seed = data["meta"].get("seed")
+    started = time.monotonic()
+    try:
+        answer, error = iv.Asker(model, seed, 0.7, fake, key_roots=(ROOT,)).ask(prompt, data["persona"]), None
+    except SystemExit as e:  # Asker exits when TALP_KEY is missing
+        answer, error = "", str(e)
+    except Exception as e:  # SDK messages can carry URLs: report only the type
+        answer, error = "", type(e).__name__
+    iv.log({"id": __import__("uuid").uuid4().hex, "ts": time.strftime("%Y-%m-%dT%H:%M:%S"), "run": rid,
+            "persona": pid, "question": question, "prompt": prompt, "response": answer,
+            "model": "fake:interview" if fake else model, "seed": seed, "temperature": 0.7,
+            "elapsed_seconds": round(time.monotonic() - started, 3), "error_type": error, "source": "viewer"})
+    return {"answer": answer, "error": error, "fake": fake, "prompt": prompt,
+            "model": "fake:interview" if fake else model}
+
+
+ROUTES = {"/api/network": api_network, "/api/interview": api_interview,
           "/api/runs": api_runs, "/api/run": api_run, "/api/call": api_call, "/api/raw": api_raw,
           "/api/logs": api_logs, "/api/log": api_log,
           "/api/config": api_config, "/api/docs": api_docs,
@@ -802,14 +886,38 @@ class Handler(BaseHTTPRequestHandler):
             traceback.print_exc()
             return self.send_json(500, {"error": repr(e)})
 
+    def do_POST(self):  # noqa: N802
+        if urlparse(self.path).path != "/api/interview":
+            return self.send_json(404, {"error": "not found"})
+        # Only this page may ask: a JSON body (other sites would need a CORS preflight we never answer)
+        # and, when the browser sends one, an Origin on this host.
+        origin = self.headers.get("Origin")
+        if not self.headers.get("Content-Type", "").startswith("application/json") or (
+                origin and urlparse(origin).netloc != self.headers.get("Host")):
+            return self.send_json(403, {"error": "forbidden"})
+        try:
+            size = int(self.headers.get("Content-Length") or 0)
+            if size > 64_000:
+                raise ValueError("request too large")
+            body = json.loads(self.rfile.read(size) or b"{}")
+            return self.send_json(200, post_interview(body if isinstance(body, dict) else {}))
+        except (LookupError, ValueError) as e:
+            return self.send_json(400, {"error": str(e)})
+        except Exception as e:
+            traceback.print_exc()
+            return self.send_json(500, {"error": type(e).__name__})
+
 
 def main() -> None:
-    global ROOT, SHOW_FAKE
+    global ROOT, SHOW_FAKE, FAKE_INTERVIEW
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--root", default=str(CODE_DIR.parent), help="repo root to read data from")
     ap.add_argument("--port", type=int, default=8765)
     ap.add_argument("--show-fake", action="store_true", help="also list runs whose model starts with fake:")
+    ap.add_argument("--fake-interview", action="store_true",
+                    help="Konuşma page gives canned answers instead of calling the run's model")
     a = ap.parse_args()
+    FAKE_INTERVIEW = a.fake_interview
     ROOT = Path(a.root).expanduser().resolve()
     SHOW_FAKE = a.show_fake
     if not ROOT.is_dir():
@@ -819,7 +927,8 @@ def main() -> None:
         print(f"warning: sim.metrics/sim.decisions not importable ({SIM['error']}); budget and metrics off")
     srv = ThreadingHTTPServer(("127.0.0.1", a.port), Handler)
     print(f"viewer: http://127.0.0.1:{a.port}/   root: {ROOT}   sim from: {SIM['from']}"
-          f"{'   (fake runs shown)' if SHOW_FAKE else ''}", flush=True)
+          f"{'   (fake runs shown)' if SHOW_FAKE else ''}"
+          f"   interview: {'canned answers' if FAKE_INTERVIEW else 'live model'}", flush=True)
     try:
         srv.serve_forever()
     except KeyboardInterrupt:

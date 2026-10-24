@@ -576,7 +576,7 @@ function personaHtml(d, runId, pid, week) {
   const skip = new Set(["id", "name", "group", "narrative", "voice"]);
   const other = Object.entries(p).filter(([k]) => !skip.has(k));
   h += `<details style="margin-top:22px"><summary>Tüm profil alanları (${other.length})</summary><div class="kv" style="margin-top:10px">${other.map(([k, v]) => `<div>${esc(k.replace(/_/g, " "))}</div><div>${esc(typeof v === "object" && v !== null ? JSON.stringify(v) : v)}</div>`).join("")}</div></details>
-    <div class="small faint" style="margin-top:14px">Canlı soru: <span class="mono">python3 code/scripts/interview.py --run ${esc(runId)} --persona ${esc(pid)} "soru"</span></div>`;
+    <div style="margin-top:14px"><a href="/interview.html?run=${enc(runId)}#${enc(pid)}">Bu personayla konuş →</a></div>`;
   return h;
 }
 function callHtml(c, title) {

@@ -5,6 +5,7 @@
   "use strict";
   const PAGES = [
     ["/", "Panorama"],
+    ["/interview.html", "Konuşma"],
     ["/network.html", "Haberleşme"],
     ["/algorithms.html", "Algoritma"],
   ];

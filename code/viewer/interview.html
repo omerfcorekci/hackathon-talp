@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Konuşma</title>
+<link rel="stylesheet" href="/shell.css">
+<style>
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 24px 24px 40px; display: grid; grid-template-columns: 290px minmax(0, 1fr); gap: 18px; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); }
+
+  /* persona list */
+  .list { display: flex; flex-direction: column; height: calc(100vh - 56px - 64px); position: sticky; top: 80px; overflow: hidden; }
+  .list input { margin: 12px; padding: 8px 11px; font: inherit; border: 1px solid var(--line); border-radius: 8px; }
+  .list .scroll { overflow: auto; padding: 0 6px 10px; }
+  .grp { font-size: 11.5px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; padding: 12px 8px 4px; display: flex; gap: 6px; align-items: center; }
+  .grp i { width: 8px; height: 8px; border-radius: 50%; }
+  .who { display: flex; gap: 10px; align-items: center; width: 100%; border: 0; background: none; font: inherit; text-align: left; padding: 7px 8px; border-radius: 9px; cursor: pointer; color: var(--text); }
+  .who:hover { background: var(--hover); }
+  .who.on { background: var(--accent-soft); }
+  .who .t { min-width: 0; flex: 1; }
+  .who b { display: block; font-weight: 600; font-size: 13.5px; }
+  .who small { display: block; color: var(--muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .av { width: 34px; height: 34px; border-radius: 50%; color: #fff; font-weight: 700; font-size: 12.5px; display: grid; place-items: center; flex: none; }
+  .av.lg { width: 48px; height: 48px; font-size: 16px; }
+  .st { font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 999px; white-space: nowrap; }
+  .st.main { background: var(--accent-soft); color: var(--accent-text); }
+  .st.second { background: #eef2f8; color: #4a5a72; }
+  .st.dormant { background: var(--warn-bg); color: var(--warn); }
+  .st.left { background: var(--bad-bg); color: var(--bad); }
+  .pick { display: none; }
+
+  /* chat */
+  .chat { display: flex; flex-direction: column; min-height: calc(100vh - 56px - 64px); }
+  .head { display: flex; gap: 14px; align-items: center; padding: 16px 18px; border-bottom: 1px solid var(--line-soft); flex-wrap: wrap; }
+  .head .t { flex: 1; min-width: 180px; }
+  .head h1 { font-size: 19px; margin: 0; }
+  .head .meta { color: var(--muted); font-size: 13px; }
+  .facts { display: flex; gap: 6px; flex-wrap: wrap; }
+  .fact { font-size: 12px; padding: 3px 9px; border-radius: 999px; background: var(--hover); color: var(--muted); white-space: nowrap; }
+  .fact b { color: var(--text); font-weight: 600; }
+  .story { padding: 0 18px; color: var(--muted); font-size: 13px; }
+  .story summary { cursor: pointer; padding: 10px 0; list-style: none; color: var(--accent-text); font-weight: 500; }
+  .story summary::-webkit-details-marker { display: none; }
+  .story p { margin: 0 0 12px; line-height: 1.55; }
+  .mode { margin: 0 18px 4px; padding: 8px 12px; border-radius: 9px; font-size: 12.5px; background: var(--warn-bg); color: var(--warn); }
+  .mode.live { background: var(--good-bg); color: var(--good); }
+
+  .msgs { flex: 1; padding: 14px 18px; display: flex; flex-direction: column; gap: 12px; }
+  .empty { margin: auto; text-align: center; color: var(--muted); max-width: 440px; }
+  .empty h2 { font-size: 16px; color: var(--text); margin: 0 0 4px; }
+  .sugs { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 14px; }
+  .sug { border: 1px solid var(--line); background: var(--panel); color: var(--text); font: inherit; font-size: 13px; padding: 7px 12px; border-radius: 999px; cursor: pointer; }
+  .sug:hover { border-color: var(--accent); color: var(--accent-text); }
+  .q, .a { max-width: 78%; padding: 10px 14px; border-radius: 14px; line-height: 1.55; white-space: pre-wrap; word-break: break-word; }
+  .q { align-self: flex-end; background: var(--accent); color: #fff; border-bottom-right-radius: 4px; }
+  .a { align-self: flex-start; background: var(--hover); border-bottom-left-radius: 4px; }
+  .a.err { background: var(--bad-bg); color: var(--bad); }
+  .row { display: flex; gap: 10px; align-items: flex-end; }
+  .row .av { width: 28px; height: 28px; font-size: 11px; }
+  .under { font-size: 11.5px; color: var(--faint); margin: 4px 0 0 38px; }
+  .under button { border: 0; background: none; padding: 0; font: inherit; color: var(--accent-text); cursor: pointer; }
+  .under .tag { background: var(--warn-bg); color: var(--warn); padding: 0 6px; border-radius: 999px; margin-right: 6px; }
+  pre.prompt { margin: 6px 0 0 38px; max-height: 320px; overflow: auto; background: #f6f7f9; border: 1px solid var(--line-soft); border-radius: 8px; padding: 10px; font-size: 11.5px; white-space: pre-wrap; word-break: break-word; }
+  .dots { display: inline-flex; gap: 4px; padding: 4px 0; }
+  .dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--faint); animation: blink 1s infinite; }
+  .dots i:nth-child(2) { animation-delay: .15s; } .dots i:nth-child(3) { animation-delay: .3s; }
+  @keyframes blink { 0%, 80%, 100% { opacity: .25; } 40% { opacity: 1; } }
+
+  .ask { display: flex; gap: 10px; padding: 12px 18px 16px; border-top: 1px solid var(--line-soft); position: sticky; bottom: 0; background: var(--panel); border-radius: 0 0 var(--radius) var(--radius); }
+  .ask textarea { flex: 1; resize: none; font: inherit; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; min-height: 44px; max-height: 160px; }
+  .ask textarea:focus, .list input:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
+  .ask button { border: 0; border-radius: 10px; padding: 0 16px; font: inherit; font-weight: 600; cursor: pointer; }
+  #send { background: var(--accent); color: #fff; }
+  #send:disabled { background: var(--line); cursor: default; }
+  #reset { background: var(--hover); color: var(--muted); }
+
+  @media (max-width: 820px) {
+    .wrap { grid-template-columns: minmax(0, 1fr); padding: 12px 12px 24px; }
+    .list { display: none; }
+    .pick { display: block; width: 100%; font: inherit; padding: 9px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
+    .chat { min-height: calc(100vh - 56px - 90px); }
+    .q, .a { max-width: 92%; }
+    .ask { padding: 10px; }
+    #reset { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) { .dots i { animation: none; opacity: .6; } }
+</style>
+</head>
+<body>
+<main class="wrap">
+  <aside class="panel list"><input id="q" type="search" placeholder="İsim, meslek, şehir…" aria-label="Persona ara"><div class="scroll" id="people"></div></aside>
+  <div>
+    <select class="pick" id="pick" aria-label="Persona seç"></select>
+    <section class="panel chat" id="chat"></section>
+  </div>
+</main>
+<script src="/shell.js"></script>
+<script>
+"use strict";
+const $ = (s) => document.querySelector(s);
+const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const GROUPS = [
+  ["everyday customers", "Günlük müşteriler", "var(--g1)"],
+  ["paycheck customers", "Maaş müşterileri", "var(--g2)"],
+  ["savers with large balances", "Yüksek bakiyeli tasarrufçular", "var(--g3)"],
+  ["small business owners with a Cobalt card reader", "Kart okuyuculu küçük işletmeler", "var(--g4)"],
+  ["students", "Öğrenciler", "var(--g5)"],
+];
+const grp = (g) => GROUPS.find((x) => x[0] === g) || [g, g || "Diğer", "var(--faint)"];
+const STATUS = { "main bank": ["ana banka", "main"], "second bank": ["ikinci banka", "second"], "dormant": ["uykuda", "dormant"], "left": ["ayrıldı", "left"] };
+const MONEY = { "kept": "parası duruyor", "moved some": "bir kısmını taşıdı", "moved most": "çoğunu taşıdı" };
+const SUGGEST = [
+  "How did the migration weekend go for you?",
+  "Do you trust Cobalt Bank today? Why?",
+  "What did you tell your friends about Cobalt?",
+  "What would make you move your money?",
+  "Did the bank's messages help you?",
+];
+const initials = (n) => String(n || "?").split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase();
+const avatar = (p, cls = "") => `<span class="av ${cls}" style="background:${grp(p.group)[2]}">${esc(initials(p.name || p.id))}</span>`;
+const stChip = (s) => STATUS[s] ? `<span class="st ${STATUS[s][1]}">${STATUS[s][0]}</span>` : "";
+
+const S = { run: null, data: null, pid: null, chats: {}, busy: false };
+
+async function load(run) {
+  S.run = run; S.chats = {}; S.data = null;
+  if (!run) { $("#chat").innerHTML = `<div class="msgs"><div class="empty"><h2>Run yok</h2>Önce bir run seçin.</div></div>`; return; }
+  try {
+    const r = await fetch("/api/interview?run=" + encodeURIComponent(run), { cache: "no-store" });
+    S.data = await r.json();
+    if (!r.ok) throw new Error(S.data.error || r.status);
+  } catch (e) { $("#chat").innerHTML = `<div class="msgs"><div class="empty"><h2>Yüklenemedi</h2>${esc(e.message)}</div></div>`; return; }
+  const ids = S.data.personas.map((p) => p.id);
+  const want = decodeURIComponent(location.hash.slice(1));
+  S.pid = ids.includes(want) ? want : ids.includes(S.pid) ? S.pid : ids[0] || null;
+  renderList(); renderChat();
+}
+
+function sorted() {
+  const order = (p) => { const i = GROUPS.findIndex((g) => g[0] === p.group); return i < 0 ? 99 : i; };
+  return [...S.data.personas].sort((a, b) => order(a) - order(b) || String(a.id).localeCompare(String(b.id), "en", { numeric: true }));
+}
+
+function renderList() {
+  const term = $("#q").value.trim().toLowerCase();
+  let html = "", last = null;
+  for (const p of sorted()) {
+    const hay = [p.id, p.name, p.occupation, p.city, p.state].join(" ").toLowerCase();
+    if (term && !hay.includes(term)) continue;
+    if (p.group !== last) { last = p.group; html += `<div class="grp"><i style="background:${grp(p.group)[2]}"></i>${esc(grp(p.group)[1])}</div>`; }
+    html += `<button class="who ${p.id === S.pid ? "on" : ""}" data-id="${esc(p.id)}">${avatar(p)}
+      <span class="t"><b>${esc(p.name || p.id)}</b><small>${esc([p.occupation, p.city].filter(Boolean).join(" · "))}</small></span>${stChip(p.last.status)}</button>`;
+  }
+  $("#people").innerHTML = html || `<div class="grp">Sonuç yok</div>`;
+  $("#pick").innerHTML = sorted().map((p) => `<option value="${esc(p.id)}" ${p.id === S.pid ? "selected" : ""}>${esc(p.name || p.id)} · ${esc(grp(p.group)[1])}</option>`).join("");
+}
+
+function persona() { return S.data && S.data.personas.find((p) => p.id === S.pid); }
+
+function renderChat() {
+  const p = persona();
+  if (!p) { $("#chat").innerHTML = `<div class="msgs"><div class="empty"><h2>Persona yok</h2></div></div>`; return; }
+  const pr = p.probe || {};
+  const trust = pr.start_1a != null && pr.end_1a != null ? `<span class="fact">güven <b>${pr.start_1a} → ${pr.end_1a}</b> / 5</span>` : "";
+  const last = p.last || {};
+  $("#chat").innerHTML = `
+    <div class="head">${avatar(p, "lg")}
+      <div class="t"><h1>${esc(p.name || p.id)}</h1><div class="meta">${esc([p.age && p.age + " yaş", p.occupation, [p.city, p.state].filter(Boolean).join(", ")].filter(Boolean).join(" · "))}</div></div>
+      <div class="facts"><span class="fact">${esc(grp(p.group)[1])}</span>
+        ${last.status ? `<span class="fact">${last.week}. hafta sonunda <b>${esc((STATUS[last.status] || [last.status])[0])}</b></span>` : ""}
+        ${last.money ? `<span class="fact"><b>${esc(MONEY[last.money] || last.money)}</b></span>` : ""}${trust}</div>
+    </div>
+    ${p.narrative ? `<details class="story"><summary>Hikâyesi</summary><p>${esc(p.narrative)}</p></details>` : ""}
+    <div class="mode ${S.data.fake || S.data.problem ? "" : "live"}">${S.data.fake
+      ? `Test modu (--fake-interview): model çağrılmıyor, cevaplar sabit bir örnek.`
+      : S.data.problem ? `Canlı model şu an cevap veremez: ${esc(S.data.problem)}.`
+      : `Cevaplar ${esc(S.data.model)} modelinden gelir. Persona yalnız bu run'daki kendi geçmişini bilir.`}</div>
+    <div class="msgs" id="msgs"></div>
+    <form class="ask" id="ask"><textarea id="text" rows="1" placeholder="Bir soru sorun… (Enter gönderir)" maxlength="600"></textarea>
+      <button type="button" id="reset" title="Konuşmayı sıfırla">Sıfırla</button><button id="send">Sor</button></form>`;
+  renderMsgs();
+}
+
+function renderMsgs() {
+  const p = persona(), turns = S.chats[S.pid] || [];
+  const box = $("#msgs");
+  if (!turns.length) {
+    box.innerHTML = `<div class="empty"><h2>${esc((p.name || p.id).split(" ")[0])} ile konuşun</h2>Sorunuzu yazın ya da birini seçin. Persona İngilizce düşünür; Türkçe sorarsanız Türkçe cevap verebilir.
+      <div class="sugs">${SUGGEST.map((q) => `<button class="sug" type="button">${esc(q)}</button>`).join("")}</div></div>`;
+  } else {
+    box.innerHTML = turns.map((t, i) => `<div class="q">${esc(t.q)}</div>
+      ${t.pending ? `<div class="row">${avatar(p)}<div class="a"><span class="dots"><i></i><i></i><i></i></span></div></div>`
+        : `<div><div class="row">${avatar(p)}<div class="a ${t.error ? "err" : ""}">${esc(t.error ? "Model cevap veremedi: " + t.error : t.a)}</div></div>
+           <div class="under">${t.fake ? `<span class="tag">örnek</span>` : ""}${t.prompt ? `<button type="button" data-prompt="${i}">${t.open ? "Prompt'u gizle" : "Prompt'u göster"}</button>` : ""}</div>
+           ${t.open ? `<pre class="prompt">${esc(t.prompt)}</pre>` : ""}</div>`}`).join("");
+  }
+  $("#send").disabled = S.busy || !!S.data.problem;
+  box.lastElementChild && box.lastElementChild.scrollIntoView({ block: "nearest" });
+}
+
+async function ask(question) {
+  question = question.trim();
+  if (!question || S.busy || !S.pid || S.data.problem) return;
+  const pid = S.pid, turns = (S.chats[pid] ||= []);
+  const earlier = turns.filter((t) => t.a && !t.error).map((t) => ({ q: t.q, a: t.a }));
+  const turn = { q: question, pending: true };
+  turns.push(turn); S.busy = true; renderMsgs();
+  try {
+    const r = await fetch("/api/interview", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ run: S.run, persona: pid, question, earlier }) });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || r.status);
+    Object.assign(turn, { a: d.answer, error: d.error, fake: d.fake, prompt: d.prompt });
+  } catch (e) { turn.error = e.message; }
+  turn.pending = false; S.busy = false;
+  if (S.pid === pid) renderMsgs();
+}
+
+function choose(id) {
+  if (!id || id === S.pid) return;
+  S.pid = id;
+  history.replaceState(null, "", "#" + encodeURIComponent(id));
+  renderList(); renderChat();
+}
+
+document.addEventListener("click", (e) => {
+  const who = e.target.closest(".who"); if (who) return choose(who.dataset.id);
+  const sug = e.target.closest(".sug"); if (sug) return ask(sug.textContent);
+  const pb = e.target.closest("[data-prompt]");
+  if (pb) { const t = S.chats[S.pid][+pb.dataset.prompt]; t.open = !t.open; renderMsgs(); return; }
+  if (e.target.closest("#reset")) { S.chats[S.pid] = []; renderMsgs(); }
+});
+document.addEventListener("submit", (e) => {
+  if (e.target.id !== "ask") return;
+  e.preventDefault();
+  const ta = $("#text"); const q = ta.value; ta.value = ""; ta.style.height = ""; ask(q);
+});
+document.addEventListener("keydown", (e) => {
+  if (e.target.id === "text" && e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); $("#ask").requestSubmit(); }
+});
+document.addEventListener("input", (e) => {
+  if (e.target.id === "text") { e.target.style.height = ""; e.target.style.height = Math.min(160, e.target.scrollHeight) + "px"; }
+  if (e.target.id === "q") renderList();
+});
+$("#pick").addEventListener("change", (e) => choose(e.target.value));
+window.addEventListener("hashchange", () => {
+  const id = decodeURIComponent(location.hash.slice(1));
+  if (S.data && S.data.personas.some((p) => p.id === id)) choose(id);
+});
+TALP.ready.then(({ run }) => load(run));
+window.addEventListener("talp:run", (e) => load(e.detail.run));
+</script>
+</body>
+</html>

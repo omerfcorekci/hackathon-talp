@@ -127,7 +127,8 @@ def history(data: dict) -> str:
     return "\n".join(lines)
 
 
-def build_prompt(data: dict, question: str) -> str:
+def build_prompt(data: dict, question: str, earlier=()) -> str:
+    """`earlier`: (question, answer) pairs already asked in this conversation, oldest first."""
     world = People(data["personas"])
     profile = render_profile(data["persona"], world, data["network"])
     last = data["weekly"][-1]["week"] if data["weekly"] else 0
@@ -138,16 +139,20 @@ def build_prompt(data: dict, question: str) -> str:
         "Do not invent events that are not in it; if you do not know something, say so the way you would.",
         profile,
         "=== YOUR OWN HISTORY, WEEK BY WEEK ===\n" + history(data),
+        *(["=== EARLIER IN THIS CONVERSATION ===\n" + "\n".join(f'Board: "{q}"\nYou: "{a}"' for q, a in earlier)]
+          if earlier else []),
         f"=== NOW ===\n{when} Someone from Cobalt Bank's board asks you:\n\"{question}\"\n\n"
         "Answer in the first person, in your own voice, honestly, in 2-5 sentences. Plain text only.",
     ])
 
 
-def load_key() -> str | None:
+def load_key(*roots: Path) -> str | None:
+    """TALP_KEY from the environment, else from .env in this checkout or in one of `roots`."""
     if os.environ.get("TALP_KEY"):
         return os.environ["TALP_KEY"]
-    env = ROOT / ".env"
-    if env.is_file():
+    for env in [ROOT / ".env", *(Path(r) / ".env" for r in roots)]:
+        if not env.is_file():
+            continue
         for line in env.read_text(encoding="utf-8").splitlines():
             m = re.match(r"^\s*(?:export\s+)?TALP_KEY\s*=\s*(.*?)\s*$", line)
             if m and m.group(1).strip("'\""):
@@ -156,11 +161,11 @@ def load_key() -> str | None:
 
 
 class Asker:
-    def __init__(self, model: str, seed, temperature: float, fake: bool):
+    def __init__(self, model: str, seed, temperature: float, fake: bool, key_roots=()):
         self.model, self.seed, self.temperature, self.fake = model, seed, temperature, fake
         self.client = None
         if not fake:
-            key = load_key()
+            key = load_key(*key_roots)
             if not key:
                 sys.exit("TALP_KEY is not set (environment or .env). Use --fake or --print-prompt to test.")
             from google import genai
