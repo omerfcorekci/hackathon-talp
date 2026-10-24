@@ -26,6 +26,8 @@ from sim.world import World
 ROOT = Path(__file__).resolve().parents[1]
 REPO = ROOT.parent
 WORLD = json.loads((ROOT / "config/world.json").read_text())
+# These tests describe an on-time switch; the real world.json carries the announced overrun.
+WORLD["migration"]["overrun_hours"] = 0
 
 
 def people(*ids):

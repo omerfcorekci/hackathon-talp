@@ -11,6 +11,8 @@ from sim.world import World, expand_surprises
 
 ROOT = Path(__file__).resolve().parents[1]
 WORLD = json.loads((ROOT / "config/world.json").read_text())
+# These tests describe an on-time switch; the real world.json carries the announced overrun.
+WORLD["migration"]["overrun_hours"] = 0
 
 OVERRUN = {"id": "overrun", "week": 7,
            "text": "Cobalt Bank: the migration took longer than planned and finished eight hours late.",
