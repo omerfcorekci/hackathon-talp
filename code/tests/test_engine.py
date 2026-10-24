@@ -32,7 +32,7 @@ def people(*ids):
 def answer(**changes):
     value = {"status": "main bank", "money": "kept", "new_money": "none", "balance": None,
              "active_in_last_30_days": False, "actions": [], "heard_from": [],
-             "app_rating": 4, "complaint": "none", "reason": "test response",
+             "app_rating": 4, "complaint": "none", "trust": 4, "mood": "calm", "reason": "test response",
              "memory": "test memory", "messages": []}
     value.update(changes)
     return value
@@ -290,6 +290,18 @@ class SchemaTests(unittest.TestCase):
             with self.subTest(value=value), self.assertRaises(ValueError):
                 self.parse(value)
 
+    def test_trust_and_mood_must_be_on_the_scale(self):
+        parsed = self.parse(answer(trust=1, mood="angry"))
+        self.assertEqual((parsed["trust"], parsed["mood"]), (1, "angry"))
+        for bad in (answer(trust=0), answer(trust=6), answer(trust=3.0), answer(trust=True), answer(trust=None),
+                    answer(mood="sad"), answer(mood="Calm"), answer(mood=None)):
+            with self.subTest(value=bad), self.assertRaises(ValueError):
+                self.parse(bad)
+        missing = answer()
+        del missing["mood"]
+        with self.assertRaises(ValueError):
+            self.parse(missing)
+
     def test_app_rating_is_the_rating_if_asked_now(self):
         # Every answer carries the stars the persona would give now; writing a review is a separate action.
         self.assertEqual(self.parse(answer(actions=["wait and see"], app_rating=5))["app_rating"], 5)
@@ -337,8 +349,10 @@ class EngineTests(unittest.IsolatedAsyncioTestCase):
             changes = {"messages": []}
             if week == 1 and turn == 1 and person == "a":
                 changes["messages"] = [{"channel": "social", "target": None, "text": "My app experience."}]
+            if week == 1 and turn == 1 and person == "b":
+                changes.update(trust=4, mood="hopeful")
             if week == 1 and turn == 2 and person == "b":
-                changes.update(status="second bank", actions=["called_support"],
+                changes.update(status="second bank", actions=["called_support"], trust=2, mood="frustrated",
                                messages=[{"channel": "direct", "target": "c", "text": "I called support."}])
             return {**previous, **changes}
 
@@ -353,6 +367,11 @@ class EngineTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(beta["status"], "second bank")
             self.assertEqual(beta["round"], 2)
             self.assertEqual(json.loads(lookup[beta["call"]]["response"])["status"], beta["status"])
+            # Trust and mood come straight from the final (round-two) answer, like status.
+            self.assertEqual((beta["trust"], beta["mood"]), (2, "frustrated"))
+            for row in weekly:
+                response = json.loads(lookup[row["call"]]["response"])
+                self.assertEqual((row["trust"], row["mood"]), (response["trust"], response["mood"]))
             week_one_calls = [row for row in calls if row["week"] == 1]
             self.assertEqual(len(week_one_calls), 5)
             self.assertFalse(any("I called support." in c["prompt"] for c in week_one_calls if c["persona"] == "c"))

@@ -41,7 +41,7 @@ def people(*ids):
 def answer(**changes):
     value = {"status": "main bank", "money": "kept", "new_money": "none", "balance": None,
              "active_in_last_30_days": True, "actions": [], "heard_from": [],
-             "app_rating": None, "complaint": "none", "reason": "test reason",
+             "app_rating": None, "complaint": "none", "trust": 3, "mood": "calm", "reason": "test reason",
              "memory": "test memory", "messages": []}
     value.update(changes)
     return value

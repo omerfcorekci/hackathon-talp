@@ -6,6 +6,7 @@ import math
 STATUSES = ("main bank", "second bank", "dormant", "left")
 MONEY = ("kept", "moved some", "moved most")
 NEW_MONEY = ("none", "some", "a lot")
+MOODS = ("calm", "hopeful", "relieved", "worried", "frustrated", "angry")
 HEARD_FROM = ("bank", "friend", "rival", "news", "social media", "none")
 CHANNELS = ("social", "whatsapp", "direct", "phone")
 # Saying you posted or told people is only real if a message goes out through the simulation.
@@ -27,6 +28,10 @@ TURN_SCHEMA = {
         "app_rating": {"type": "integer", "minimum": 1, "maximum": 5,
                        "description": "Stars you would give the Cobalt app if it asked you to rate it right now."},
         "complaint": {"type": "string", "enum": ["none", "bank", "cfpb"]},
+        "trust": {"type": "integer", "minimum": 1, "maximum": 5,
+                  "description": "How much you trust Cobalt Bank this week: 1 = not at all, 5 = completely."},
+        "mood": {"type": "string", "enum": list(MOODS),
+                 "description": "How you feel about Cobalt this week, in one word."},
         "reason": {"type": "string", "maxLength": 600},
         "memory": {"type": "string", "maxLength": 1200},
         "messages": {
@@ -77,6 +82,11 @@ def parse_turn(raw: str, *, contacts: set[str], groups: set[str], previous=None,
         raise ValueError("app_rating must be the 1-5 stars you would give the app if it asked you now")
     if result["complaint"] not in ("none", "bank", "cfpb"):
         raise ValueError("Invalid complaint value")
+    trust = result["trust"]
+    if type(trust) is not int or not 1 <= trust <= 5:
+        raise ValueError("trust must be an integer from 1 (not at all) to 5 (completely)")
+    if result["mood"] not in MOODS:
+        raise ValueError(f"mood must be one of {', '.join(MOODS)}")
     for field, limit in (("actions", 12), ("heard_from", 6)):
         value = result[field]
         if not isinstance(value, list) or len(value) > limit or not all(isinstance(x, str) for x in value):

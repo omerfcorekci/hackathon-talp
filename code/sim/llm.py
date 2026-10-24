@@ -110,6 +110,12 @@ class FakeTransport:
         data["app_rating"] = rng.randint(3, 5) if rng.random() < 0.7 else rng.randint(1, 2)
         # A retry after a round-two rejection takes the highest complaint, which is never refused.
         data["complaint"] = "cfpb" if retried else rng.choices(("none", "bank", "cfpb"), (90, 8, 2))[0]
+        # Trust leans on status so fake charts move a little; mood follows trust.
+        base = {"main bank": 4, "second bank": 3, "dormant": 2, "left": 1}[status]
+        data["trust"] = max(1, min(5, base + rng.choice((-1, 0, 0, 1))))
+        data["mood"] = rng.choice({1: ("angry", "frustrated"), 2: ("frustrated", "worried"),
+                                   3: ("worried", "calm", "hopeful"), 4: ("calm", "hopeful", "relieved"),
+                                   5: ("calm", "relieved")}[data["trust"]])
         data["messages"] = []
 
     async def close(self):

@@ -28,6 +28,8 @@ Answer with the JSON requested by the API:
 - app_rating: the 1-5 stars you would give the Cobalt app if it asked you to rate it right now. Writing a
   public review is a separate step: "post a review (App Store / Google / Trustpilot)" in actions.
 - complaint: the highest step you took this week: "none", "bank" (complained to Cobalt) or "cfpb".
+- trust: how much you trust Cobalt Bank this week, 1 = not at all, 5 = completely.
+- mood: how you feel about Cobalt this week: "calm", "hopeful", "relieved", "worried", "frustrated" or "angry".
 - reason: one or two sentences, in your own voice, on why you did what you did.
 - memory: at most three first-person sentences you will carry into next week.
 - messages: NEW things you said to others this round, at most two, each one or two short sentences (hard

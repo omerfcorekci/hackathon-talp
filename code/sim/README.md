@@ -202,8 +202,11 @@ underlying client API.
   the inputs used by this run, with no generated relationships or personas.
 
 The weekly response fields are defined in `sim/schema.py`: `status`, `money`,
-`balance`, `active_in_last_30_days`, `actions`, `heard_from`, `app_rating`,
-`complaint`, `reason`, `memory`, `messages`. Status and money use dossier wording.
+`new_money`, `balance`, `active_in_last_30_days`, `actions`, `heard_from`, `app_rating`,
+`complaint`, `trust`, `mood`, `reason`, `memory`, `messages`. Status and money use dossier wording.
+`trust` (1 = not at all, 5 = completely, the scale of check-in question 1a) and `mood` (`calm`,
+`hopeful`, `relieved`, `worried`, `frustrated`, `angry`) are the persona's own weekly reading; they are
+copied to `weekly.jsonl` unchanged and only charted by the viewer, never used in `metrics.json`.
 Two bookkeeping fields are derived by the engine and added to each weekly row, because
 the model cannot be trusted to track them: `active_derived` (an app action in that week
 or the three before it, status not `left`) and `balance_derived` (the persona's Nov 2
