@@ -10,6 +10,10 @@
       {
         "action": "Instant dispute credit: credit disputed card charges at once, up to $100 per customer, for 8 weeks",
         "level": "on"
+      },
+      {
+        "action": "Extra support staff for 4 weeks",
+        "level": "+50"
       }
     ],
     "message": "Update on the card charges from Nov 16-17: our card processor confirmed a fault that charged some payments twice, and a small number of cards had fraud test charges of $0.50 to $2 after card numbers were stolen elsewhere, for example on a fake shopping site. Cobalt's own systems were not breached. About 9,000 customers were affected. Starting today, for 8 weeks: if you dispute a card charge, we credit up to $100 right away while we investigate. In the app you can turn on an alert for every card payment and order a free new card.",
@@ -27,10 +31,6 @@
       {
         "action": "Higher offline card limit during the migration",
         "level": "on"
-      },
-      {
-        "action": "Extra support staff",
-        "level": "+50"
       }
     ],
     "message": "On Sat Dec 12, 00:00 to Sun Dec 13, 12:00 CT, Cobalt moves to a new core banking system. For those 36 hours the app is read-only: you can see your balance, but transfers, P2P payments and new cards are paused. Your card keeps working offline: we raised the limit to $250 per payment for that weekend, and we added support staff for the coming weeks. If something goes wrong the switch can take some hours longer; we will post updates in the app.",
