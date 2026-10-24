@@ -23,6 +23,7 @@ class Settings:
     fallback_model: str = "gemini-3.1-flash-lite"
     attempts: int = 3
     timeout_seconds: float = 60.0
+    transport_backoff_seconds: float = 3.0
     max_peer_messages: int = 2
     stranger_probability: float = 0.05
     following_probability: float = 0.35
@@ -41,6 +42,8 @@ class Settings:
             raise ValueError("temperature must be positive and at most 2")
         if not math.isfinite(self.timeout_seconds) or self.timeout_seconds <= 0:
             raise ValueError("timeout_seconds must be positive")
+        if not math.isfinite(self.transport_backoff_seconds) or self.transport_backoff_seconds < 0:
+            raise ValueError("transport_backoff_seconds must be nonnegative")
         if not isinstance(self.model, str) or not self.model.strip():
             raise ValueError("model must be a nonempty string")
         if not isinstance(self.fallback_model, str):

@@ -5,6 +5,8 @@ import math
 import unicodedata
 from dataclasses import dataclass
 
+from .settings import draw
+
 
 def normalize(text):
     text = re.sub(r"\\u([0-9a-fA-F]{4})", lambda m: chr(int(m.group(1), 16)), text)
@@ -58,13 +60,15 @@ MENU = {
 
 
 class DecisionPlan:
-    def __init__(self, decisions, personas, targets=None, action_aliases=None):
+    def __init__(self, decisions, personas, targets=None, action_aliases=None, seed=0):
         if not isinstance(decisions, list) or len(decisions) not in (0, 2):
             raise ValueError("Supply either no decisions or exactly two locked decisions")
         self.raw = decisions
         self.people = {p["id"]: p for p in personas}
         self.targets = {}
         self.actions = {}
+        self.reach = {}  # (decision key, action id) -> share of the target that a capped offer reaches
+        self.seed = seed
         self.total_cost = 0
         targets = {} if targets is None else targets
         aliases = {} if action_aliases is None else action_aliases
@@ -133,8 +137,10 @@ class DecisionPlan:
                     weights = [self.people[p].get("weight_customers") for p in selected]
                     if any(type(w) not in (int, float) or not math.isfinite(w) or w <= 0 for w in weights):
                         raise ValueError("Capped offers require external weight_customers for targeted personas")
-                    if sum(weights) > spec.effect["recipient_cap"]:
-                        raise ValueError("Targeted population exceeds the menu recipient cap")
+                    # The menu caps recipients ("up to 100,000 customers"). A target larger than the cap
+                    # is served in part: each persona is drawn as a recipient with probability cap/total,
+                    # seeded, so the expected reach matches the cap and plan runs on one seed agree.
+                    self.reach[(key, name)] = min(1.0, spec.effect["recipient_cap"] / sum(weights))
                 self.actions[key].append((action, spec))
         if self.total_cost > 4_000_000:
             raise ValueError("Both decisions, including SMS sends, must cost at most $4M")
@@ -148,10 +154,20 @@ class DecisionPlan:
             messages.append({"id": key, "starts_week": decision["week"],
                              "channels": decision["channels"], "text": decision["message"]})
             for original, spec in self.actions[key]:
-                if spec.duration is None or week < decision["week"] + spec.duration:
-                    effects.append({"decision": key, "action": original,
-                                    "starts_week": decision["week"], "effect": spec.effect})
+                if spec.duration is not None and week >= decision["week"] + spec.duration:
+                    continue
+                name = next(n for n, levels in MENU.items() if spec in levels.values())
+                share = self.reach.get((key, name), 1.0)
+                if share < 1.0 and draw(self.seed, "reach", key, name, person) >= share:
+                    continue  # this persona was not among the capped number of recipients
+                effects.append({"decision": key, "action": original,
+                                "starts_week": decision["week"], "effect": spec.effect, "reach": share})
         return messages, effects
+
+    def recipients(self, key, name):
+        """Persona IDs a capped action actually reaches (all targeted personas when uncapped)."""
+        share = self.reach.get((key, name), 1.0)
+        return {p for p in self.targets[key] if share >= 1.0 or draw(self.seed, "reach", key, name, p) < share}
 
     def guard_prompt(self, text, person, week, *, enabled):
         normalized = normalize(text)

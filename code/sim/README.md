@@ -93,8 +93,12 @@ identifiers and supported level strings. If the dashboard uses a different actio
 name, supply `--action-aliases` mapping that exact label to an engine identifier,
 instead of rewriting the locked action. Level strings must match the printed menu.
 Menu costs, action durations, the $4M total and $25k per SMS send are validated.
-Capped goodwill/advance audiences require external `weight_customers`; missing
-weights or audiences above the menu cap are rejected rather than estimated.
+Capped goodwill/advance audiences require external `weight_customers`. A target
+larger than the cap ("up to 100,000 customers" offered to a 310,000-customer group)
+is served in part: each targeted persona is drawn as a recipient with probability
+cap / weighted target size, seeded by the run seed, so the expected reach equals the
+cap and plan runs on one seed agree. The message still goes to the whole target;
+word it for "eligible customers". `DecisionPlan.recipients(key, action)` lists who got it.
 Security-pack/advance timing follows the menu where stated; an advance or goodwill
 credit is offered once in its start week. Security eligibility continues after
 activation; the higher offline limit only describes the migration window.
@@ -187,6 +191,17 @@ underlying client API.
 The weekly response fields are defined in `sim/schema.py`: `status`, `money`,
 `balance`, `active_in_last_30_days`, `actions`, `heard_from`, `app_rating`,
 `complaint`, `reason`, `memory`, `messages`. Status and money use dossier wording.
+Two bookkeeping fields are derived by the engine and added to each weekly row, because
+the model cannot be trusted to track them: `active_derived` (an app action in that week
+or the three before it, status not `left`) and `balance_derived` (the persona's Nov 2
+balance times the money factor). Metrics use the derived fields; the ledger shown to the
+persona carries `balance_derived`, so model arithmetic cannot drift it.
+
+Each persona may carry a `migration_weekend` commitment (rent autopay, Sunday payouts,
+weekend card tickets above the offline limit, a single large purchase, settlement delay).
+The world resolves it against the offline card limit and any overrun into plain facts:
+"your rent autopay ran at Sunday 20:00, after the payee's cutoff, so a $50 late fee was
+charged"; "5 of your weekend tickets were above $100: about $1,400 you could not charge".
 `sim/metrics.py` turns the weekly rows and the personas' weights into `metrics.json`
 (`goal_1`–`goal_3b`, `units`, stated assumptions, a by-group breakdown); `sim/probe.py`
 asks the eight check-in questions at week 0 and week 11 when `--probe` is set and writes

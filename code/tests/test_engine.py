@@ -233,10 +233,19 @@ class WorldTests(unittest.TestCase):
         decisions[0]["actions"] = [{"action": "goodwill_credit", "level": "$5"}]
         with self.assertRaisesRegex(ValueError, "weight_customers"):
             DecisionPlan(decisions, self.people, targets={"decision-1": ["a"]})
+        # A target larger than the menu cap is served in part: reach = cap / weighted target size.
         weighted = copy.deepcopy(self.people)
-        weighted[0]["weight_customers"] = 100_001
-        with self.assertRaisesRegex(ValueError, "recipient cap"):
-            DecisionPlan(decisions, weighted, targets={"decision-1": ["a"]})
+        for person in weighted:
+            person["weight_customers"] = 100_000
+        plan = DecisionPlan(decisions, weighted, targets={"decision-1": ["a", "b"]}, seed=3)
+        self.assertAlmostEqual(plan.reach[("decision-1", "goodwill_credit")], 0.5)
+        reached = plan.recipients("decision-1", "goodwill_credit")
+        self.assertTrue(reached <= {"a", "b"})
+        for pid in ("a", "b"):
+            got = any("goodwill_credit" in e["effect"] for e in plan.for_person(pid, 2)[1])
+            self.assertEqual(got, pid in reached)
+        self.assertEqual(reached, DecisionPlan(decisions, weighted, targets={"decision-1": ["a", "b"]}, seed=3)
+                         .recipients("decision-1", "goodwill_credit"))
 
     def test_action_aliases_do_not_rewrite_locked_decisions(self):
         decisions = decision_pair()
@@ -273,11 +282,13 @@ class SchemaTests(unittest.TestCase):
 
     def test_second_round_cannot_erase_completed_actions(self):
         previous = answer(actions=["called_support"], complaint="bank", app_rating=2)
-        for value in (answer(complaint="bank", app_rating=2),
-                      answer(actions=["called_support"], app_rating=2),
+        for value in (answer(actions=["called_support"], app_rating=2),
                       answer(actions=["called_support"], complaint="bank")):
             with self.assertRaises(ValueError):
                 self.parse(value, previous)
+        # A rephrased or shortened action list is merged with what was already done, not rejected.
+        merged = self.parse(answer(actions=["asked_friend"], complaint="bank", app_rating=2), previous)
+        self.assertEqual(merged["actions"], ["called_support", "asked_friend"])
         final = answer(actions=["called_support", "asked_friend"], complaint="cfpb", app_rating=3)
         self.assertEqual(self.parse(final, previous), final)
 

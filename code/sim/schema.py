@@ -86,8 +86,9 @@ def parse_turn(raw: str, *, contacts: set[str], groups: set[str], previous=None)
         if channel in ("phone", "direct") and (not isinstance(target, str) or target not in contacts):
             raise ValueError("Private messages must target one of your contacts")
     if previous is not None:
-        if not set(previous["actions"]).issubset(result["actions"]):
-            raise ValueError("Round two cannot erase actions already taken this week")
+        # Actions already taken this week stay taken: merge rather than reject a rephrased list.
+        merged = list(previous["actions"]) + [a for a in result["actions"] if a not in previous["actions"]]
+        result["actions"] = merged[:12]
         ranks = {"none": 0, "bank": 1, "cfpb": 2}
         if ranks[result["complaint"]] < ranks[previous["complaint"]]:
             raise ValueError("Round two cannot erase a complaint already filed")

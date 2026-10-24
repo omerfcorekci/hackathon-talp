@@ -65,7 +65,8 @@ async def execute(args):
     decisions = load_json(args.decisions) if args.decisions else []
     plan = DecisionPlan(decisions, people,
                         targets=load_json(args.targets) if args.targets else {},
-                        action_aliases=load_json(args.action_aliases) if args.action_aliases else {})
+                        action_aliases=load_json(args.action_aliases) if args.action_aliases else {},
+                        seed=settings.seed)
     world = World(load_json(args.world), plan, surprises=read_surprises(args.surprises),
                   decisions_enabled=bool(decisions), surprises_enabled=not args.no_surprises,
                   seed=settings.seed)

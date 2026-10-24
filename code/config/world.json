@@ -28,7 +28,7 @@
     "window": "Saturday December 12 00:00 to Sunday December 13 12:00 Central Time",
     "overrun_hours": 0,
     "offline_card_limit_default": 100,
-    "scheduled_payments": "Payments and autopays due during the window were processed once the system returned; none were lost."
+    "scheduled_payments": "Other scheduled payments due during the window were processed once the system returned."
   },
   "support_wait": {
     "base_minutes": 4,

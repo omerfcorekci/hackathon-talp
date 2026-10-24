@@ -5,7 +5,9 @@ complaint) together with the external weights in personas.jsonl. Nothing here ca
 edits a persona's answer. Assumptions, written verbatim to metrics.json under "assumptions":
 
 - goal_1 (% of Nov 2 30-day actives) = 100 × A_last / A_1, where A_w = Σ weight_customers over
-  personas whose week-w row has active_in_last_30_days == true and status "main bank" or
+  personas whose week-w row has active_derived == true (an app action in that week or the three
+  before it, status not "left"; derived by the engine from the actions the model reported, falling
+  back to the model's own active_in_last_30_days when absent) and status "main bank" or
   "second bank". Week 1 stands for the November 2 baseline. If A_1 is 0, goal_1 is written as 0
   and a note says so. Rounded to 2 decimals.
 - goal_2 (% of Nov 2 deposits) = 100 × Σ weight_deposits_usd × f / Σ weight_deposits_usd over
@@ -40,7 +42,9 @@ from pathlib import Path
 
 ASSUMPTIONS = [
     "goal_1 (% of Nov 2 30-day actives) = 100 × A_last / A_1, where A_w = Σ weight_customers over "
-    "personas whose week-w row has active_in_last_30_days == true and status \"main bank\" or "
+    "personas whose week-w row has active_derived == true (an app action in that week or the three "
+    "before it, status not \"left\"; derived by the engine from the actions the model reported, falling "
+    "back to the model's own active_in_last_30_days when absent) and status \"main bank\" or "
     "\"second bank\". Week 1 stands for the November 2 baseline. If A_1 is 0, goal_1 is written as 0 "
     "and a note says so. Rounded to 2 decimals.",
     "goal_2 (% of Nov 2 deposits) = 100 × Σ weight_deposits_usd × f / Σ weight_deposits_usd over "
@@ -105,7 +109,8 @@ def _windows(last):
 def _goals(ids, rows, last, customers, deposits, notes, label):
     def active(week):
         return sum(customers[pid] for pid in ids if (row := rows.get((pid, week)))
-                   and row.get("active_in_last_30_days") is True and row.get("status") in ACTIVE_STATUSES)
+                   and row.get("active_derived", row.get("active_in_last_30_days")) is True
+                   and row.get("status") in ACTIVE_STATUSES)
 
     series = {week: active(week) for week in range(1, last + 1)}
     baseline = series.get(1, 0.0)

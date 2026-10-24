@@ -11,6 +11,29 @@ from .prompt import build_prompt
 from .schema import parse_turn
 
 
+APP_ACTIONS = ("log in and check balance", "try a transfer or P2P payment", "complain in the app",
+               "dispute a card charge", "use Cobalt less")
+MONEY_FACTOR = {"kept": 1.0, "moved some": 0.6, "moved most": 0.1}
+
+
+def derive_bookkeeping(person, data, ledger):
+    """Numbers the model should not be trusted to track, derived from what it said it did.
+
+    active_derived: an app action in this or the previous three weeks (a 30-day window) and not
+    `left`; with fewer than four weeks of history a daily app user counts as active.
+    balance_derived: the persona's Nov 2 balance times the money factor (kept 1.0, moved some 0.6,
+    moved most 0.1, left 0), so the ledger does not drift with model arithmetic."""
+    recent = [data["actions"]] + [row["actions"] for row in ledger[-3:]]
+    used_app = any(action in APP_ACTIONS for actions in recent for action in actions)
+    if len(recent) < 4 and person.get("checks_app_daily"):
+        used_app = True
+    active = used_app and data["status"] != "left"
+    start = person.get("balance_usd")
+    factor = 0.0 if data["status"] == "left" else MONEY_FACTOR[data["money"]]
+    balance = round(start * factor) if isinstance(start, (int, float)) else None
+    return {"active_derived": active, "balance_derived": balance}
+
+
 async def gather_or_cancel(coroutines):
     tasks = [asyncio.create_task(coroutine) for coroutine in coroutines]
     try:
@@ -93,7 +116,8 @@ class SimulationEngine:
                 for person in self.personas:
                     pid = person["id"]
                     final = second.get(pid, first[pid])
-                    row = {"persona": pid, "week": week, **final.data, "call": final.call,
+                    derived = derive_bookkeeping(person, final.data, ledgers[pid])
+                    row = {"persona": pid, "week": week, **final.data, **derived, "call": final.call,
                            "round": 2 if pid in second else 1,
                            "round_1_call": first[pid].call,
                            "round_2_call": second[pid].call if pid in second else None,
@@ -102,7 +126,7 @@ class SimulationEngine:
                     weekly_rows.append(row)
                     states[pid] = deepcopy(final.data)
                     ledgers[pid].append({"week": week, "status": final.data["status"],
-                                         "money": final.data["money"], "balance": final.data["balance"],
+                                         "money": final.data["money"], "balance": derived["balance_derived"],
                                          "actions": final.data["actions"], "call": final.call})
                 metadata["completed_weeks"] = week
                 writer.write("run.json", metadata)

@@ -60,6 +60,7 @@ class LoggedModel:
 
     async def turn(self, *, persona, week, round_number, prompt, validate, schema=TURN_SCHEMA):
         rejection = None
+        last_stage = "transport"
         for attempt in range(1, self.settings.attempts + 1):
             model = self.settings.model
             if attempt == self.settings.attempts and attempt > 1 and self.settings.fallback_model:
@@ -102,11 +103,17 @@ class LoggedModel:
                     record["error_type"] = type(error).__name__
                     record["error_stage"] = stage
                     rejection = str(error)[:300] if stage == "validation" else None
+                    last_stage = stage
                 finally:
                     record["elapsed_seconds"] = round(time.monotonic() - started, 4)
                     self.writer.append("calls.jsonl", record)
             if succeeded:
                 return ModelResult(data, record["id"], model)
             if attempt < self.settings.attempts:
-                await asyncio.sleep(min(2 ** (attempt - 1), 4))
+                # A rejected answer is retried at once with the reason; a transport failure (rate limit,
+                # timeout, connection) backs off long enough for the quota window to pass.
+                if last_stage == "validation":
+                    await asyncio.sleep(0.5)
+                else:
+                    await asyncio.sleep(min(self.settings.transport_backoff_seconds * 2 ** (attempt - 1), 30))
         raise RuntimeError(f"Model attempts exhausted for persona {persona}, week {week}, round {round_number}")

@@ -185,6 +185,44 @@ class World:
             limit = max(limit, item["effect"].get("migration_offline_card_limit", limit))
         return limit
 
+    def weekend_outcome(self, item, limit, overrun):
+        """What the migration window did to one persona's own weekend commitment (see generate.py)."""
+        if not item or item.get("type") in (None, "none"):
+            return []
+        back = 12 + overrun  # hour on Sunday when the system returned
+        back_text = f"Sunday {back:02d}:00"
+        kind = item["type"]
+        lines = []
+        if kind == "autopay":
+            text = (f"Your {item['what']} autopay of {_money(item['amount'])}, scheduled {item['scheduled']}, could not run "
+                    f"during the window; it went through at {back_text}.")
+            if back > item.get("late_after_hour", 99) and item.get("late_fee"):
+                text += f" That was after the payee's cutoff, so a {_money(item['late_fee'])} late fee was charged."
+            lines.append(text)
+        elif kind in ("p2p", "transfer"):
+            hour = int(item["scheduled"].split()[1].split(":")[0]) + (24 if item["scheduled"].startswith("Sunday") else 0)
+            late = back + 24 - hour
+            lines.append(f"{item['what'][0].upper() + item['what'][1:]} ({_money(item['amount'])}) failed at {item['scheduled']} with "
+                         f"'service unavailable'; you could only send it at {back_text}, {late} hours later.")
+        elif kind == "card_sales":
+            count = item.get("tickets_over_100", 0) if limit <= 100 else item.get("tickets_over_250", 0)
+            avg = item.get("over_100_avg", 0) if limit <= 100 else item.get("over_250_avg", 0)
+            if count:
+                lines.append(f"During the window your card reader could only take payments up to {_money(limit)}. {count} of your "
+                             f"weekend tickets were above that: about {_money(count * avg)} of sales you could not charge to a card.")
+            else:
+                lines.append(f"All your weekend card tickets were under the {_money(limit)} offline limit; every card sale went through.")
+        elif kind == "card_purchase":
+            if item["amount"] > limit:
+                lines.append(f"Your Cobalt card was declined for {item['what']} because offline payments were capped at {_money(limit)}.")
+            else:
+                lines.append(f"Your Cobalt card worked for {item['what']}; the offline cap was {_money(limit)}.")
+        elif kind == "settlement_delay":
+            lines.append("Your Saturday and Sunday card sales settled into your account on Monday instead of the same day.")
+        if item.get("then"):
+            lines += self.weekend_outcome(item["then"], limit, overrun)
+        return lines
+
     def experience(self, p, week, effects):
         """What happened to this persona this week, as plain facts. No feelings, no decisions."""
         lines = []
@@ -211,10 +249,12 @@ class World:
             lines.append(f"From Saturday Dec 12 00:00 until {end} the Cobalt app was read-only: you could see "
                          f"balances but could not send transfers or P2P payments or get a new card. "
                          f"Card payments worked offline up to {_money(limit)} per payment.")
-            if p.get("uses_p2p"):
-                lines.append("Any P2P payment or transfer you tried during that window failed with 'service unavailable'; it could only go out after the system returned.")
-            if "card reader" in str(p.get("group", "")):
-                lines.append(f"Your Cobalt card reader accepted payments up to {_money(limit)} each during the window; a larger ticket could not be charged to a card.")
+            lines += self.weekend_outcome(p.get("migration_weekend"), limit, overrun)
+            if not p.get("migration_weekend"):
+                if p.get("uses_p2p"):
+                    lines.append("Any P2P payment or transfer you tried during that window failed with 'service unavailable'; it could only go out after the system returned.")
+                if "card reader" in str(p.get("group", "")):
+                    lines.append(f"Your Cobalt card reader accepted payments up to {_money(limit)} each during the window; a larger ticket could not be charged to a card.")
             lines.append(self.migration.get("scheduled_payments", "Payments due during the window were processed once the system returned."))
         if week == migration_week + 1:
             finish = "on schedule at Sunday Dec 13 12:00" if not overrun else f"{overrun} hours late, at Sunday Dec 13 {12 + overrun:02d}:00"
