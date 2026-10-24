@@ -134,7 +134,7 @@ week 7 still shapes week 6. With `--no-surprises` the effects vanish with the te
 ```
 
 Supported keys: `migration_overrun_hours` (integer; the migration-week and following-week
-lines use it), `support_wait_by_week` (week → minutes, before the extra-staff factor), and
+lines use it; `world.json` `migration.overrun_minutes` adds the minutes of an announced end, e.g. 16:10), `support_wait_by_week` (week → minutes, before the extra-staff factor), and
 `experience` (lines added to that week; an optional `if` requires persona attributes to equal
 the given values, an optional `unless` leaves out personas whose attributes equal any of the given
 values, an optional `probability` hits a seeded share of personas, and an optional

@@ -13,6 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 WORLD = json.loads((ROOT / "config/world.json").read_text())
 # These tests describe an on-time switch; the real world.json carries the announced overrun.
 WORLD["migration"]["overrun_hours"] = 0
+WORLD["migration"]["overrun_minutes"] = 0
 
 OVERRUN = {"id": "overrun", "week": 7,
            "text": "Cobalt Bank: the migration took longer than planned and finished eight hours late.",
@@ -47,6 +48,16 @@ class SurpriseEffectTests(unittest.TestCase):
         self.assertIn("on schedule", " ".join(w.context("a", 7)["experience"]))
         self.assertEqual(w.context("a", 7)["support_wait_minutes"], WORLD["support_wait"]["by_week"]["7"])
         self.assertEqual(w.context("a", 7)["announcements_so_far"], [])
+
+    def test_the_announced_end_is_kept_to_the_minute(self):
+        world_cfg = json.loads((ROOT / "config/world.json").read_text())
+        person = {"id": "a", "group": "g", "migration_weekend": {"type": "autopay", "what": "rent", "amount": 900,
+                                                                 "scheduled": "Sunday 08:00", "late_after_hour": 16, "late_fee": 25}}
+        w = World(world_cfg, DecisionPlan([], [person]), decisions_enabled=False)
+        week6, week7 = " ".join(w.context("a", 6)["experience"]), " ".join(w.context("a", 7)["experience"])
+        self.assertIn("until Sunday Dec 13 16:10 Central Time, 4 hours and 10 minutes later than announced", week6)
+        self.assertIn("it went through at Sunday 16:10. That was after the payee's cutoff", week6)
+        self.assertIn("4 hours and 10 minutes late, at Sunday Dec 13 16:10", week7)
 
     def test_no_surprise_means_on_schedule(self):
         self.assertIn("on schedule", " ".join(world([]).context("a", 7)["experience"]))
