@@ -8,6 +8,8 @@ engine's attempt policy; no score is ever defaulted.
 
 import json
 
+from .prompt import stretches
+
 COMPANY = "Cobalt Bank"
 WEEK = {"start": 0, "end": 11}
 
@@ -26,6 +28,7 @@ QUESTIONS = {
     "4b": f"\"{COMPANY} takes advantage of people like me.\" 1 = strongly disagree, 5 = strongly agree.",
 }
 QUESTION_IDS = tuple(QUESTIONS)
+ROUTINE = ("log in and check balance", "wait and see", "do nothing")
 
 PROBE_SCHEMA = {
     "type": "object",
@@ -57,25 +60,44 @@ def require_profiles(personas):
         raise ValueError(f"The check-in probe needs each persona's narrative; missing for {', '.join(missing)}")
 
 
+def how_you_started(person):
+    """The persona's relationship with Cobalt on Nov 2, from its own fields, for both check-ins."""
+    parts = []
+    if person.get("cobalt_role"):
+        parts.append(f"Cobalt is your {person['cobalt_role']}")
+    if isinstance(person.get("years_customer"), (int, float)):
+        parts.append(f"customer for {person['years_customer']} years")
+    if isinstance(person.get("balance_usd"), (int, float)):
+        parts.append(f"about ${person['balance_usd']:,} at Cobalt on Nov 2")
+    return "; ".join(parts) + "." if parts else "As described in your story."
+
+
 def build_probe_prompt(person, when, *, world, ledger=(), state=None, include_memory=True):
-    """Narrative and voice only, plus (at the end) the persona's own record and what went wrong for it in
-    the weeks it lived through. No weights, ties or KPIs."""
+    """The same frame at both check-ins, so a change in scores comes from the weeks, not from what the
+    prompt shows: narrative, voice and how the persona started; then its record in stretches, what it did
+    beyond routine, what went wrong for it and its latest memory - empty at the start, filled at the end.
+    No weights, ties or KPIs."""
     if when not in WEEK:
         raise ValueError("when must be 'start' or 'end'")
     about = {"narrative": person["narrative"]}
     if isinstance(person.get("voice"), str) and person["voice"].strip():
         about["voice"] = person["voice"]
-    payload = {"check_in": when, "moment": MOMENTS[when], "about_you": about}
-    if when == "end":
-        payload["your_weekly_record"] = [
-            {"week": row["week"], "status": row["status"], "money": row["money"], "actions": row["actions"]}
-            for row in ledger]
-        last = max((row["week"] for row in ledger), default=0)
-        payload["what_went_wrong_for_you_since_nov_2"] = [
-            {"week": week, "what": text} for week, text in world.went_wrong_before(person["id"], last + 1, ledger)]
-        if include_memory and isinstance(state, dict):
-            payload["your_latest_memory"] = state.get("memory")
-            payload["your_latest_reason"] = state.get("reason")
+    ledger = list(ledger) if when == "end" else []
+    last = max((row["week"] for row in ledger), default=0)
+    payload = {"check_in": when, "moment": MOMENTS[when], "about_you": about,
+               "how_you_started": how_you_started(person),
+               "your_record_since_nov_2": [
+                   {"weeks": f"{first}" if first == end else f"{first}-{end}", "status": status, "money": money}
+                   for first, end, status, money in stretches(ledger)],
+               "what_you_did_beyond_routine": [
+                   {"week": row["week"], "did": [a for a in row["actions"] if a not in ROUTINE]}
+                   for row in ledger if any(a not in ROUTINE for a in row["actions"])],
+               "what_went_wrong_for_you_since_nov_2": [
+                   {"week": week, "what": text} for week, text in world.went_wrong_before(person["id"], last + 1, ledger)]}
+    if include_memory:
+        state = state if when == "end" and isinstance(state, dict) else {}
+        payload["your_latest_memory"] = state.get("memory")
+        payload["your_latest_reason"] = state.get("reason")
     questions = "\n".join(f"{qid}: {text}" for qid, text in QUESTIONS.items())
     prompt = "\n\n".join([INSTRUCTIONS, json.dumps(payload, ensure_ascii=False, allow_nan=False),
                           "Check-in questions:\n" + questions])

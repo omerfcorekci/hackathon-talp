@@ -122,12 +122,17 @@ class ProbeUnitTests(unittest.TestCase):
                    "actions": ["UNIQUE_ACTION"], "call": "CALL_ID_SECRET"}]
         end = build_probe_prompt(person, "end", world=world, ledger=ledger, state=answer(memory="UNIQUE_MEMORY"))
         data = payload(end)
-        self.assertEqual(data["your_weekly_record"],
-                         [{"week": 1, "status": "second bank", "money": "moved some", "actions": ["UNIQUE_ACTION"]}])
+        self.assertEqual(data["your_record_since_nov_2"], [{"weeks": "1", "status": "second bank", "money": "moved some"}])
+        self.assertEqual(data["what_you_did_beyond_routine"], [{"week": 1, "did": ["UNIQUE_ACTION"]}])
         self.assertEqual(data["your_latest_memory"], "UNIQUE_MEMORY")
         self.assertEqual(data["your_latest_reason"], "test reason")
         self.assertEqual(data["what_went_wrong_for_you_since_nov_2"], [])
-        self.assertNotIn("what_went_wrong_for_you_since_nov_2", payload(start))
+        # Both check-ins show the same frame; at the start it is empty.
+        self.assertEqual(list(payload(start)), list(data))
+        self.assertEqual({k: payload(start)[k] for k in ("your_record_since_nov_2", "what_you_did_beyond_routine",
+                                                         "what_went_wrong_for_you_since_nov_2", "your_latest_memory")},
+                         {"your_record_since_nov_2": [], "what_you_did_beyond_routine": [],
+                          "what_went_wrong_for_you_since_nov_2": [], "your_latest_memory": None})
         for hidden in ("987654", "CALL_ID_SECRET", "weight_customers", "baseline"):
             self.assertNotIn(hidden, end)
 
@@ -186,7 +191,7 @@ class ProbeEngineTests(unittest.IsolatedAsyncioTestCase):
             self.assertTrue(all("Check-in questions:" in r["prompt"] for r in probe_requests))
             self.assertTrue(all(r["schema"] is TURN_SCHEMA for r in transport.requests if r not in probe_requests))
             end_prompt = next(c["prompt"] for c in calls if c["week"] == 11 and c["persona"] == "a")
-            self.assertEqual([r["week"] for r in payload(end_prompt)["your_weekly_record"]], [1, 2])
+            self.assertEqual(payload(end_prompt)["your_record_since_nov_2"], [{"weeks": "1-2", "status": "main bank", "money": "kept"}])
             run = json.loads((Path(output) / "run.json").read_text())
             self.assertTrue(run["complete"])
             self.assertTrue(run["probe"])
