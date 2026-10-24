@@ -48,6 +48,8 @@ def validate_effects(effects):
         prob = item.get("probability", 1.0)
         if isinstance(prob, bool) or not isinstance(prob, (int, float)) or not 0 <= prob <= 1:
             raise ValueError("An experience effect's 'probability' must be between 0 and 1")
+        if "went_wrong" in item and not isinstance(item["went_wrong"], bool):
+            raise ValueError("An experience effect's 'went_wrong' must be true or false")
 
 
 def expand_surprises(events):
@@ -163,8 +165,11 @@ class World:
         return hours
 
     def _surprise_experience(self, p, week):
-        """Lines a surprise adds to this persona's week. `probability` makes it hit a seeded share of
-        personas; items sharing a `key` hit the same personas (so a week-3 charge is still there in week 4)."""
+        """(fact, went_wrong) pairs a surprise adds to this persona's week. `probability` makes it hit a
+        seeded share of personas; items sharing a `key` hit the same personas (so a week-3 charge is still
+        there in week 4). An item aimed at some personas (`if` or `probability`) counts as something that
+        went wrong for them unless it says `"went_wrong": false`; an item for everyone (news, a holding
+        statement) does not, unless it says `"went_wrong": true`."""
         lines = []
         for event in (self.surprises if self.surprises_enabled else []):
             eff = event.get("effects")
@@ -178,7 +183,8 @@ class World:
                 prob = item.get("probability", 1.0)
                 if prob < 1.0 and draw(self.seed, "experience", event["id"], item.get("key", item["text"]), p.get("id")) >= prob:
                     continue
-                lines.append(item["text"])
+                personal = "if" in item or "probability" in item
+                lines.append((item["text"], item.get("went_wrong", personal)))
         return lines
 
     # ------------------------------------------------------------------ deterministic consequences
@@ -199,7 +205,8 @@ class World:
         return limit
 
     def weekend_outcome(self, item, limit, overrun):
-        """What the migration window did to one persona's own weekend commitment (see generate.py)."""
+        """What the migration window did to one persona's own weekend commitment (see generate.py), as
+        (fact, went_wrong) pairs: a delayed, failed or declined payment went wrong; a sale that went through did not."""
         if not item or item.get("type") in (None, "none"):
             return []
         back = 12 + overrun  # hour on Sunday when the system returned
@@ -211,34 +218,44 @@ class World:
                     f"during the window; it went through at {back_text}.")
             if back > item.get("late_after_hour", 99) and item.get("late_fee"):
                 text += f" That was after the payee's cutoff, so a {_money(item['late_fee'])} late fee was charged."
-            lines.append(text)
+            lines.append((text, True))
         elif kind in ("p2p", "transfer"):
             hour = int(item["scheduled"].split()[1].split(":")[0]) + (24 if item["scheduled"].startswith("Sunday") else 0)
             late = back + 24 - hour
-            lines.append(f"{item['what'][0].upper() + item['what'][1:]} ({_money(item['amount'])}) failed at {item['scheduled']} with "
-                         f"'service unavailable'; you could only send it at {back_text}, {late} hours later.")
+            lines.append((f"{item['what'][0].upper() + item['what'][1:]} ({_money(item['amount'])}) failed at {item['scheduled']} with "
+                          f"'service unavailable'; you could only send it at {back_text}, {late} hours later.", True))
         elif kind == "card_sales":
             count = item.get("tickets_over_100", 0) if limit <= 100 else item.get("tickets_over_250", 0)
             avg = item.get("over_100_avg", 0) if limit <= 100 else item.get("over_250_avg", 0)
             if count:
-                lines.append(f"During the window your card reader could only take payments up to {_money(limit)}. {count} of your "
-                             f"weekend tickets were above that: about {_money(count * avg)} of sales you could not charge to a card.")
+                lines.append((f"During the window your card reader could only take payments up to {_money(limit)}. {count} of your "
+                              f"weekend tickets were above that: about {_money(count * avg)} of sales you could not charge to a card.", True))
             else:
-                lines.append(f"All your weekend card tickets were under the {_money(limit)} offline limit; every card sale went through.")
+                lines.append((f"All your weekend card tickets were under the {_money(limit)} offline limit; every card sale went through.", False))
         elif kind == "card_purchase":
             if item["amount"] > limit:
-                lines.append(f"Your Cobalt card was declined for {item['what']} because offline payments were capped at {_money(limit)}.")
+                lines.append((f"Your Cobalt card was declined for {item['what']} because offline payments were capped at {_money(limit)}.", True))
             else:
-                lines.append(f"Your Cobalt card worked for {item['what']}; the offline cap was {_money(limit)}.")
+                lines.append((f"Your Cobalt card worked for {item['what']}; the offline cap was {_money(limit)}.", False))
         elif kind == "settlement_delay":
-            lines.append("Your Saturday and Sunday card sales settled into your account on Monday instead of the same day.")
+            lines.append(("Your Saturday and Sunday card sales settled into your account on Monday instead of the same day.", True))
         if item.get("then"):
             lines += self.weekend_outcome(item["then"], limit, overrun)
         return lines
 
     def experience(self, p, week, effects):
         """What happened to this persona this week, as plain facts. No feelings, no decisions."""
+        return [text for text, _ in self.experience_items(p, week, effects)]
+
+    def experience_items(self, p, week, effects):
+        """This week's facts as (fact, went_wrong) pairs. went_wrong marks what actually went wrong for this
+        persona (a failed or late payment, a declined card, lost sales, an overrun); news, hypotheticals
+        ("if you contacted support...") and the bank's own offers are not marked."""
         lines = []
+
+        def add(text, went_wrong=False):
+            lines.append((text, went_wrong))
+
         cal = self.calendar.get(week, {})
         pay_weeks = p.get("pay_weeks") or []
         early = any(item["effect"].get("early_pay_days") for item in effects)
@@ -247,59 +264,78 @@ class World:
         if week in pay_weeks:
             if week == migration_week and p.get("paid_fri_dec11"):
                 if early:
-                    lines.append("Your pay showed in your Cobalt account on Wednesday Dec 9, two days early (early pay).")
+                    add("Your pay showed in your Cobalt account on Wednesday Dec 9, two days early (early pay).")
                 else:
-                    lines.append("Your pay landed in your Cobalt account on Friday Dec 11, the day before the migration window.")
+                    add("Your pay landed in your Cobalt account on Friday Dec 11, the day before the migration window.")
             else:
-                lines.append(f"Money landed in your Cobalt account this week ({p.get('pay_schedule', 'your usual schedule')}).")
+                add(f"Money landed in your Cobalt account this week ({p.get('pay_schedule', 'your usual schedule')}).")
         elif early and p.get("paycheck_into_cobalt"):
-            lines.append("Early pay is on: paychecks now show in your account up to two days early.")
+            add("Early pay is on: paychecks now show in your account up to two days early.")
         if week == migration_week:
             limit = self.offline_limit(effects)
             end = "Sunday Dec 13 12:00 Central Time"
             if overrun:
                 end = f"Sunday Dec 13 {12 + overrun:02d}:00 Central Time, {overrun} hours later than announced,"
-            lines.append(f"From Saturday Dec 12 00:00 until {end} the Cobalt app was read-only: you could see "
-                         f"balances but could not send transfers or P2P payments or get a new card. "
-                         f"Card payments worked offline up to {_money(limit)} per payment.")
+            add(f"From Saturday Dec 12 00:00 until {end} the Cobalt app was read-only: you could see "
+                f"balances but could not send transfers or P2P payments or get a new card. "
+                f"Card payments worked offline up to {_money(limit)} per payment.", bool(overrun))
             lines += self.weekend_outcome(p.get("migration_weekend"), limit, overrun)
             if not p.get("migration_weekend"):
                 if p.get("uses_p2p"):
-                    lines.append("Any P2P payment or transfer you tried during that window failed with 'service unavailable'; it could only go out after the system returned.")
+                    add("Any P2P payment or transfer you tried during that window failed with 'service unavailable'; it could only go out after the system returned.")
                 if "card reader" in str(p.get("group", "")):
-                    lines.append(f"Your Cobalt card reader accepted payments up to {_money(limit)} each during the window; a larger ticket could not be charged to a card.")
-            lines.append(self.migration.get("scheduled_payments", "Payments due during the window were processed once the system returned."))
+                    add(f"Your Cobalt card reader accepted payments up to {_money(limit)} each during the window; a larger ticket could not be charged to a card.")
+            add(self.migration.get("scheduled_payments", "Payments due during the window were processed once the system returned."))
         if week == migration_week + 1:
             finish = "on schedule at Sunday Dec 13 12:00" if not overrun else f"{overrun} hours late, at Sunday Dec 13 {12 + overrun:02d}:00"
-            lines.append(f"The migration finished {finish}. Transfers, P2P and new cards are available again on the new system.")
+            add(f"The migration finished {finish}. Transfers, P2P and new cards are available again on the new system.")
         lines += self._surprise_experience(p, week)
         wait = self.support_wait(week, effects)
-        lines.append(f"If you contacted Cobalt support this week, the typical wait was about {wait} minutes.")
+        add(f"If you contacted Cobalt support this week, the typical wait was about {wait} minutes.")
         if not any("instant_dispute_credit_cap" in item["effect"] for item in effects):
             base = self.config["baseline"]
-            lines.append(f"A disputed card charge gets provisional credit within {base.get('dispute_provisional_credit_business_days', 10)} "
-                         f"business days; the investigation can take up to {base.get('dispute_investigation_max_days', 45)} days.")
+            add(f"A disputed card charge gets provisional credit within {base.get('dispute_provisional_credit_business_days', 10)} "
+                f"business days; the investigation can take up to {base.get('dispute_investigation_max_days', 45)} days.")
         for item in effects:
             eff = item["effect"]
             if "rate_boost_points" in eff:
                 scope = " on new money only" if eff.get("new_money_only") else ""
-                lines.append(f"Your Cobalt savings rate is {eff['rate_boost_points']} points higher for four weeks from week "
-                             f"{item['starts_week']}, on balances up to {_money(eff.get('balance_cap', 50000))}{scope}.")
+                add(f"Your Cobalt savings rate is {eff['rate_boost_points']} points higher for four weeks from week "
+                    f"{item['starts_week']}, on balances up to {_money(eff.get('balance_cap', 50000))}{scope}.")
             if "instant_dispute_credit_cap" in eff:
-                lines.append(f"If you dispute a card charge, Cobalt credits it immediately, up to {_money(eff['instant_dispute_credit_cap'])}, for eight weeks.")
+                add(f"If you dispute a card charge, Cobalt credits it immediately, up to {_money(eff['instant_dispute_credit_cap'])}, for eight weeks.")
             if "instant_transfer_fee" in eff:
-                lines.append("Instant transfers to other banks are free right now (normally 1.5%, up to $15).")
+                add("Instant transfers to other banks are free right now (normally 1.5%, up to $15).")
             if "cash_back_percent" in eff:
-                lines.append(f"You get {eff['cash_back_percent']}% cash back on debit card purchases, up to {_money(eff.get('cash_back_cap', 0))}, for four weeks.")
+                add(f"You get {eff['cash_back_percent']}% cash back on debit card purchases, up to {_money(eff.get('cash_back_cap', 0))}, for four weeks.")
             if "goodwill_credit" in eff and week == item["starts_week"]:
-                lines.append(f"A {_money(eff['goodwill_credit'])} goodwill credit from Cobalt landed in your account this week.")
+                add(f"A {_money(eff['goodwill_credit'])} goodwill credit from Cobalt landed in your account this week.")
             if "advance_cap" in eff and week == item["starts_week"]:
-                lines.append(f"Cobalt offered you a zero-interest advance of up to {_money(eff['advance_cap'])}, repaid from your next deposit.")
+                add(f"Cobalt offered you a zero-interest advance of up to {_money(eff['advance_cap'])}, repaid from your next deposit.")
             if eff.get("free_replacement_card"):
-                lines.append("You can request a free replacement card and receive an alert for every card payment.")
+                add("You can request a free replacement card and receive an alert for every card payment.")
         if cal.get("note"):
-            lines.insert(0, cal["note"])
+            lines.insert(0, (cal["note"], False))
         return lines
+
+    def went_wrong_before(self, person, week, ledger=()):
+        """What went wrong for this persona in weeks 1 to week - 1, as (week, fact) pairs.
+
+        Recomputed with the same rules as each week's experience, so a failed payment does not drop out
+        of a persona's information set once its one-week memory moves on. A support contact the persona
+        reported (in its ledger) counts when that week's wait was longer than the usual one."""
+        p = self.person(person)
+        usual = self.config["baseline"].get("support_wait_minutes", 4)
+        contacted = {row["week"] for row in ledger if "call or chat with support" in row.get("actions", [])}
+        history = []
+        for earlier in range(1, min(week, 11)):
+            effects = self.plan.for_person(person, earlier)[1] if self.decisions_enabled else []
+            history += [(earlier, text) for text, went_wrong in self.experience_items(p, earlier, effects) if went_wrong]
+            wait = self.support_wait(earlier, effects)
+            if earlier in contacted and wait > usual:
+                history.append((earlier, f"You contacted Cobalt support; the wait was about {wait} minutes "
+                                         f"(usually about {usual})."))
+        return history
 
     # ------------------------------------------------------------------ the information set
     def context(self, person, week):

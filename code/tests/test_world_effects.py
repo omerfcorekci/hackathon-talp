@@ -5,6 +5,8 @@ import unittest
 from pathlib import Path
 
 from sim.decisions import DecisionPlan
+from sim.network import Network
+from sim.prompt import build_prompt
 from sim.world import World, expand_surprises
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -59,6 +61,71 @@ class SurpriseEffectTests(unittest.TestCase):
         event = {"id": "mig", "week": 6, "text": "Migration is running.",
                  "update": {"week": 7, "text": "It overran.", "effects": {"migration_overrun_hours": 5}}}
         self.assertEqual(world([event]).overrun_hours(), 5)
+
+
+# Identity keys plus the one weekend commitment each test needs; not authored customer personas.
+DECLINED = {"id": "d", "group": "g", "migration_weekend": {"type": "card_purchase", "what": "a $140 ticket", "amount": 140}}
+UNDER = {"id": "u", "group": "g", "migration_weekend": {"type": "card_purchase", "what": "a $60 dinner", "amount": 60}}
+NEWS = {"id": "news", "week": 3, "text": "Cobalt Bank: an incident is being investigated.",
+        "effects": {"experience": [{"week": 3, "text": "EVERYONE_NEWS_LINE"},
+                                   {"week": 3, "text": "PERSONAL_HARM_LINE", "if": {"id": "d"}},
+                                   {"week": 3, "text": "PERSONAL_GOOD_LINE", "if": {"id": "d"}, "went_wrong": False},
+                                   {"week": 4, "text": "FLAGGED_FOR_ALL_LINE", "went_wrong": True}]}}
+
+
+def history_world(surprises=()):
+    return World(WORLD, DecisionPlan([], [DECLINED, UNDER]), surprises=list(surprises), decisions_enabled=False)
+
+
+class WentWrongHistoryTests(unittest.TestCase):
+    def test_a_declined_card_is_remembered_and_a_working_one_is_not(self):
+        w = history_world()
+        self.assertEqual(w.went_wrong_before("d", 6), [])  # the migration week itself is not history yet
+        history = w.went_wrong_before("d", 10)
+        self.assertEqual([week for week, _ in history], [6])
+        self.assertIn("declined for a $140 ticket", history[0][1])
+        self.assertEqual(w.went_wrong_before("u", 10), [])  # an on-time migration is not a grievance
+
+    def test_an_overrun_marks_the_migration_window_for_everyone(self):
+        w = World(WORLD, DecisionPlan([], [UNDER]), surprises=[OVERRUN], decisions_enabled=False)
+        self.assertTrue(any("8 hours later than announced" in text for _, text in w.went_wrong_before("u", 7)))
+
+    def test_surprise_lines_count_when_personal_or_flagged(self):
+        w = history_world([NEWS])
+        texts = [text for _, text in w.went_wrong_before("d", 5)]
+        self.assertEqual(texts, ["PERSONAL_HARM_LINE", "FLAGGED_FOR_ALL_LINE"])
+        self.assertEqual([text for _, text in w.went_wrong_before("u", 5)], ["FLAGGED_FOR_ALL_LINE"])
+        # The weekly experience still shows every line, marked or not.
+        self.assertIn("EVERYONE_NEWS_LINE", w.context("u", 3)["experience"])
+        self.assertIn("PERSONAL_GOOD_LINE", w.context("d", 3)["experience"])
+
+    def test_went_wrong_flag_is_validated(self):
+        bad = {**NEWS, "effects": {"experience": [{"week": 3, "text": "x", "went_wrong": "yes"}]}}
+        with self.assertRaises(ValueError):
+            expand_surprises([bad])
+
+    def test_a_long_support_wait_the_persona_reported_is_remembered(self):
+        w = history_world()
+        ledger = [{"week": 2, "actions": ["call or chat with support"]},
+                  {"week": 6, "actions": ["call or chat with support"]}]
+        support = [(week, text) for week, text in w.went_wrong_before("u", 8, ledger) if "support" in text]
+        self.assertEqual(len(support), 1)  # week 2 had the usual wait
+        self.assertEqual(support[0][0], 6)
+        self.assertIn(f"about {WORLD['support_wait']['by_week']['6']} minutes", support[0][1])
+
+    def test_weekly_prompt_carries_the_history(self):
+        w = history_world()
+        network = Network(["d", "u"])
+
+        def prompt(week):
+            return build_prompt(persona=DECLINED, week=week, round_number=1, prior_state=None, ledger=[],
+                                world=w, network=network, inbox=[])
+
+        self.assertIn("=== WHAT WENT WRONG FOR YOU SINCE NOV 2 ===\n", prompt(1))
+        self.assertIn("- Nothing has gone wrong for you so far.", prompt(6))
+        later = prompt(9)
+        self.assertIn("- Week 6 (Mon Dec 7 - Sun Dec 13): Your Cobalt card was declined for a $140 ticket", later)
+        self.assertNotIn("Nothing has gone wrong", later)
 
 
 if __name__ == "__main__":
