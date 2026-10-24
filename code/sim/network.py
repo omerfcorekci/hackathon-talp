@@ -6,6 +6,9 @@ from copy import deepcopy
 from .schema import CHANNELS
 from .settings import Settings, draw
 
+# A message sent to you by name is always read; the weekly cap is for group chats and public posts.
+PRIVATE = ("direct", "phone")
+
 
 @dataclass(frozen=True)
 class Message:
@@ -127,11 +130,13 @@ class Network:
                 reason = "bank_message_quote"
             elif roll >= probability:
                 reason = "not_seen"
-            elif used.get(recipient, 0) >= settings.max_peer_messages:
-                reason = "inbox_limit"
+            elif settings.max_peer_messages == 0 or (
+                    message.channel not in PRIVATE and used.get(recipient, 0) >= settings.max_peer_messages):
+                reason = "inbox_limit"  # a cap of 0 switches all peer exposure off, private messages included
             else:
                 inboxes[recipient].append(message)
-                used[recipient] = used.get(recipient, 0) + 1
+                if message.channel not in PRIVATE:
+                    used[recipient] = used.get(recipient, 0) + 1
             audit.append({"week": week, "round": round_number, "message": message.id,
                           "author": message.author, "recipient": recipient,
                           "channel": message.channel, "probability": probability,

@@ -121,12 +121,23 @@ class NetworkTests(unittest.TestCase):
             self.assertEqual(len(inbox["b"]), 1)
 
     def test_inbox_cap_is_shared_across_rounds(self):
-        settings = replace(self.settings, stranger_probability=1, following_probability=1, close_friend_probability=1)
+        settings = replace(self.settings, stranger_probability=1, following_probability=1, close_friend_probability=1,
+                           max_peer_messages=2)
         used = {"b": 1}
         inbox, audit = self.route([message("1"), message("2"), message("3")], settings, used)
         self.assertEqual(len(inbox["b"]), 1)
         self.assertEqual(used["b"], 2)
         self.assertEqual(sum(row["result"] == "inbox_limit" for row in audit if row["recipient"] == "b"), 2)
+
+    def test_direct_and_phone_messages_skip_the_cap(self):
+        settings = replace(self.settings, stranger_probability=1, max_peer_messages=1)
+        used = {"b": 1}
+        sent = [message("s"), message("d", channel="direct", target="b"), message("p", channel="phone", target="b")]
+        inbox, _ = self.route(sent, settings, used)
+        self.assertEqual(sorted(m.id for m in inbox["b"]), ["d", "p"])  # the public post hit the cap
+        self.assertEqual(used["b"], 1)
+        off, _ = self.route(sent, replace(settings, max_peer_messages=0), {})
+        self.assertEqual(off["b"], [])  # a cap of 0 still switches everything off
 
     def test_draws_do_not_depend_on_message_order(self):
         messages = [message("1"), message("2"), message("3")]

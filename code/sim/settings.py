@@ -24,7 +24,7 @@ class Settings:
     attempts: int = 3
     timeout_seconds: float = 60.0
     transport_backoff_seconds: float = 3.0
-    max_peer_messages: int = 2
+    max_peer_messages: int = 3
     stranger_probability: float = 0.05
     following_probability: float = 0.35
     close_friend_probability: float = 0.65
