@@ -179,8 +179,17 @@ class DecisionPlan:
             target = decision.get("target")
             if not isinstance(target, str) or not target:
                 raise ValueError("Decision target is required")
+            target_customers = None
             if key in targets:
                 members = targets[key]
+                if isinstance(members, dict):
+                    # {"ids": [...], "customers": N}: N is our estimate of the real group's size, used for
+                    # capped offers when the personas stand for a wider audience than the group itself.
+                    target_customers = members.get("customers")
+                    if target_customers is not None and (type(target_customers) not in (int, float)
+                                                         or not math.isfinite(target_customers) or target_customers <= 0):
+                        raise ValueError("Target mapping 'customers' must be a positive number")
+                    members = members.get("ids")
                 if not isinstance(members, list) or not all(isinstance(p, str) and p in self.people for p in members):
                     raise ValueError("Target mapping contains an unknown persona")
                 selected = set(members)
@@ -235,7 +244,8 @@ class DecisionPlan:
                     # The menu caps recipients ("up to 100,000 customers"). A target larger than the cap
                     # is served in part: each persona is drawn as a recipient with probability cap/total,
                     # seeded, so the expected reach matches the cap and plan runs on one seed agree.
-                    self.reach[(key, name)] = min(1.0, spec.effect["recipient_cap"] / sum(weights))
+                    size = target_customers if target_customers is not None else sum(weights)
+                    self.reach[(key, name)] = min(1.0, spec.effect["recipient_cap"] / size)
                 self.actions[key].append((action, spec))
                 self.resolved.setdefault(key, []).append((name, level, spec.cost))
         if self.total_cost > 4_000_000:
