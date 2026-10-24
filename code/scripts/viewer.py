@@ -188,7 +188,8 @@ def budget_info(decisions: list[dict], personas: list[dict] | None = None) -> di
     if personas is None:
         personas = read_jsonl(ROOT / "code" / "personas" / "personas.jsonl")
     try:
-        plan = dm.DecisionPlan(decisions, personas, action_aliases=action_aliases())
+        plan = dm.DecisionPlan(decisions, personas, targets=read_json(ROOT / "code" / "config" / "decisions" / "targets.json"),
+                               action_aliases=action_aliases())
         info["total"] = plan.total_cost
         for i, _ in enumerate(decisions, 1):
             resolved = getattr(plan, "resolved", {}).get(f"decision-{i}", [])
