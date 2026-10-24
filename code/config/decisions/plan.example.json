@@ -1,0 +1,12 @@
+[
+  {
+    "week": 1,
+    "target": "everyone, or a description of the group",
+    "actions": [
+      {"action": "<action name from the decision menu>", "level": "<one listed level, or \"on\">"}
+    ],
+    "message": "<the exact words customers receive, max 600 characters>",
+    "channels": ["push", "email", "in-app"],
+    "why": "<line 1>\n<line 2>\n<line 3>"
+  }
+]
