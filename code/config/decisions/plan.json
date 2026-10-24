@@ -1,28 +1,32 @@
 [
   {
     "week": 5,
-    "target": "Everyone",
+    "target": "everyone",
     "actions": [
       {
-        "action": "Security pack: a free new card on request and an alert for every card payment",
+        "action": "Free replacement card on request and payment alerts",
         "level": "on"
       },
       {
-        "action": "Instant dispute credit: credit disputed card charges at once, up to $100 per customer, for 8 weeks",
+        "action": "Instant dispute credit up to $100 per customer, 8 weeks",
         "level": "on"
       },
       {
         "action": "Extra support staff for 4 weeks",
-        "level": "+50"
+        "level": "+50 staff"
       }
     ],
     "message": "Update on the card charges from Nov 16-17: our card processor confirmed a fault that charged some payments twice, and a small number of cards had fraud test charges of $0.50 to $2 after card numbers were stolen elsewhere, for example on a fake shopping site. Cobalt's own systems were not breached. About 9,000 customers were affected. Starting today, for 8 weeks: if you dispute a card charge, we credit up to $100 right away while we investigate. In the app you can turn on an alert for every card payment and order a free new card.",
     "channels": [
-      "Push",
-      "Email",
-      "In-app"
+      "push",
+      "email",
+      "in-app"
     ],
-    "why": "The week-4 facts are far smaller than the 'Cobalt got hacked' rumor, but many customers only heard the rumor.\nInstant dispute credit and payment alerts give every customer a concrete way to protect themselves before the migration.\nWe repeat only what the processor confirmed and promise nothing about refunds we cannot yet confirm."
+    "why": [
+      "The week-4 facts are far smaller than the 'Cobalt got hacked' rumor, but many customers only heard the rumor.",
+      "Instant dispute credit and payment alerts give every customer a concrete way to protect themselves before the migration.",
+      "We repeat only what the processor confirmed and promise nothing about refunds we cannot yet confirm."
+    ]
   },
   {
     "week": 5,
