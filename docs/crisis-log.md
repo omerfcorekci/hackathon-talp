@@ -112,6 +112,9 @@ Who hears the text is the engine's seeded reach draw (app-daily users, social-me
   card shows up twice, and a market customer asks whether his card reader is safe. Before the update we
   had three (P5, E4, B5), but together they stand for about 307,000 customers; the update says about
   9,000 were hit, so we kept only B5 (7,000 customers);
+- everyone else learns in week 3 that their own card payments are all theirs (`unless` B5, not a
+  grievance). Without it, with the less inert engine, E6 disputed and then complained about a charge
+  that was never on his card (seed 2, plan and no-decision), and that complaint took goal_3b to 228.7;
 - the week-4 update is an `update` on the same file: its text reaches personas by the same reach draw
   from week 4, so some keep the week-3 rumor without hearing the correction.
 
