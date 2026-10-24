@@ -71,7 +71,11 @@ weeks from about 5 million customers). Formulas: [`code/sim/metrics.py`](code/si
   declined card, a late or queued payment, lost sales, a long support wait it reported), recomputed by
   the same rules each week, so a grievance outlives the persona's three-sentence memory;
 - its own history as stretches of unchanged status and money ("Weeks 1-5: main bank, money kept"),
-  plus last week's memory and reason;
+  plus last week's memory and reason, and last week's trust and mood ("Last week you trusted Cobalt
+  2/5 and felt worried about it; give this week's trust and mood as they are now"). The model keeps
+  nothing between calls, so everything a persona remembers is in its prompt and in `calls.jsonl`;
+  carrying trust halved its week-to-week jumps (0.24–0.30 → 0.13–0.19) and slowed its recovery after
+  the migration (week-10 trust 3.88–4.00 → 3.54–3.75);
 - **"Your open business with Cobalt"**: where its own cases stand by the bank's rules: a dispute's
   provisional credit (10 business days, or at once under the instant dispute credit) and its close
   after about 45 days, a regulator complaint's answer within 15 days, and an advance it asked for,
@@ -237,6 +241,22 @@ What we learned so far:
   the model inert, and switched the network off to measure what it adds.
 - **A rating is an opinion every week**, counted at the pace the app asks for ratings, so a single
   persona's mood does not swing the board number and the weekly curve shows the crisis.
+
+**How much personas talk:** in the final engine every week has messages, most around the crises (five
+runs, weeks 1–10: 17, 15, 72, 72, 61, 97, 65, 44, 34, 17). Quiet weeks stay quiet on purpose: we do
+not make people talk about their bank when nothing happens to it.
+
+## What the simulation does not model yet, and what we would do
+
+| Not modelled | Why it matters | What we would build |
+|---|---|---|
+| Channels: push, email, in-app, SMS and a CEO video all reach every targeted persona the same way | the menu prices SMS and says a CEO video "costs credibility"; we cannot show either | a reach and attention draw per channel and persona (e.g. `reaction_to_bank_sms`), and a credibility cost for a CEO video |
+| Support load: waits come from a table (25 min in week 6), not from how many people call | an outage that floods support should make waits longer, and extra staff should matter more | waits computed from the weighted number of personas calling that week |
+| Rivals: one fixed rate offer in week 5, "half a point above Cobalt" even after a rate boost | rivals react to Cobalt's moves | rival offers as rules or agents that respond to our decisions and to the migration date |
+| Virality: a public post reaches strangers at 5%, nothing amplifies it | the C1 rumor spread through "a post with many shares" | reach that grows with shares and with a persona's followers, and news that picks up a wave of posts |
+| Rumor belief: we know who received a message, not who believed it | the board asks whether the correction beat the rumor | per persona: which claim it believes, how sure, from whom; carried to the next week |
+| Activity: every persona counts as active on Nov 2; the real base is 1.0M of 2.1M | goal 1 assumes the same activity rate for every persona | a 30-day activity rate per persona and lost activity weighted by it |
+| Students, and few personas per group | one saver (S1, S2) or one everyday persona (E2, E6) can flip a board goal | a student group and two or three seeded variants per persona |
 
 ## What we would do with more time
 
