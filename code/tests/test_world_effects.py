@@ -123,6 +123,20 @@ class WentWrongHistoryTests(unittest.TestCase):
         self.assertEqual(support[0][0], 6)
         self.assertIn(f"about {WORLD['support_wait']['by_week']['6']} minutes", support[0][1])
 
+    def test_pay_follows_the_persona_to_its_other_bank(self):
+        payee = {"id": "p", "group": "g", "pay_weeks": [2, 4, 6, 8], "pay_schedule": "every other Friday"}
+        w = World(WORLD, DecisionPlan([], [payee]), decisions_enabled=False)
+
+        def pay(week, ledger):
+            return [t for t in w.context("p", week, ledger)["experience"] if "every other Friday" in t]
+
+        row = lambda week, status="main bank", actions=(): {"week": week, "status": status, "actions": list(actions)}
+        self.assertIn("landed in your Cobalt account this week", pay(4, [row(1), row(2), row(3)])[0])
+        moved = [row(1), row(2, actions=["move direct deposit to another bank"]), row(3)]
+        self.assertIn("now goes to your other bank", pay(4, moved)[0])
+        self.assertIn("landed in your Cobalt account", pay(2, moved[:1])[0])  # not before the move
+        self.assertIn("now goes to your other bank", pay(8, [row(1), row(7, status="left")])[0])
+
     def test_weekly_prompt_carries_the_history(self):
         w = history_world()
         network = Network(["d", "u"])
