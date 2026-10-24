@@ -29,7 +29,9 @@ ASSUMPTIONS = [
     "L = Σ f × weight_customers over those personas whose final-week row is not active: status not "
     "\"main bank\" or \"second bank\", or active_derived false (an app action in that week or the three "
     "before it, status not \"left\"; derived by the engine from the actions the model reported, falling "
-    "back to the model's own active_in_last_30_days when absent). The model's week-1 answer is not the "
+    "back to the model's own active_in_last_30_days when absent) after the persona had used the app in "
+    "an earlier week. A persona that stays a customer but never reports an app action (only \"wait and "
+    "see\") is a quiet user and is not counted as lost. The model's week-1 answer is not the "
     "baseline, so goal_1 is at most 100. A persona with no final-week row counts as unchanged. If B is "
     "0, goal_1 is written as 0 and a note says so. Rounded to 2 decimals.",
     "goal_2 (% of Nov 2 deposits) = 100 × (D + Σ f × weight_deposits_usd × (m + n - 1)) / D over the "
@@ -104,9 +106,16 @@ def _active_at_start(person):
     return person.get("cobalt_role") not in INACTIVE_AT_START
 
 
-def _is_active(row):
-    return (row.get("status") in ACTIVE_STATUSES
-            and row.get("active_derived", row.get("active_in_last_30_days")) is True)
+def _used_app(row):
+    return row.get("active_derived", row.get("active_in_last_30_days")) is True
+
+
+def _is_active(row, used_app_before=True):
+    # A persona that never reports an app action (e.g. only "wait and see") but stays a customer is a
+    # quiet user, not a lost one: active_derived only counts against it once it has used the app.
+    if row.get("status") not in ACTIVE_STATUSES:
+        return False
+    return _used_app(row) or not used_app_before
 
 
 def _deposit_factor(row):
@@ -137,9 +146,13 @@ def _goals(ids, rows, last, customers, deposits, follow, start_ids, notes, label
     base_active = sum(customers[pid] for pid in ids if pid in start_ids)
     base_deposits = sum(deposits[pid] for pid in ids)
 
+    def used_app_before(pid, week):
+        return any(_used_app(rows[(pid, w)]) for w in range(1, week) if (pid, w) in rows)
+
     def active(week):
         lost = sum(follow[pid] * customers[pid] for pid in ids
-                   if pid in start_ids and (row := rows.get((pid, week))) and not _is_active(row))
+                   if pid in start_ids and (row := rows.get((pid, week)))
+                   and not _is_active(row, used_app_before(pid, week)))
         return base_active - lost
 
     def deposits_at(week):

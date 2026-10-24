@@ -323,10 +323,17 @@ class MetricsTests(unittest.TestCase):
         for value in (result, empty):
             self.assertTrue(all(math.isfinite(value[k]) for k in ("goal_1", "goal_2", "goal_3", "goal_3b")))
 
+    def test_quiet_user_counts_until_it_stops_using_the_app(self):
+        weekly = [dict(row, status="main bank", active_derived=False) for row in self.scenario()]
+        self.assertEqual(metrics.compute_metrics(self.personas, weekly)["goal_1"], 100.0)
+        stopped = [dict(row, status="main bank", active_derived=row["week"] < 5) for row in self.scenario()]
+        self.assertLess(metrics.compute_metrics(self.personas, stopped)["goal_1"], 100.0)
+
     def test_zero_baseline_and_missing_weights_are_noted(self):
         weekly = [dict(row, active_in_last_30_days=False) for row in self.scenario()]
         result = metrics.compute_metrics(self.personas, weekly)
-        self.assertEqual(result["goal_1"], 75.0)  # all inactive: only the followers (f = 0.25) go
+        # Never used the app but still a customer = a quiet user: only dormant/left statuses count.
+        self.assertEqual(result["goal_1"], 76.19)
         bare = [{"id": p["id"], "group": p["group"]} for p in self.personas]
         result = metrics.compute_metrics(bare, self.scenario())
         self.assertEqual(result["goal_1"], 0.0)
