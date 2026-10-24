@@ -1,26 +1,40 @@
 #!/usr/bin/env bash
 # Regenerate the five official runs in parallel, then build and check the submission ZIP.
 #
-# Usage: code/scripts/run_all.sh [--weeks N] [--out-root DIR]
+# Usage: code/scripts/run_all.sh [--weeks N] [--out-root DIR] [--fake] [--plan F] [--surprises D]
 #   --weeks N       weeks per run, passed to the engine (default 10; use fewer only for smoke tests)
 #   --out-root DIR  parent of the five run folders (default runs). make_submission.sh packages
 #                   runs/ only, so packaging is skipped for any other DIR.
+#   --fake          offline fake model: no TALP_KEY, no calls, model "fake:..."; needs an
+#                   --out-root outside runs/ and never packages
+#   --plan F / --surprises D / --targets F / --action-aliases F
+#                   override code/config inputs (with --plan, default targets/aliases are not used)
 #   TEAM=NN         two-digit team number for the ZIP name (default 07)
 #
 # Run from the repo root (the script also cd's there). Reads TALP_KEY from the environment or
 # .env; the key is never written anywhere. Every run uses the same personas, settings and surprises.
 set -euo pipefail
 
-usage() { sed -n '4,8p' "$0" | sed 's/^# \{0,1\}//'; }
+usage() { sed -n '4,12p' "$0" | sed 's/^# \{0,1\}//'; }
 
 weeks=10
 out_root=runs
+fake=0
+plan_arg=""
+surprises_arg=""
+targets_arg=""
+aliases_arg=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --weeks) weeks="${2:?--weeks needs a number}"; shift 2 ;;
     --weeks=*) weeks="${1#*=}"; shift ;;
     --out-root) out_root="${2:?--out-root needs a directory}"; shift 2 ;;
     --out-root=*) out_root="${1#*=}"; shift ;;
+    --fake) fake=1; shift ;;
+    --plan) plan_arg="${2:?--plan needs a file}"; shift 2 ;;
+    --surprises) surprises_arg="${2:?--surprises needs a directory}"; shift 2 ;;
+    --targets) targets_arg="${2:?--targets needs a file}"; shift 2 ;;
+    --action-aliases) aliases_arg="${2:?--action-aliases needs a file}"; shift 2 ;;
     -h|--help) usage; exit 0 ;;
     *) echo "Unknown argument: $1" >&2; usage >&2; exit 2 ;;
   esac
@@ -32,6 +46,14 @@ out_root="${out_root%/}"
 
 cd "$(dirname "$0")/../.."
 
+if (( fake )); then
+  mkdir -p "$out_root"
+  if [[ "$(cd "$out_root" && pwd -P)/" == "$(pwd -P)/runs/"* ]]; then
+    echo "--fake runs must never land in runs/: pass --out-root to a scratch directory." >&2
+    exit 2
+  fi
+fi
+
 if [[ -f .env ]]; then
   set -a
   # shellcheck disable=SC1091
@@ -41,7 +63,7 @@ fi
 if [[ -z "${SSL_CERT_FILE:-}" && -f /etc/ssl/cert.pem ]]; then
   export SSL_CERT_FILE=/etc/ssl/cert.pem
 fi
-if [[ -z "${TALP_KEY:-}" ]]; then
+if (( ! fake )) && [[ -z "${TALP_KEY:-}" ]]; then
   echo "TALP_KEY is empty: export it or put it in .env (never in code). Nothing was run." >&2
   exit 1
 fi
@@ -57,6 +79,12 @@ plan=code/config/decisions/plan.json
 surprises=code/config/surprises
 targets=code/config/decisions/targets.json
 aliases=code/config/decisions/action-aliases.json
+if [[ -n "$plan_arg" ]]; then
+  plan="$plan_arg"; targets=""; aliases=""
+fi
+[[ -n "$surprises_arg" ]] && surprises="$surprises_arg"
+[[ -n "$targets_arg" ]] && targets="$targets_arg"
+[[ -n "$aliases_arg" ]] && aliases="$aliases_arg"
 settings=code/config/engine.json
 
 [[ -f "$personas" ]] || { echo "Missing $personas" >&2; exit 1; }
@@ -82,8 +110,9 @@ else
   echo "Note: $network not found; running without declared ties." >&2
 fi
 decide=(--decisions "$plan")
-[[ -f "$targets" ]] && decide+=(--targets "$targets")
-[[ -f "$aliases" ]] && decide+=(--action-aliases "$aliases")
+[[ -n "$targets" && -f "$targets" ]] && decide+=(--targets "$targets")
+[[ -n "$aliases" && -f "$aliases" ]] && decide+=(--action-aliases "$aliases")
+(( fake )) && common+=(--fake)
 
 # Seeds are fixed: plan_1 and nodecision_1 share seed 1, so their difference is the plan.
 names=(plan_1 plan_2 nodecision_1 nodecision_2 plan_nosurprises)
@@ -116,6 +145,7 @@ fi
 # five succeed, and the previous set is kept under experiments/runs-backup/<timestamp>/.
 stamp="$(date +%Y%m%d-%H%M%S)"
 log_dir="experiments/run_all-logs/$stamp"
+(( fake )) && log_dir="$out_root/../run_all-logs-$stamp"
 stage="$out_root/.staging-$stamp"
 mkdir -p "$out_root" "$log_dir" "$stage"
 started=$SECONDS
@@ -164,6 +194,10 @@ rmdir "$stage" 2>/dev/null || true
 [[ -d "$backup" ]] && echo "Previous runs moved to $backup/"
 echo "Runs are in $out_root/"
 
+if (( fake )); then
+  echo "Fake runs in $out_root/: not packaging (see code/tests/fake_end_to_end.py for a scratch ZIP)."
+  exit 0
+fi
 if [[ "$out_root" != runs ]]; then
   echo "Runs are in $out_root/, not runs/: skipping make_submission.sh (it packages runs/)."
   exit 0

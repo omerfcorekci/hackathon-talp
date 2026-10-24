@@ -44,6 +44,77 @@ class VertexTransport:
         self.client.close()
 
 
+class FakeTransport:
+    """Offline stand-in for VertexTransport: no key, no network, no cost.
+
+    Answers are generated from the response schema, seeded by sha256(seed, model, prompt), so they
+    are deterministic per (seed, prompt) and differ between seeds. Text fields are short neutral
+    placeholders that never quote the prompt; outgoing messages stay empty so contact and channel
+    validation cannot fail. Only for testing the pipeline: run with a model name starting "fake:".
+    """
+
+    STATUS_WEIGHTS = (("main bank", 80), ("second bank", 13), ("dormant", 5), ("left", 2))
+    # Actions every current persona lists; talk actions are left out because they need a message.
+    SAFE_ACTIONS = ("log in and check balance", "wait and see", "try a transfer or P2P payment",
+                    "call or chat with support", "use Cobalt less", "move some money to another bank")
+
+    def __init__(self, *, timeout_seconds=None):
+        self.calls = 0
+
+    async def generate(self, *, prompt, model, seed, temperature, schema):
+        import hashlib
+        import json
+        import random
+
+        self.calls += 1
+        digest = hashlib.sha256(json.dumps([seed, model, prompt]).encode()).digest()
+        rng = random.Random(int.from_bytes(digest[:8], "big"))
+        data = self._value(schema, rng, "")
+        if isinstance(data, dict) and "status" in data:
+            self._turn(data, rng, retried="previous answer was rejected" in prompt)
+        return json.dumps(data, ensure_ascii=False)
+
+    def _value(self, schema, rng, name):
+        kind = schema.get("type")
+        if isinstance(kind, list):
+            kind = next((k for k in kind if k != "null"), "null")
+        if "enum" in schema:
+            return rng.choice(schema["enum"])
+        if kind == "object":
+            return {key: self._value(sub, rng, key) for key, sub in schema.get("properties", {}).items()}
+        if kind == "array":
+            return []
+        if kind == "integer":
+            return rng.randint(schema.get("minimum", 1), schema.get("maximum", 5))
+        if kind == "number":
+            return float(rng.randint(int(schema.get("minimum", 0)), 1000))
+        if kind == "boolean":
+            return rng.random() < 0.8
+        if kind == "string":
+            return f"fake {name or 'text'} {rng.randrange(16**6):06x}"[: schema.get("maxLength", 200)]
+        return None
+
+    def _turn(self, data, rng, *, retried):
+        statuses, weights = zip(*self.STATUS_WEIGHTS)
+        status = rng.choices(statuses, weights)[0]
+        data["status"] = status
+        data["money"] = ("moved most" if status == "left" else
+                         rng.choices(("kept", "moved some", "moved most"), (85, 12, 3))[0])
+        if "new_money" in data:
+            data["new_money"] = rng.choices(("none", "some", "a lot"), (85, 12, 3))[0]
+        data["balance"] = None
+        data["active_in_last_30_days"] = status in ("main bank", "second bank")
+        data["actions"] = rng.sample(self.SAFE_ACTIONS, 0 if status == "left" else rng.randint(1, 2))
+        data["heard_from"] = [rng.choice(("bank", "news", "none"))]
+        data["app_rating"] = rng.randint(3, 5) if rng.random() < 0.7 else rng.randint(1, 2)
+        # A retry after a round-two rejection takes the highest complaint, which is never refused.
+        data["complaint"] = "cfpb" if retried else rng.choices(("none", "bank", "cfpb"), (90, 8, 2))[0]
+        data["messages"] = []
+
+    async def close(self):
+        return None
+
+
 @dataclass(frozen=True)
 class ModelResult:
     data: dict

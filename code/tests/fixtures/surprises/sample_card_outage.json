@@ -1,0 +1,7 @@
+{
+  "id": "sample_card_outage",
+  "week": 3,
+  "title": "TEST FIXTURE: card payment errors",
+  "text": "TEST FIXTURE, not a real announcement. Some Cobalt customers report card payments being declined for a few hours on Tuesday. Cobalt has not said yet how many customers were affected or why.",
+  "update": {"week": 4, "text": "TEST FIXTURE update: Cobalt says the declines lasted about three hours and are fixed; it does not yet say how many customers were affected."}
+}

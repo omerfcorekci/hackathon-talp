@@ -9,7 +9,7 @@ from pathlib import Path
 from .decisions import DecisionPlan, MENU
 from .engine import SimulationEngine
 from .io import load_json, load_personas
-from .llm import VertexTransport
+from .llm import FakeTransport, VertexTransport
 from .network import Network
 from .settings import Settings
 from .world import World
@@ -38,6 +38,9 @@ def parser():
     result.add_argument("--model")
     result.add_argument("--validate-only", action="store_true", help="Check inputs without API calls or outputs")
     result.add_argument("--show-plan", action="store_true", help="Print how the engine read the decisions, then exit")
+    result.add_argument("--fake", action="store_true",
+                        help="Offline fake model (no key, no calls); model names get a 'fake:' prefix. "
+                             "For pipeline tests only: never write fake runs to runs/")
     result.add_argument("--print-menu", action="store_true", help="Print supported action/level identifiers and exit")
     return result
 
@@ -60,6 +63,12 @@ async def execute(args):
     for name in ("seed", "weeks", "concurrency", "model"):
         if getattr(args, name) is not None:
             settings_data[name] = getattr(args, name)
+    if args.fake:
+        # Fake runs must be recognisable in run.json and calls.jsonl.
+        for name in ("model", "fallback_model"):
+            value = settings_data.get(name, getattr(Settings, name))
+            if value and not value.startswith("fake:"):
+                settings_data[name] = f"fake:{value}"
     settings = Settings(**settings_data)
     people = load_personas(args.personas)
     network = Network([p["id"] for p in people], load_json(args.network) if args.network else {})
@@ -93,9 +102,13 @@ async def execute(args):
               f"{len(decisions)} decisions, ${plan.total_cost:,} menu cost"
               f"{', check-in probe on' if args.probe else ''}. No model calls made.")
         return
+    official = Path(__file__).resolve().parents[2] / "runs"
+    if args.fake and args.out.resolve().is_relative_to(official):
+        raise ValueError("Fake runs must never be written under runs/; use a scratch --out")
     if args.out.exists() and any(args.out.iterdir()):
         raise ValueError("Output directory must be empty")
-    transport = VertexTransport(timeout_seconds=settings.timeout_seconds)
+    transport_class = FakeTransport if args.fake else VertexTransport
+    transport = transport_class(timeout_seconds=settings.timeout_seconds)
     try:
         engine = SimulationEngine(personas=people, network=network, world=world,
                                   settings=settings, transport=transport)
