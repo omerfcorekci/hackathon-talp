@@ -29,7 +29,7 @@ def validate_effects(effects):
         return
     if not isinstance(effects, dict):
         raise ValueError("Surprise effects must be an object")
-    unknown = set(effects) - {"migration_overrun_hours", "support_wait_by_week", "experience"}
+    unknown = set(effects) - {"migration_overrun_hours", "support_wait_by_week", "experience", "pay_paused"}
     if unknown:
         raise ValueError(f"Unknown surprise effect keys: {sorted(unknown)}")
     hours = effects.get("migration_overrun_hours", 0)
@@ -38,6 +38,16 @@ def validate_effects(effects):
     for week, minutes in effects.get("support_wait_by_week", {}).items():
         if not str(week).isdigit() or type(minutes) is not int or minutes < 0:
             raise ValueError("support_wait_by_week maps week numbers to nonnegative minutes")
+    for item in effects.get("pay_paused", []):
+        if not isinstance(item, dict) or type(item.get("from_week")) is not int or not 1 <= item["from_week"] <= 10:
+            raise ValueError("Each pay_paused effect needs a from_week in 1-10")
+        if "until_week" in item and (type(item["until_week"]) is not int or item["until_week"] < item["from_week"]):
+            raise ValueError("A pay_paused until_week must be a week number not before from_week")
+        if not isinstance(item.get("text"), str) or not item["text"].strip():
+            raise ValueError("Each pay_paused effect needs the text the persona reads in a pay week")
+        for name in ("if", "unless"):
+            if name in item and not isinstance(item[name], dict):
+                raise ValueError(f"A pay_paused effect's '{name}' must map persona attributes to values")
     for item in effects.get("experience", []):
         if not isinstance(item, dict) or type(item.get("week")) is not int or not 1 <= item["week"] <= 10:
             raise ValueError("Each experience effect needs a week in 1-10")
@@ -205,6 +215,19 @@ class World:
                 lines.append((item["text"], item.get("went_wrong", personal)))
         return lines
 
+    def pay_paused(self, p, week):
+        """The text a surprise puts in place of this persona's pay this week (its pay stopped), or None."""
+        for eff in self._surprise_effects():
+            for item in eff.get("pay_paused", []):
+                if not item["from_week"] <= week <= item.get("until_week", 10):
+                    continue
+                if not all(p.get(key) == value for key, value in item.get("if", {}).items()):
+                    continue
+                if any(p.get(key) == value for key, value in item.get("unless", {}).items()):
+                    continue
+                return item["text"]
+        return None
+
     # ------------------------------------------------------------------ deterministic consequences
     def support_wait(self, week, effects):
         base = self.support.get("by_week", {}).get(str(week), self.support.get("base_minutes", 4))
@@ -290,7 +313,10 @@ class World:
         migration_week = self.migration.get("week", 6)
         back, overrun = self.back_time(), self.overrun_text()
         elsewhere = self.pay_elsewhere(ledger, week)
-        if week in pay_weeks and elsewhere:
+        paused = self.pay_paused(p, week)
+        if week in pay_weeks and paused:
+            add(paused)
+        elif week in pay_weeks and elsewhere:
             add(f"Money that used to land at Cobalt ({p.get('pay_schedule', 'your usual schedule')}) now goes to "
                 "your other bank; none of it landed in your Cobalt account this week.")
         elif week in pay_weeks:
@@ -301,7 +327,7 @@ class World:
                     add("Your pay landed in your Cobalt account on Friday Dec 11, the day before the migration window.")
             else:
                 add(f"Money landed in your Cobalt account this week ({p.get('pay_schedule', 'your usual schedule')}).")
-        elif early and p.get("paycheck_into_cobalt") and not elsewhere:
+        elif early and p.get("paycheck_into_cobalt") and not elsewhere and not paused:
             add("Early pay is on: paychecks now show in your account up to two days early.")
         if week == migration_week:
             limit = self.offline_limit(effects)

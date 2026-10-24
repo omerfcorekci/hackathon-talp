@@ -59,6 +59,21 @@ class SurpriseEffectTests(unittest.TestCase):
         self.assertIn("it went through at Sunday 16:10. That was after the payee's cutoff", week6)
         self.assertIn("4 hours and 10 minutes late, at Sunday Dec 13 16:10", week7)
 
+    def test_a_surprise_can_pause_a_persona_s_pay(self):
+        payee = {"id": "p", "group": "g", "pay_weeks": [2, 4, 6, 8], "pay_schedule": "every other Friday"}
+        other = {**payee, "id": "q"}
+        event = {"id": "s", "week": 7, "text": "Cobalt Bank: a shutdown.",
+                 "effects": {"pay_paused": [{"from_week": 7, "if": {"id": "p"}, "text": "NO_PAY_THIS_TIME"}]}}
+        w = World(WORLD, DecisionPlan([], [payee, other]), surprises=[event], decisions_enabled=False)
+        self.assertIn("NO_PAY_THIS_TIME", w.context("p", 8)["experience"])
+        self.assertFalse(any("landed in your Cobalt account" in t for t in w.context("p", 8)["experience"]))
+        self.assertTrue(any("landed in your Cobalt account" in t for t in w.context("p", 6)["experience"]))  # before
+        self.assertTrue(any("landed in your Cobalt account" in t for t in w.context("q", 8)["experience"]))  # not targeted
+        off = World(WORLD, DecisionPlan([], [payee, other]), surprises=[event], decisions_enabled=False, surprises_enabled=False)
+        self.assertNotIn("NO_PAY_THIS_TIME", off.context("p", 8)["experience"])
+        with self.assertRaises(ValueError):
+            expand_surprises([{**event, "effects": {"pay_paused": [{"from_week": 7, "text": ""}]}}])
+
     def test_weekend_transfers_are_queued_not_failed(self):
         person = {"id": "a", "group": "g", "migration_weekend": {"type": "p2p", "what": "the babysitter's pay", "amount": 120,
                                                                  "scheduled": "Saturday 10:00"}}
