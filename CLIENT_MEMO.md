@@ -1,67 +1,65 @@
 # Cobalt Bank: memo to the board
 
-_One page. Written for the board, not for engineers. Numbers marked ⟨…⟩ are filled from the five
-official runs at 17:30._
+_One page, for the board. Numbers come from the five official runs (two with our plan, two without
+decisions, one without surprises), 24 AI customers over ten weeks, Nov 2 – Jan 10._
 
 ## What we decided and why
 
-_The exact wording is in `code/config/decisions/plan.json`. Decision 2 is not locked yet._
-
 1. **Week 5 (Nov 30), everyone: answer the card charges with the facts.** Security pack (free new
-   card on request + an alert on every card payment, $0.3M), instant dispute credit up to $100 per
-   customer for 8 weeks ($0.4M), +50 support staff for 4 weeks ($0.25M); push, email and in-app.
-   **Cost: $0.95M.** Locked at 15:00. Why: the week-4 facts (a processor fault that charged some
-   payments twice on Nov 16–17, fraud test charges on cards stolen elsewhere, Cobalt not breached,
-   about 9,000 customers) are far smaller than the "Cobalt got hacked" rumor, but many customers only
-   heard the rumor. The message repeats only what the processor confirmed, promises nothing about
-   refunds, and gives every customer a concrete way to protect themselves before the migration.
-2. **Week 8 (Dec 21): held back on purpose.** ⟨Target, actions, cost.⟩ The simulation found no
-   step before the migration that moves a board goal, so we keep our second decision to answer what
-   the migration and the week-7 announcement actually show. It will be locked for week 8, before
-   16:30 on the day.
+   card + an alert on every card payment, $0.3M), instant dispute credit up to $100 for 8 weeks
+   ($0.4M), +50 support staff for 4 weeks ($0.25M); push, email, in-app. **$0.95M.** The week-4 facts
+   (a processor fault that charged some payments twice, fraud tests on cards stolen elsewhere, Cobalt
+   not breached, about 9,000 customers) are far smaller than the "Cobalt got hacked" rumor. We repeat
+   only what the processor confirmed and give every customer a concrete way to protect themselves.
+2. **Week 8 (Dec 21), paycheck customers who work for the federal government or its contractors:
+   zero-interest advance up to $500**, up to 20,000 customers; push, email, in-app. **$0.4M.** The
+   week-7 shutdown left them with no pay date before Christmas bills; we estimate 10–15k are affected.
 
-**Total cost: $0.95M + ⟨decision 2⟩ of $4.0M.** Inside the menu and the red lines: no misleading
-statement, the date does not move, no layoffs, no product closed.
+**Total: $1.35M of $4.0M.** Inside the menu and the red lines: nothing misleading, the date does not
+move, no layoffs, no product closed.
 
 ## What the simulation says
 
-24 customers built as AI personas (paycheck customers, savers with large balances, small businesses
-with a card reader, everyday customers), each standing for a share of the 2.1M customers, lived the
-ten weeks twice with our plan and twice without it.
-
-| Board goal (Jan 10) | Target | With our plan | Without decisions |
+| Board goal (Jan 10) | Target | With our plan (2 runs) | Without decisions (2 runs) |
 |---|---|---|---|
-| Active customers | ≥ 98% | ⟨…⟩ | ⟨…⟩ |
-| Deposits | ≥ 97% | ⟨…⟩ | ⟨…⟩ |
-| App Store rating | ≥ 4.3 | ⟨…⟩ | ⟨…⟩ |
-| CFPB complaints / month | ≤ 240 | ⟨…⟩ | ⟨…⟩ |
+| Active customers | ≥ 98% | 100.0% · 99.95% ✓ | 99.6% · 99.95% ✓ |
+| Deposits | ≥ 97% | 93.7% · 95.6% ✗ | 94.4% · 94.0% ✗ |
+| App Store rating | ≥ 4.3 | 4.58 · 4.58 ✓ | 4.58 · 4.58 ✓ |
+| CFPB complaints / month | ≤ 240 | 175 · 143 ✓ | 133 · 138 ✓ |
 
-What we see so far (real model, two seeds per option, card charges on, decision 1 in place; read it
-as direction, not size):
-- An on-time migration with an honest notice is mild: ratings and complaints barely move, and the
-  card charges at their real scale barely move them either.
-- **Deposits are the goal at risk**, and they hinge on one large saver whose worry is the FDIC
-  limit, not the rate. A rate boost (balances up to $50k) does not answer that, and no option we
-  tested, in any week, reliably beat doing nothing on deposits.
-- That saver keeps saying he will move "after the holidays", so the deposit risk lands just after
-  January 10.
-- In an earlier single-seed test, a reassuring message that reality then contradicted (an overrun)
-  made things worse than saying nothing.
+- **Three goals hold with or without us.** A migration that ends four hours late, with an honest
+  notice, is survivable; the card charges at their real scale do not break ratings or complaints.
+- **Deposits miss in every run, with or without decisions.** The outflow comes from a few large
+  savers: one above the FDIC limit, one who already holds an account at a rival paying more, one
+  keeping a house down payment "safe". Neither decision speaks to them, and no lever we tested (a
+  rate boost covers only balances up to $50k) reliably beat doing nothing.
+- **Our plan's clearest effect is trust.** Week-10 trust is higher with the plan in both runs
+  (3.67 and 3.71 vs 3.58 and 3.58 out of 5). At the end check-in, with the plan vs without: trust
+  3.21 vs 2.96, would recommend 3.04 vs 2.79, thinking about leaving 1.92 vs 2.17.
+- **The migration week is the low point in every run** (customers' app rating falls to about 3.2–3.4 that
+  week). In earlier tests a $250 offline card limit softened it; it is not in our final plan.
+- **The advance reaches who it is meant for, and is not enough on its own.** Our customer sent home
+  by the shutdown asks for it in both plan runs and it lands, but his trust stays low, and in one run
+  he moves most of his money to his credit union: one persona, so a story, not a measurement.
+- **Rumors travel.** With the network switched off, far fewer customers who never saw the
+  announcement talk about the charges, and deposits end 1–2 points higher.
 
 ## What it cannot tell
 
-- **Size.** 24 personas and two seeds show direction, not precise percentages; one large saver's
-  choice moves deposits by about a point.
-- **How long the switch overruns.** We tested on time and an 8-hour overrun; the real overrun is
-  unknown.
-- **Who exactly was hit by the charges.** The bank says about 9,000 customers; we give one of our
-  24 personas a double charge; the rest hear of it, if at all, through social media and our messages.
-- **Rivals' real moves** and press coverage beyond one rate offer.
-- The rating and complaint numbers rest on our conversion assumptions, not on Cobalt's history.
+- **Size.** 24 personas and two seeds show direction, not percentages. One large saver moves
+  deposits by about a point; a plan's effect is often the size of the noise between seeds.
+- **Small drops in active customers.** The metric shows there is no mass exodus, but it moves only
+  when a whole persona goes quiet; it cannot show a 1–2% drop, and customers who move their savings
+  but keep using the app still count as active.
+- **Rating and complaint levels** rest on our conversion assumptions (1% of a persona's customers
+  act; ratings arrive at the pace the existing 210,000 did), not on Cobalt's history.
+- **Not modelled:** different reach of push, email and SMS; support waits that grow with callers;
+  rivals reacting to our moves; posts going viral; how long the shutdown lasts.
 
 ## What Cobalt should watch next
 
-- Week-by-week deposit outflows from customers above $50k, and rival rate moves before Dec 12.
-- Card disputes and support waits after the charges scare; a spike is the earliest sign of CFPB risk.
-- The migration clock on Dec 13: if it runs past 12:00, update customers every few hours with facts.
-- App Store reviews mentioning "hacked" or "frozen" in the week after the switch.
+- Outflows from customers above $50k and above the FDIC limit, week by week into January.
+- The shutdown: whether the Dec 30 federal paycheck is missed, and how many advances are taken and
+  repaid.
+- Card disputes and support waits after the charges scare: the earliest sign of CFPB risk.
+- Trust, measured directly (a short in-app pulse), not only ratings, which move slowly.
