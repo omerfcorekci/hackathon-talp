@@ -96,14 +96,15 @@ is not locked and is left out below.
 ## Locked on the dashboard
 
 Copy the exact text locked on the dashboard into `code/config/decisions/plan.json`.
-`plan.json` holds decision 1 as locked. Decision 2 is not locked: until it is, `plan.json` carries
-D2 (migration notice, week 5) as a PLACEHOLDER so plan runs have two decisions; its `why` starts with
-"PLACEHOLDER". Replace it word for word when decision 2 is locked.
+`plan.json` is the dashboard export's `run_decisions` list, unchanged (`dashboard-export.json`,
+exported 16:26:58): both decisions, final. Decision 2's target is a description, so
+`code/config/decisions/targets.json` maps it to P2 Marcus Bell with an estimated 12,000 affected
+customers (the 10-15k in its `why`); the 20,000-customer cap of the advance covers all of them.
 
 | Decision | Week | Actions | Cost | Locked at (clock time) | Replaced? |
 |---|---|---|---|---|---|
 | 1 | 5 | Security pack (on) + Instant dispute credit (on) + Extra support staff (+50), everyone, push/email/in-app | $0.95M | locked 15:00 (last saved 14:57:44, confirmed on the dashboard) | yes: added +50 support staff (weeks 5–8, covers the migration week) |
-| 2 | 8 (planned) | pending: answer to the week-7 announcement; options in `docs/decision-2-timing.md` | ≤ $3.05M | pending: lock for week 8 before 16:30 (fallback week 9 before 17:00) | |
+| 2 | 8 | Zero-interest advance up to $500 (on), paycheck customers who work for the federal government or its contractors, push/email/in-app | $0.4M | saved 16:26:42, locks at 16:30 (the 16:26 export still shows `locked: false`) | no |
 
-Decision 1 in `plan.json` is the dashboard export's `run_decisions` entry, unchanged (`dashboard-export.json`, exported 15:36, shows it locked at 15:00). Reasons and
-simulation evidence: `docs/decision-1-lock.md` (sweep `c1_plans`).
+Total cost of both decisions: $1.35M of $4M, no paid messages. Decision 1: reasons and simulation evidence in
+`docs/decision-1-lock.md` (sweep `c1_plans`). Decision 2: candidate `f_shutdown_advance`, sweep `d2_week8`.

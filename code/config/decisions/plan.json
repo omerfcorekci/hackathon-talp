@@ -29,20 +29,24 @@
     ]
   },
   {
-    "week": 5,
-    "target": "everyone",
+    "week": 8,
+    "target": "paycheck customers who work for the federal government or its contractors",
     "actions": [
       {
-        "action": "Higher offline card limit during the migration",
+        "action": "Zero-interest advance up to $500, up to 20,000 customers",
         "level": "on"
       }
     ],
-    "message": "On Sat Dec 12, 00:00 to Sun Dec 13, 12:00 CT, Cobalt moves to a new core banking system. For those 36 hours the app is read-only: you can see your balance, but transfers, P2P payments and new cards are paused. Your card keeps working offline: we raised the limit to $250 per payment for that weekend, and we added support staff for the coming weeks. If something goes wrong the switch can take some hours longer; we will post updates in the app.",
+    "message": "If your pay is delayed by the government shutdown because you work for the federal government or a federal contractor, you can ask Cobalt for a zero-interest advance of up to $500. No fees and no interest. The offer covers up to 20,000 customers, in the order requests arrive. Request it in the app. We cannot say how long the shutdown will last; we will tell you as soon as we know more.",
     "channels": [
       "push",
       "email",
       "in-app"
     ],
-    "why": "PLACEHOLDER, not locked: Tell customers early and plainly what the migration weekend means.\nThe $250 offline limit covers most weekend card spending while transfers are paused.\nExtra staff keeps support waits short after the charges scare and around the switch."
+    "why": [
+      "The week-7 shutdown leaves federal and contractor paycheck customers with no pay date before Christmas bills.",
+      "A zero-interest advance up to $500 for up to 20,000 customers covers the roughly 10-15k we estimate are affected, before the Dec 30 paycheck is missed.",
+      "It costs $0.4M, $1.35M in total with decision 1, and helps the people hit hardest without buying loyalty with rate offers."
+    ]
   }
 ]
