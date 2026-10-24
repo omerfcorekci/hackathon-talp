@@ -145,6 +145,8 @@ Not known: how long it will last; when federal workers will be paid; which servi
 
 Some of Cobalt's paycheck customers work for the federal government or its contractors. Their next federal paycheck is due on December 30.
 
+**Update (week 8, 16:30, id `6f2c7320517cab2de1e34c9df9b857b2`, verbatim):** The Senate passed a short-term funding bill; the House plans to vote after Christmas. Federal workers have been told they will get back pay once the government reopens. Their December 30 paycheck may be missed.
+
 **What is known / unknown:** a shutdown of unknown length; federal and contractor pay at risk; the next
 federal paycheck is Dec 30 (week 9). Unknown: how many Cobalt customers, how long, back pay.
 
@@ -156,6 +158,13 @@ federal paycheck is Dec 30 (week 9). Unknown: how many Cobalt customers, how lon
   on the bank only if it charges fees or says nothing. Everyone else mostly hears it as news.
 - Earliest answer: a decision in **week 8 (lock before 16:30)**. Matching menu item: the zero-interest
   advance up to $500 (≤ 20k customers, $0.4M), which fits the group's size.
+- After the week-8 update: an end is in sight (Senate passed, House votes after Christmas) and federal
+  workers are promised back pay, but the Dec 30 paycheck may still be missed. So the gap is a timing
+  gap, not lost income: exactly what a zero-interest advance bridges. The update arrives with our
+  decision 2 (week 8, locked 16:30), which stays true: it says only that we cannot say how long the
+  shutdown lasts. Back pay is promised to federal workers, not contractors; contractor pay for paused
+  work is often not made up, so contractors like P2 stay the hardest hit. The earliest decision that
+  could answer the update is week 9, but both decisions are locked.
 
 **Simulation input:** `code/config/surprises/c2_week7_government_shutdown.json`, text word for word,
 reaching personas by the seeded reach draw. None of our 24 personas is a federal worker; `effects`
@@ -164,5 +173,8 @@ home without pay from federal jobs in week 7, marked as something that went wron
 55,000 customers, about four times our estimate of those affected; the follow share brings his
 weight in the metrics closer. His pay weeks 8 and 10 (Dec 25, Jan 8) then read "no pay landed" instead
 of his usual paycheck (`pay_paused` from week 8; no end week, since nobody knows how long the shutdown
-lasts). With surprises off, the text and the effects vanish.
+lasts). The week-8 update is an `update` on the same file, text word for word, reaching personas by
+the same reach draw from week 8. It carries no effects: the back pay is promised to federal workers,
+not to contractors, and P2's pay stays paused, since the House vote and the reopening date are still
+unknown. With surprises off, the texts and the effects vanish.
 

@@ -25,5 +25,12 @@
         "text": "Your employer, a contractor, told the crew that its federal building jobs are paused for the shutdown. You are sent home from those jobs without pay until it ends, and nobody can say when that will be."
       }
     ]
+  },
+  "update": {
+    "week": 8,
+    "title": "Government shutdown — update",
+    "text": "The Senate passed a short-term funding bill; the House plans to vote after Christmas. Federal workers have been told they will get back pay once the government reopens. Their December 30 paycheck may be missed.",
+    "dashboard_id": "6f2c7320517cab2de1e34c9df9b857b2",
+    "published_at": "2026-10-24T16:30:00+03:00"
   }
 }
