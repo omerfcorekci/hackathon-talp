@@ -246,12 +246,13 @@ function parseHash() {
 }
 const compareSel = new Set();
 const NAV = [["oneri", "Karar önerisi"], ["runs", "Run'lar"], ["compare", "Karşılaştır"], ["logs", "Loglar"], ["docs", "Belgeler"]];
+const NAV_EXTRA = `<a href="/algorithms.html">Algoritmalar</a>`;
 
 async function render() {
   const r = parseHash();
   const view = r[0] || "oneri";
   const navKey = view === "run" ? "runs" : view;
-  $("#nav").innerHTML = NAV.map(([k, t]) => `<a href="#/${k}" class="${navKey === k ? "on" : ""}">${t}</a>`).join("");
+  $("#nav").innerHTML = NAV.map(([k, t]) => `<a href="#/${k}" class="${navKey === k ? "on" : ""}">${t}</a>`).join("") + NAV_EXTRA;
   closeDrawer(false);
   try {
     if (view === "oneri") await viewAdvice(r[1]);
@@ -332,41 +333,42 @@ function groupBars(best, base) {
     ${rows.map((r) => `<div class="gname"><div>${esc(groupTr(r.n))}</div><div class="small faint">${fmtNum(r.x.customers)} müşteri · ${fmtUsd(r.x.deposits_usd)}</div></div>${bar(r.da)}${bar(r.dd)}`).join("")}</div>`;
 }
 function matrixHtml(mx) {
-  const all = mx.rows.flatMap((r) => Object.values(r.cells).map((c) => c.benefit)).filter((v) => v != null);
+  const all = mx.rows.flatMap((r) => Object.values(r.cells).map((c) => c.gap_total)).filter((v) => v != null);
   const lo = Math.min(...all), hi = Math.max(...all);
-  const shade = (v) => v == null ? "transparent" : `rgba(47, 111, 222, ${(0.05 + 0.3 * (hi > lo ? (v - lo) / (hi - lo) : 1)).toFixed(3)})`;
+  const shade = (v) => v == null ? "transparent" : `rgba(47, 111, 222, ${(0.05 + 0.3 * (hi > lo ? (hi - v) / (hi - lo) : 1)).toFixed(3)})`;
   return `<div class="tablewrap"><table class="matrix"><thead><tr><th class="lbl">Plan · oynatılan karar</th>${mx.weeks.map((w) => `<th>${w}. hafta</th>`).join("")}</tr></thead><tbody>
     ${mx.rows.map((r) => `<tr><td class="lbl"><b>${esc(r.label)}</b><div class="small muted">${r.decision}. karar · en iyi: ${r.best_week ? r.best_week + ". hafta" : "–"}</div></td>
-      ${mx.weeks.map((w) => { const c = r.cells[w]; return `<td>${c ? `<span class="mcell ${w === r.best_week ? "best" : ""}" style="background:${shade(c.benefit)}" title="${esc(c.variant)}">${fmtNum(c.benefit, 1)}<span class="s">${c.spread ? "aralık " + fmtNum(c.spread, 1) + " · " : ""}${c.met_count}/4 hedef</span></span>` : `<span class="faint">–</span>`}</td>`; }).join("")}</tr>`).join("")}
-    </tbody></table></div><div class="small muted" style="margin-top:8px">Hücre = fayda (pp). Koyu = daha iyi; çerçeve = o planın en iyi haftası.</div>`;
+      ${mx.weeks.map((w) => { const c = r.cells[w]; return `<td>${c ? `<span class="mcell ${w === r.best_week ? "best" : ""}" style="background:${shade(c.gap_total)}" title="${esc(c.variant)}">${c.met_count}/4<span class="s">açık ${fmtNum(c.gap_total, 1)}${c.spread ? " · oynama " + fmtNum(c.spread, 1) : ""}</span></span>` : `<span class="faint">–</span>`}</td>`; }).join("")}</tr>`).join("")}
+    </tbody></table></div><div class="small muted" style="margin-top:8px">Hücre = tutan hedef sayısı ve toplam hedef açığı (puan). Koyu = daha iyi; çerçeve = o planın en iyi haftası.</div>`;
 }
-function recCard(S, best, second, base) {
+function gapChips(v, targets) {
+  return GOALS.map(([k, l, , d]) => { const g = v.goals[k]; const ok = v.met[k]; const gap = v.gap[k];
+    return `<div class="fact"><div class="k">${l} <span class="faint">${esc(tgtText(targets, k))}</span></div><div class="v ${ok == null ? "" : ok ? "g-good" : "g-bad"}">${fmtNum(g.mean, k === "goal_3b" ? 0 : d)}</div><div class="small muted">${ok ? "tuttu" : gap != null ? "açık " + fmtNum(gap, 1) + " puan" : "–"}${v.delta && v.delta[k] != null ? ` · baza göre ${k === "goal_3b" ? (v.delta[k] > 0 ? "+" : "") + fmtNum(v.delta[k], 0) : k === "goal_3" ? (v.delta[k] > 0 ? "+" : "") + fmtNum(v.delta[k], 2) : fmtPp(v.delta[k])}` : ""}</div></div>`; }).join("");
+}
+function recCard(S, ranked, base) {
   const rec = S.recommendation;
-  const k = best.varied ? best.varied.decision : 1;
-  const wk = (best.decisions[k - 1] || {}).week;
-  const others = best.decisions.map((d, i) => [i + 1, d.week]).filter(([i]) => i !== k);
-  const late = best.decisions.map((d, i) => [i + 1, d.week]).filter(([, w]) => weekStart(w) <= new Date());
+  const chosen = ranked.find((v) => v.variant === rec.variant);
+  const byScore = ranked.find((v) => v.variant === rec.best_by_score);
+  const eq = ranked.filter((v) => rec.equivalent.includes(v.variant) && v.variant !== chosen.variant);
+  const late = chosen.decisions.map((d, i) => [i + 1, d.week]).filter(([, w]) => weekStart(w) <= new Date());
   let honesty = "";
-  if (rec.no_gain) honesty = `<div class="note">Hiçbir varyant kararsız baza göre kazanç göstermiyor.</div>`;
-  else if (rec.within_noise) honesty = `<div class="note"><b>Fark gürültü içinde.</b> 2. sıradaki (${esc(second.label)}${second.varied ? `, ${second.varied.decision}. karar ${second.varied.week}. hafta` : ""}) ile fark ${fmtNum(rec.gap, 1)} pp; seed'ler arası oynama ${fmtNum(rec.noise, 1)} pp. Daha çok seed gerek.</div>`;
-  else if (rec.seeds < 2) honesty = `<div class="note">Tek seed: gürültü ölçülemedi, sonucu temkinli oku.</div>`;
+  if (rec.no_gain) honesty += `<div class="note"><b>Karar vermek kararsız kalmaktan daha iyi değil.</b> Kararsız baz da en az bu kadar hedef tutuyor; bütçeyi harcamadan önce bir kez daha bak.</div>`;
+  if (eq.length) honesty += `<div class="note"><b>Eşdeğer planlar var:</b> ${eq.map((v) => `${esc(v.label)} (${fmtUsd(v.cost)})`).join(", ")} aynı sayıda hedef tutuyor ve açık farkı seed oynamasından (${fmtNum(rec.noise, 1)} puan) küçük. ${chosen.variant !== byScore.variant ? `Puanda ${esc(byScore.label)} önde, ama fark gürültü içinde olduğu için ucuz olan öneriliyor.` : "Ucuz olan öneriliyor."}</div>`;
+  if (rec.single_seed) honesty += `<div class="note">Tek seed'li varyant var: gürültü ölçülemedi, sonucu temkinli oku.</div>`;
   const lateNote = late.length ? `<div class="note">Kilit saati geçti: ${late.map(([i, w]) => `${i}. karar (${w}. hafta, ${hhmm(weekStart(w))})`).join(", ")}. En erken kilitlenebilir hafta için zamanlama sweep'ine bak.</div>` : "";
   return `<div class="rec">
     <div class="eyebrow">Öneri · ${esc(S.name)}</div>
-    <div class="title">En iyi: ${esc(best.label)}, ${k}. karar ${esc(wk)}. hafta${others.length ? ` <span class="weeks">(${others.map(([i, w]) => `${i}. karar ${w}. hafta`).join(", ")})</span>` : ""}</div>
-    <div class="muted small">${best.decisions.map((d) => (d.actions || []).map(shortAction).join(" + ")).map((t, i) => `${i + 1}: ${esc(t)}`).join(" · ")}</div>
+    <div class="title">${esc(chosen.label)} <span class="weeks">(${chosen.decisions.map((d, i) => `${i + 1}. karar ${d.week}. hafta`).join(", ")})</span></div>
+    <div class="muted small">${chosen.decisions.map((d) => (d.actions || []).map(shortAction).join(" + ")).map((t, i) => `${i + 1}: ${esc(t)}`).join(" · ")}</div>
     <div class="facts">
-      <div class="fact"><div class="k">Fayda</div><div class="v">${fmtNum(best.benefit, 1)} pp</div></div>
-      <div class="fact"><div class="k">Aktif müşteri</div><div class="v">${fmtPp(best.uplift.goal_1)}</div></div>
-      <div class="fact"><div class="k">Mevduat</div><div class="v">${fmtPp(best.uplift.goal_2)}</div></div>
-      <div class="fact"><div class="k">Maliyet</div><div class="v">${fmtUsd(best.cost)}</div></div>
-      <div class="fact"><div class="k">Hedef</div><div class="v">${best.met_count}/4</div></div>
-      <div class="fact"><div class="k">pp başına maliyet</div><div class="v">${best.cost_per_pp ? fmtUsd(best.cost_per_pp) : "–"}</div></div>
+      <div class="fact"><div class="k">Tutan hedef</div><div class="v">${chosen.met_count}/4</div><div class="small muted">toplam açık ${fmtNum(chosen.gap_total, 1)} puan</div></div>
+      <div class="fact"><div class="k">Maliyet</div><div class="v">${fmtUsd(chosen.cost)}</div><div class="small muted">bütçe $4.0M</div></div>
+      ${gapChips(chosen, S.targets)}
     </div>
     ${honesty}${lateNote}
-    <div class="bar" style="margin-bottom:0"><button class="primary" data-toggle="${esc(best.variant)}">${openVariants.has(best.variant) ? "Kararları gizle" : "Kararları göster"}</button>
-      <span class="small muted">Baz: kararsız run, ${base.seeds.length} seed · aktif ${fmtNum(base.goals.goal_1.mean, 1)}% · mevduat ${fmtNum(base.goals.goal_2.mean, 1)}%</span></div>
-    ${openVariants.has(best.variant) ? `<div style="margin-top:14px">${decisionCards(best.decisions)}</div>` : ""}
+    <div class="bar" style="margin-bottom:0"><button class="primary" data-toggle="${esc(chosen.variant)}">${openVariants.has(chosen.variant) ? "Kararları gizle" : "Kararları göster"}</button>
+      ${base ? `<span class="small muted">Baz: kararsız run, ${base.seeds.length} seed · ${base.met_count}/4 hedef · açık ${fmtNum(base.gap_total, 1)} puan</span>` : ""}</div>
+    ${openVariants.has(chosen.variant) ? `<div style="margin-top:14px">${decisionCards(chosen.decisions)}</div>` : ""}
   </div>`;
 }
 async function viewAdvice(name) {
@@ -378,40 +380,40 @@ async function viewAdvice(name) {
   const sel = name && L.sweeps.some((s) => s.name === name) ? name : L.default;
   const S = await api(`/api/sweep?name=${enc(sel)}`);
   const ranked = S.variants.filter((v) => !v.baseline), base = S.variants.find((v) => v.baseline);
-  const best = ranked[0], second = ranked[1];
+  const best = ranked[0];
   const picker = L.sweeps.length > 1 ? `<label class="small muted">Sweep <select id="swsel">${L.sweeps.map((s) => `<option value="${esc(s.name)}" ${s.name === sel ? "selected" : ""}>${esc(s.name)} · ${s.variants} varyant${s.timing ? " · zamanlama" : ""}</option>`).join("")}</select></label>` : `<span class="small muted">Sweep: ${esc(sel)}</span>`;
   let top = "";
-  if (!base) top = `<div class="note">Bu sweep'te kararsız baz (nodecision) yok; fayda hesaplanamıyor. Sweep'i <code>--baseline</code> ile çalıştır.</div>`;
-  else if (!best) top = `<div class="card empty">Sweep'te karar varyantı yok.</div>`;
-  else top = recCard(S, best, second, base);
-  const picked = best ? best.decisions.map((d) => d.week) : [];
+  if (!best) top = `<div class="card empty">Sweep'te karar varyantı yok.</div>`;
+  else top = (base ? "" : `<div class="note">Bu sweep'te kararsız baz (nodecision) yok; baza göre değişim gösterilemiyor. Sweep'i <code>--baseline</code> ile çalıştır.</div>`) + recCard(S, ranked, base);
+  const chosenV = S.recommendation ? ranked.find((v) => v.variant === S.recommendation.variant) : null;
+  const picked = chosenV ? chosenV.decisions.map((d) => d.week) : [];
   const rows = S.variants.map((v) => {
     const open = openVariants.has(v.variant);
-    const row = `<tr class="click ${v.rank === 1 ? "best" : ""}" data-toggle="${esc(v.variant)}">
+    const row = `<tr class="click ${chosenV && v.variant === chosenV.variant ? "best" : ""}" data-toggle="${esc(v.variant)}">
       <td class="num muted">${v.rank ?? ""}</td>
-      <td><b>${esc(v.label)}</b>${v.varied ? ` <span class="badge accent">${v.varied.decision}. karar → ${v.varied.week}. hf</span>` : ""}<div class="small faint">${esc(v.variant)} · ${v.seeds.length} seed</div><div class="small" style="margin-top:4px">${ticks(v.met)} <span class="muted">${v.met_count}/4 hedef</span></div></td>
+      <td><b>${esc(v.label)}</b>${v.varied ? ` <span class="badge accent">${v.varied.decision}. karar → ${v.varied.week}. hf</span>` : ""}<div class="small faint">${esc(v.variant)} · ${v.seeds.length} seed</div><div class="small" style="margin-top:4px">${ticks(v.met)} <span class="muted">${v.met_count}/4 hedef</span>${v.equivalent && chosenV && v.variant !== chosenV.variant ? ` <span class="badge">eşdeğer</span>` : ""}</div></td>
       <td class="small" style="min-width:260px">${v.decisions.length ? v.decisions.map((d) => `<div style="margin-bottom:4px"><b>${esc(d.week)}. hf</b> · ${esc((d.actions || []).map(shortAction).join(" + "))}</div>`).join("") : '<span class="muted">karar yok</span>'}</td>
       <td class="num">${fmtUsd(v.cost)}</td>
       ${GOALS.map(([k, , , d]) => `<td class="num">${goalStat(v.goals[k], k, k === "goal_3b" ? 0 : d === 2 && k !== "goal_3" ? 1 : 2, S.targets)}</td>`).join("")}
-      <td class="num"><b>${v.baseline ? "baz" : fmtNum(v.benefit, 1)}</b>${!v.baseline && v.uplift ? `<span class="spread">${fmtPp(v.uplift.goal_1)} / ${fmtPp(v.uplift.goal_2)}</span>` : ""}</td>
+      <td class="num"><b>${fmtNum(v.gap_total, 1)}</b>${v.gap_spread ? `<span class="spread">oynama ${fmtNum(v.gap_spread, 1)}</span>` : ""}</td>
 </tr>`;
     const exp = open ? `<tr class="expand"><td colspan="9"><div class="two"><div>${decisionCards(v.decisions)}</div><div>
       ${base && !v.baseline ? `<div class="box"><h3 style="margin-top:0">Gruplara etkisi</h3>${groupBars(v, base)}</div>` : ""}
-      <div class="box small"><h3 style="margin-top:0">Run'lar</h3>${Object.entries(v.runs).map(([s, id]) => `<div><a href="#/run/${enc(id)}">seed ${esc(s)}</a>${(v.per_seed || []).filter((p) => String(p.seed) === String(s)).map((p) => ` <span class="muted">· fayda ${fmtNum(p.benefit, 1)} pp${p.paired ? "" : " (baz ortalamasına göre)"}</span>`).join("")}</div>`).join("")}</div>
+      <div class="box small"><h3 style="margin-top:0">Run'lar</h3>${Object.entries(v.runs).map(([s, id]) => `<div><a href="#/run/${enc(id)}">seed ${esc(s)}</a></div>`).join("")}</div>
       </div></div></td></tr>` : "";
     return row + exp;
   }).join("");
   setMain(`<div class="bar" style="margin:0 0 4px"><h1 style="margin:0">Karar önerisi</h1><span class="spacer"></span>${picker}</div>
-    <p class="lead">Hangi karar, hangi haftada en çok fayda sağlıyor? Hedefler her run için güncel <span class="mono">sim/metrics.py</span> ile yeniden hesaplanır.</p>
+    <p class="lead">Hangi plan yönetim kurulunun dört hedefini en ucuza tutuyor? Hedefler her run için güncel <span class="mono">sim/metrics.py</span> ile yeniden hesaplanır.</p>
     ${top}
     <h2>Kilit saatleri</h2>${lockStrip(picked)}
     ${S.matrix ? `<h2>Zamanlama: plan × hafta</h2>${matrixHtml(S.matrix)}` : ""}
     <h2>Tüm varyantlar</h2>
     <div class="tablewrap"><table><thead><tr><th></th><th>Plan</th><th>Kararlar (hafta · aksiyonlar)</th><th class="num">Maliyet</th>
       ${GOALS.map(([k, l]) => `<th class="num" title="hedef ${esc(tgtText(S.targets, k))}">${l}<div class="faint" style="font-weight:400">${esc(tgtText(S.targets, k))}</div></th>`).join("")}
-      <th class="num">Fayda (pp)<div class="faint" style="font-weight:400">aktif / mevduat</div></th></tr></thead><tbody>${rows}</tbody></table></div>
-    <div class="score">Sıralama ölçüsü: <b>${esc(S.score)}</b>. Eşitlikte önce tutan hedef sayısı, sonra düşük maliyet. Gri küçük sayılar = seed'ler arası min–maks. Satıra tıkla: kararların tam metni ve gruplara etkisi.</div>
-    ${best && base ? `<h2>En iyi varyantın gruplara etkisi <span class="small muted" style="font-weight:400">(${esc(best.label)} − kararsız baz, 10. hafta)</span></h2><div class="card">${groupBars(best, base)}</div>` : ""}`);
+      <th class="num">Hedef açığı<div class="faint" style="font-weight:400">puan, 0 = hepsi tuttu</div></th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="score">Sıralama: <b>${esc(S.score)}</b>. Gri küçük sayılar = seed'ler arası min–maks. Satıra tıkla: kararların tam metni ve gruplara etkisi.</div>
+    ${chosenV && base ? `<h2>Önerilen planın gruplara etkisi <span class="small muted" style="font-weight:400">(${esc(chosenV.label)} − kararsız baz, 10. hafta)</span></h2><div class="card">${groupBars(chosenV, base)}</div>` : ""}`);
   document.querySelectorAll("[data-toggle]").forEach((el) => el.addEventListener("click", (e) => {
     if (e.target.closest("a")) return;
     const v = el.dataset.toggle; openVariants.has(v) ? openVariants.delete(v) : openVariants.add(v);

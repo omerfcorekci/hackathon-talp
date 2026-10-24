@@ -3,14 +3,15 @@
 
     python3 code/scripts/viewer.py [--root PATH] [--port 8765] [--show-fake]
 
-Binds 127.0.0.1 only. Stdlib only. Serves code/viewer/index.html (from this checkout) and a small
+Binds 127.0.0.1 only. Stdlib only. Serves code/viewer/index.html and algorithms.html (from this checkout) and a small
 JSON API that reads, on every request, from an allowlist under --root:
   <root>/runs/** and <root>/experiments/**   any folder with run.json (two-round engine layout:
                                               calls/weekly/messages/probe .jsonl, network.json, ...)
   <root>/code/config/**                       decisions (plan.json, candidates/), surprises
   <root>/docs/*.md
   <root>/experiments/sweeps/<sweep>/          sweep runs <variant>_s<seed>/ + decisions/<variant>.json
-                                              (Karar önerisi; baseline variant "nodecision")
+                                              (Karar önerisi: goals met, then total shortfall to the
+                                              board targets, then cost; see api_sweep)
 Runs whose run.json model starts with "fake:" are hidden everywhere unless --show-fake is given.
 Goals are always recomputed from weekly.jsonl + personas.jsonl with the current
 sim.metrics.compute_metrics; cost comes from sim.decisions.DecisionPlan(...).total_cost. The
@@ -37,6 +38,7 @@ from urllib.parse import parse_qs, urlparse
 HERE = Path(__file__).resolve().parent          # code/scripts
 CODE_DIR = HERE.parent                           # code/
 INDEX_HTML = CODE_DIR / "viewer" / "index.html"
+ALGORITHMS_HTML = CODE_DIR / "viewer" / "algorithms.html"
 RUN_FILES = ["run.json", "personas.jsonl", "calls.jsonl", "weekly.jsonl", "metrics.json",
              "probe.jsonl", "messages.jsonl", "exposures.jsonl", "network.json", "world.json",
              "announcements.json", "decision_targets.json", "state.json"]
@@ -338,29 +340,48 @@ def stats(vals: list[float]) -> dict:
     return {"mean": round(sum(vals) / len(vals), 3), "min": min(vals), "max": max(vals), "n": len(vals)}
 
 
+def target_of(key: str):
+    """('>=', 98.0) from the board target string; None when unparseable."""
+    mt = re.match(r"^(>=|<=)\s*([\d.]+)", targets().get(key, ""))
+    return (mt[1], float(mt[2])) if mt else None
+
+
 def met(key: str, v) -> bool | None:
-    if v is None:
+    t = target_of(key)
+    if v is None or t is None:
         return None
-    t = targets().get(key, "")
-    mt = re.match(r"^(>=|<=)\s*([\d.]+)", t)
-    if not mt:
+    return v >= t[1] if t[0] == ">=" else v <= t[1]
+
+
+# One "point" of shortfall per goal, so the four goals add up in a common unit:
+# 1 percentage point of actives or deposits, 0.1 of App Store rating, 24 CFPB complaints a month.
+GAP_UNIT = {"goal_1": 1.0, "goal_2": 1.0, "goal_3": 0.1, "goal_3b": 24.0}
+
+
+def shortfall(key: str, v) -> float | None:
+    """How far below (or, for 3b, above) the board target this value is, in points; 0 when met."""
+    t = target_of(key)
+    if v is None or t is None:
         return None
-    return v >= float(mt[2]) if mt[1] == ">=" else v <= float(mt[2])
+    raw = (t[1] - v) if t[0] == ">=" else (v - t[1])
+    return round(max(0.0, raw) / GAP_UNIT[key], 3)
 
 
 def api_sweep(q) -> dict:
-    """Rank a sweep's variants against its nodecision baseline. Score (shown in the UI):
-
-    benefit = (goal_1 - baseline goal_1) + (goal_2 - baseline goal_2), in percentage points,
-    computed per seed against the same seed's baseline when it exists (else the baseline mean),
-    then averaged; spread = max - min of the per-seed benefit."""
+    """Rank a sweep's variants and recommend one. Three ranking keys, in order:
+    1. goals met (of 4), on the mean over seeds;
+    2. total shortfall: for each goal the distance below its target in common points
+       (pp of actives/deposits, 0.1 rating, 24 complaints), summed; 0 when every goal is met;
+    3. cost.
+    Noise rule: variants that meet as many goals as the best and whose shortfall differs from it
+    by less than the seed spread are "equivalent"; the cheapest equivalent is recommended.
+    The per-goal change against the same seed's nodecision run is shown, not ranked on."""
     if SIM["metrics"] is None:
         raise LookupError(f"sim.metrics not importable: {SIM['error']}")
     d = sweep_dir(q.get("name", [""])[0])
     runs = sweep_runs(d)
     goals = {v: {s: run_goals(p) or {} for s, p in seeds.items()} for v, seeds in runs.items()}
     base = goals.get("nodecision")
-    base_mean = {k: stats([g.get(k) for g in base.values()])["mean"] for k in GOAL_KEYS} if base else None
 
     variants = []
     for v, seeds in runs.items():
@@ -382,23 +403,21 @@ def api_sweep(q) -> dict:
         row["goals"] = {k: stats([x.get(k) for x in g.values()]) for k in GOAL_KEYS}
         row["met"] = {k: met(k, row["goals"][k]["mean"]) for k in GOAL_KEYS}
         row["met_count"] = sum(1 for x in row["met"].values() if x)
+        row["gap"] = {k: shortfall(k, row["goals"][k]["mean"]) for k in GOAL_KEYS}
+        row["gap_total"] = round(sum(x for x in row["gap"].values() if x is not None), 3)
+        per_seed = [sum(x for x in (shortfall(k, r.get(k)) for k in GOAL_KEYS) if x is not None) for r in g.values()]
+        row["gap_spread"] = round(max(per_seed) - min(per_seed), 3) if len(per_seed) > 1 else None
         row["weeks_completed"] = sorted({x.get("weeks_completed") for x in g.values() if x.get("weeks_completed")})
-        if base_mean:
-            per_seed = []
+        if base and not row["baseline"]:
+            deltas = {k: [] for k in GOAL_KEYS}
             for s, x in g.items():
-                bs = base.get(s) or base_mean
-                if None in (x.get("goal_1"), x.get("goal_2"), bs.get("goal_1"), bs.get("goal_2")):
+                bs = base.get(s)
+                if not bs:
                     continue
-                per_seed.append({"seed": s, "paired": s in base,
-                                 "u1": x["goal_1"] - bs["goal_1"], "u2": x["goal_2"] - bs["goal_2"]})
-            row["per_seed"] = [dict(r, benefit=round(r["u1"] + r["u2"], 3)) for r in per_seed]
-            u1 = stats([r["u1"] for r in per_seed])
-            u2 = stats([r["u2"] for r in per_seed])
-            ben = stats([r["u1"] + r["u2"] for r in per_seed])
-            row["uplift"] = {"goal_1": u1["mean"], "goal_2": u2["mean"]}
-            row["benefit"] = ben["mean"]
-            row["benefit_spread"] = round(ben["max"] - ben["min"], 3) if ben["n"] else None
-            row["cost_per_pp"] = (row["cost"] / row["benefit"]) if row["cost"] and row["benefit"] and row["benefit"] > 0 else None
+                for k in GOAL_KEYS:
+                    if x.get(k) is not None and bs.get(k) is not None:
+                        deltas[k].append(x[k] - bs[k])
+            row["delta"] = {k: stats(vals)["mean"] for k, vals in deltas.items()}
         grp: dict[str, dict] = {}
         for x in g.values():
             for name, gv in (x.get("groups") or {}).items():
@@ -410,24 +429,28 @@ def api_sweep(q) -> dict:
                          for n, e in grp.items()}
         variants.append(row)
 
-    ranked = sorted([r for r in variants if not r["baseline"]],
-                    key=lambda r: (-(r.get("benefit") if r.get("benefit") is not None else -1e9),
-                                   -r["met_count"], r["cost"] if r["cost"] is not None else 1e18))
+    def key(r):
+        return (-r["met_count"], r["gap_total"], r["cost"] if r["cost"] is not None else 1e18)
+
+    ranked = sorted([r for r in variants if not r["baseline"]], key=key)
     for i, r in enumerate(ranked, 1):
         r["rank"] = i
     baseline = next((r for r in variants if r["baseline"]), None)
 
     rec = None
-    if ranked and baseline and ranked[0].get("benefit") is not None:
+    if ranked:
         best = ranked[0]
-        second = ranked[1] if len(ranked) > 1 else None
-        gap = round(best["benefit"] - second["benefit"], 3) if second and second.get("benefit") is not None else None
-        noise = max(best.get("benefit_spread") or 0, (second or {}).get("benefit_spread") or 0)
-        rec = {"variant": best["variant"], "runner_up": second["variant"] if second else None, "gap": gap,
-               "noise": round(noise, 3), "seeds": len(best["seeds"]),
-               "within_noise": gap is not None and len(best["seeds"]) > 1 and gap < noise}
-        if best["benefit"] <= 0:
-            rec["no_gain"] = True
+        noise = max((r["gap_spread"] or 0) for r in ranked)
+        equivalent = [r for r in ranked if r["met_count"] == best["met_count"]
+                      and abs(r["gap_total"] - best["gap_total"]) <= noise]
+        chosen = min(equivalent, key=lambda r: r["cost"] if r["cost"] is not None else 1e18)
+        for r in ranked:
+            r["equivalent"] = r in equivalent
+        rec = {"variant": chosen["variant"], "best_by_score": best["variant"],
+               "equivalent": [r["variant"] for r in equivalent], "noise": round(noise, 3),
+               "seeds": len(chosen["seeds"]), "single_seed": any(len(r["seeds"]) < 2 for r in ranked)}
+        if baseline:
+            rec["no_gain"] = (chosen["met_count"], -chosen["gap_total"]) <= (baseline["met_count"], -baseline["gap_total"])
 
     matrix = None
     timed = [r for r in ranked if r["varied"]]
@@ -437,18 +460,18 @@ def api_sweep(q) -> dict:
         rows = []
         for pk in plans:
             plan, k = pk.rsplit("|", 1)
-            cells = {r["varied"]["week"]: {"variant": r["variant"], "benefit": r.get("benefit"),
-                                           "spread": r.get("benefit_spread"), "met_count": r["met_count"]}
+            cells = {r["varied"]["week"]: {"variant": r["variant"], "gap_total": r["gap_total"],
+                                           "spread": r["gap_spread"], "met_count": r["met_count"]}
                      for r in timed if r["plan"] == plan and r["varied"]["decision"] == int(k)}
-            best_w = max((w for w in cells if cells[w]["benefit"] is not None),
-                         key=lambda w: cells[w]["benefit"], default=None)
+            best_w = min(cells, key=lambda w: (-cells[w]["met_count"], cells[w]["gap_total"]), default=None)
             rows.append({"plan": plan, "label": plan_label(plan), "decision": int(k), "cells": cells, "best_week": best_w})
         matrix = {"weeks": weeks, "rows": rows}
 
     return {"name": d.name, "targets": targets(), "variants": ranked + ([baseline] if baseline else []),
             "baseline": baseline is not None, "recommendation": rec, "matrix": matrix,
-            "score": "fayda = (aktif % − baz aktif %) + (mevduat % − baz mevduat %), yüzde puan; "
-                     "seed başına aynı seed'in kararsız run'ına göre, sonra ortalama",
+            "score": "önce tutan hedef sayısı (4 üzerinden), sonra toplam hedef açığı "
+                     "(1 puan = 1 yüzde puan aktif/mevduat, 0.1 App Store puanı, 24 CFPB şikayeti), sonra maliyet; "
+                     "açık farkı seed oynamasından küçükse eşdeğer sayılır ve ucuz olan önerilir",
             "sim_from": SIM["from"]}
 
 
@@ -637,11 +660,12 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):  # noqa: N802
         u = urlparse(self.path)
         path = u.path
-        if path in ("/", "/index.html"):
+        page = {"/": INDEX_HTML, "/index.html": INDEX_HTML, "/algorithms.html": ALGORITHMS_HTML}.get(path)
+        if page is not None:
             try:
-                return self.send(200, INDEX_HTML.read_bytes(), "text/html; charset=utf-8")
+                return self.send(200, page.read_bytes(), "text/html; charset=utf-8")
             except FileNotFoundError:
-                return self.send_json(500, {"error": f"missing {INDEX_HTML}"})
+                return self.send_json(500, {"error": f"missing {page}"})
         fn = ROUTES.get(path)
         if fn is None:
             return self.send_json(404, {"error": "not found"})
