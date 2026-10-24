@@ -7,8 +7,8 @@
 | | Decision 1 (now) | Decision 2 (later) |
 |---|---|---|
 | Week | 5 (lock before **15:00**) | 6 (before 15:30) or 7+ (before 16:00) |
-| Actions | Security pack + Instant dispute credit | open |
-| Cost | $0.7M | up to $3.3M left |
+| Actions | Security pack + Instant dispute credit + Extra support staff (+50) | open |
+| Cost | $0.95M | up to $3.05M left |
 
 **Choose by these rules, in this order:**
 1. **Inside the red lines.** The message says only what the week-4 update confirmed. Saying "we don't
@@ -55,6 +55,9 @@ only level ($0.3M)
 **+ Add action → Action 2:** `Instant dispute credit: credit disputed card charges at once, up to $100
 per customer, for 8 weeks` — the only level ($0.4M)
 
+**+ Add action → Action 3:** `Extra support staff for 4 weeks` — level `+50 staff` ($0.25M; added
+before locking, see `decisions-log.md`)
+
 **Exact customer message** (534 / 600):
 
 ```
@@ -71,7 +74,7 @@ Instant dispute credit and payment alerts give every customer a concrete way to 
 We repeat only what the processor confirmed and promise nothing about refunds we cannot yet confirm.
 ```
 
-**Before you click lock:** the dashboard total should read **$0.7M**. If an action label reads
+**Before you click lock:** the dashboard total should read **$0.95M**. If an action label reads
 differently on the dashboard, note the exact wording: `plan.json` must hold the dashboard text.
 
 ## 4. After locking

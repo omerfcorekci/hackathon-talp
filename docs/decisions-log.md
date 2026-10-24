@@ -10,11 +10,13 @@ starts; nothing can be locked after 17:30. It can be replaced until its week sta
 **Week-3 surprise C1 (unrecognized charges):** the earliest answer was week 4 (lock before 14:30);
 we did not lock then. The week-4 update (14:30) gave the causes and the scale (about 9,000 customers,
 Cobalt not breached), so any answer now goes in **week 5 → lock before 15:00** and must use those
-facts: "we do not know the cause yet" would now be a misleading statement.
+facts: "we do not know the cause yet" would now be a misleading statement. Done: decision 1 answers
+it in week 5 with those facts, locked at 15:00.
 
 **Deadlines that matter:** a decision that answers the week-6 migration must start in week 5 at the
 latest → lock it **before 15:00**. A decision for week 6 itself → before 15:30. The last moment for
-anything is **17:30** (week 10).
+anything is **17:30** (week 10). Status at 15:40: weeks 5 and 6 are closed; decision 2 is planned for
+week 8 (lock before 16:30), after the 16:00 week-7 announcement (`docs/decision-2-timing.md`).
 
 ## Candidates
 
@@ -77,10 +79,19 @@ cd code && PYTHONPATH=. python3 -m sim --personas personas/personas.jsonl \
 Engine-checked totals (`--show-plan`): A $0.80M, B $2.10M, C $3.00M, D $1.05M. In C2 the $10 goodwill credit
 reaches 32% of the paycheck group (100k-customer cap), i.e. one of the six paycheck personas.
 
+`--show-plan` on `plan.json` (15:40) prints decision 1 at $300,000 + $400,000 + $250,000 = $950,000,
+matching the CFO menu. Its total line ($1,050,000) also counts the week-5 PLACEHOLDER in slot 2, which
+is not locked and is left out below.
+
 | Item | Decision | Cost |
 |---|---|---|
-| | | |
-| **Total** | | **≤ $4.0M** |
+| Security pack (on): free new card on request + alert on every card payment | 1 (week 5, everyone) | $0.30M |
+| Instant dispute credit (on): up to $100 per customer, 8 weeks | 1 | $0.40M |
+| Extra support staff (+50), 4 weeks | 1 | $0.25M |
+| Messages: push, email, in-app (no SMS, no CEO video) | 1 | $0 |
+| **Decision 1 subtotal** | 1 | **$0.95M** |
+| ⟨Decision 2 actions and paid messages⟩ | 2 (week 8, pending) | ⟨…⟩ (≤ $3.05M) |
+| **Total** | 1 + 2 | **$0.95M + ⟨…⟩ of $4.0M; $3.05M left for decision 2** |
 
 ## Locked on the dashboard
 
@@ -92,7 +103,7 @@ D2 (migration notice, week 5) as a PLACEHOLDER so plan runs have two decisions; 
 | Decision | Week | Actions | Cost | Locked at (clock time) | Replaced? |
 |---|---|---|---|---|---|
 | 1 | 5 | Security pack (on) + Instant dispute credit (on) + Extra support staff (+50), everyone, push/email/in-app | $0.95M | locked 15:00 (last saved 14:57:44, confirmed on the dashboard) | yes: added +50 support staff (weeks 5–8, covers the migration week) |
-| 2 | | not locked; options in `docs/decision-1-lock.md` | ≤ $3.05M | | |
+| 2 | 8 (planned) | pending: answer to the week-7 announcement; options in `docs/decision-2-timing.md` | ≤ $3.05M | pending: lock for week 8 before 16:30 (fallback week 9 before 17:00) | |
 
 Decision 1 in `plan.json` is the dashboard export's `run_decisions` entry, unchanged (`dashboard-export.json`, exported 15:36, shows it locked at 15:00). Reasons and
 simulation evidence: `docs/decision-1-lock.md` (sweep `c1_plans`).
