@@ -1,0 +1,44 @@
+[
+  {
+    "week": 4,
+    "target": "everyone",
+    "actions": [
+      {
+        "action": "Security pack",
+        "level": "on"
+      },
+      {
+        "action": "Instant dispute credit",
+        "level": "on"
+      }
+    ],
+    "message": "Some customers have seen small card charges they do not recognize. The charges are real and our security team is investigating with our card processor; we do not yet know the cause or how many accounts are affected, and we will tell you as soon as we do. Starting today: if you dispute a card charge, we credit up to $100 right away while we investigate, for the next 8 weeks. You can turn on an alert for every card payment and order a free new card in the app.",
+    "channels": [
+      "push",
+      "email",
+      "in-app"
+    ],
+    "why": "The unrecognized charges and the 'Cobalt got hacked' post hit trust three weeks before the migration.\nInstant dispute credit and payment alerts give every customer a concrete way to protect themselves today.\nSaying what we know and do not know keeps us inside the no-misleading red line."
+  },
+  {
+    "week": 5,
+    "target": "everyone",
+    "actions": [
+      {
+        "action": "Higher offline card limit during the migration",
+        "level": "on"
+      },
+      {
+        "action": "Extra support staff",
+        "level": "+50"
+      }
+    ],
+    "message": "On Sat Dec 12, 00:00 to Sun Dec 13, 12:00 CT, Cobalt moves to a new core banking system. For those 36 hours the app is read-only: you can see your balance, but transfers, P2P payments and new cards are paused. Your card keeps working offline: we raised the limit to $250 per payment for that weekend, and we added support staff for the coming weeks. If something goes wrong the switch can take some hours longer; we will post updates in the app.",
+    "channels": [
+      "push",
+      "email",
+      "in-app"
+    ],
+    "why": "Tell customers early and plainly what the migration weekend means.\nThe $250 offline limit covers most weekend card spending while transfers are paused.\nExtra staff keeps support waits short after the charges scare and around the switch."
+  }
+]

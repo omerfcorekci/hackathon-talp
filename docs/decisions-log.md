@@ -55,7 +55,8 @@ python3 code/scripts/sweep.py --name plans --seeds 1,2 --baseline --dry-run \
 python3 code/scripts/sweep.py --name plans --seeds 1,2 --baseline --parallel 8 \
   --decisions code/config/decisions/candidates/a_inform_cheap.json \
               code/config/decisions/candidates/b_protect_paycheck.json \
-              code/config/decisions/candidates/c_defend_deposits.json
+              code/config/decisions/candidates/c_defend_deposits.json \
+              code/config/decisions/candidates/d_fraud_first.json
 # timing: the winner's decision 1 in weeks 4, 5, 6 (7 = after the switch):
 python3 code/scripts/sweep.py --name timing --seeds 1,2 --vary 1 --weeks 4,5,6,7 \
   --decisions code/config/decisions/candidates/<winner>.json
@@ -70,7 +71,7 @@ cd code && PYTHONPATH=. python3 -m sim --personas personas/personas.jsonl \
   --decisions config/decisions/plan.json --show-plan
 ```
 
-Engine-checked totals (`--show-plan`): A $0.80M, B $2.10M, C $3.00M. In C2 the $10 goodwill credit
+Engine-checked totals (`--show-plan`): A $0.80M, B $2.10M, C $3.00M, D $1.05M. In C2 the $10 goodwill credit
 reaches 32% of the paycheck group (100k-customer cap), i.e. one of the six paycheck personas.
 
 | Item | Decision | Cost |
