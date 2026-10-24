@@ -32,7 +32,7 @@ def people(*ids):
 def answer(**changes):
     value = {"status": "main bank", "money": "kept", "new_money": "none", "balance": None,
              "active_in_last_30_days": False, "actions": [], "heard_from": [],
-             "app_rating": None, "complaint": "none", "reason": "test response",
+             "app_rating": 4, "complaint": "none", "reason": "test response",
              "memory": "test memory", "messages": []}
     value.update(changes)
     return value
@@ -284,26 +284,17 @@ class SchemaTests(unittest.TestCase):
         cases = [answer(messages=[{"channel": "direct", "target": "missing", "text": "x"}]),
                  answer(messages=[{"channel": "whatsapp", "target": "missing", "text": "x"}]),
                  answer(messages=[{"channel": "social", "target": "b", "text": "x"}]),
-                 answer(app_rating=True), answer(app_rating=0), answer(balance=float("inf")),
+                 answer(app_rating=True), answer(app_rating=0), answer(app_rating=None), answer(balance=float("inf")),
                  answer(status="unknown"), answer(active_in_last_30_days=1)]
         for value in cases:
             with self.subTest(value=value), self.assertRaises(ValueError):
                 self.parse(value)
 
-    def test_a_rating_needs_the_review_action(self):
-        review = "post a review (App Store / Google / Trustpilot)"
-        allowed = [review, "wait and see"]
-
-        def parse(value, previous=None):
-            return parse_turn(json.dumps(value), contacts=set(), groups=set(), previous=previous, allowed_actions=allowed)
-
+    def test_app_rating_is_the_rating_if_asked_now(self):
+        # Every answer carries the stars the persona would give now; writing a review is a separate action.
+        self.assertEqual(self.parse(answer(actions=["wait and see"], app_rating=5))["app_rating"], 5)
         with self.assertRaises(ValueError):
-            parse(answer(actions=["wait and see"], app_rating=5))
-        self.assertEqual(parse(answer(actions=[review], app_rating=5))["app_rating"], 5)
-        self.assertIsNone(parse(answer(actions=[review], app_rating=None))["app_rating"])  # a review elsewhere
-        # Round two keeps a round-one rating without repeating the action.
-        self.assertEqual(parse(answer(actions=["wait and see"], app_rating=2),
-                               previous=answer(actions=[review], app_rating=2))["app_rating"], 2)
+            self.parse(answer(app_rating=None))
 
     def test_money_moved_out_cannot_come_back_as_kept(self):
         for so_far, ok, refused in (("moved some", ("moved some", "moved most"), ("kept",)),
@@ -318,10 +309,8 @@ class SchemaTests(unittest.TestCase):
 
     def test_second_round_cannot_erase_completed_actions(self):
         previous = answer(actions=["called_support"], complaint="bank", app_rating=2)
-        for value in (answer(actions=["called_support"], app_rating=2),
-                      answer(actions=["called_support"], complaint="bank")):
-            with self.assertRaises(ValueError):
-                self.parse(value, previous)
+        with self.assertRaises(ValueError):  # the complaint already filed cannot be taken back
+            self.parse(answer(actions=["called_support"], app_rating=2), previous)
         # A rephrased or shortened action list is merged with what was already done, not rejected.
         merged = self.parse(answer(actions=["asked_friend"], complaint="bank", app_rating=2), previous)
         self.assertEqual(merged["actions"], ["called_support", "asked_friend"])

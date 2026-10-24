@@ -10,8 +10,6 @@ HEARD_FROM = ("bank", "friend", "rival", "news", "social media", "none")
 CHANNELS = ("social", "whatsapp", "direct", "phone")
 # Saying you posted or told people is only real if a message goes out through the simulation.
 TALK_ACTIONS = ("post on social media", "tell friends or family")
-# An App Store rating is a review the persona wrote, not a way of saying it is satisfied.
-REVIEW_ACTION = "post a review (App Store / Google / Trustpilot)"
 
 TURN_SCHEMA = {
     "type": "object",
@@ -26,7 +24,8 @@ TURN_SCHEMA = {
                        "items": {"type": "string", "enum": list(HEARD_FROM)}},
         "new_money": {"type": "string", "enum": list(NEW_MONEY),
                       "description": "Money you brought INTO Cobalt from elsewhere since Nov 2, cumulative."},
-        "app_rating": {"type": ["integer", "null"], "minimum": 1, "maximum": 5},
+        "app_rating": {"type": "integer", "minimum": 1, "maximum": 5,
+                       "description": "Stars you would give the Cobalt app if it asked you to rate it right now."},
         "complaint": {"type": "string", "enum": ["none", "bank", "cfpb"]},
         "reason": {"type": "string", "maxLength": 600},
         "memory": {"type": "string", "maxLength": 1200},
@@ -74,8 +73,8 @@ def parse_turn(raw: str, *, contacts: set[str], groups: set[str], previous=None,
     if type(result["active_in_last_30_days"]) is not bool:
         raise ValueError("active_in_last_30_days must be boolean")
     rating = result["app_rating"]
-    if rating is not None and (type(rating) is not int or not 1 <= rating <= 5):
-        raise ValueError("app_rating must be an integer 1-5 or null")
+    if type(rating) is not int or not 1 <= rating <= 5:
+        raise ValueError("app_rating must be the 1-5 stars you would give the app if it asked you now")
     if result["complaint"] not in ("none", "bank", "cfpb"):
         raise ValueError("Invalid complaint value")
     for field, limit in (("actions", 12), ("heard_from", 6)):
@@ -98,10 +97,6 @@ def parse_turn(raw: str, *, contacts: set[str], groups: set[str], previous=None,
     if any(a in TALK_ACTIONS for a in result["actions"]) and not result["messages"]:
         raise ValueError("You listed posting or telling people in actions but sent no messages; either include "
                          "what you said in messages or remove that action")
-    if (result["app_rating"] is not None and allowed_actions and REVIEW_ACTION in allowed_actions
-            and REVIEW_ACTION not in result["actions"] + (previous["actions"] if previous else [])):
-        raise ValueError(f"app_rating is a rating you submitted this week: either list \"{REVIEW_ACTION}\" in actions "
-                         "or set app_rating to null")
     for field, limit in (("reason", 600), ("memory", 1200)):
         if not isinstance(result[field], str) or len(result[field]) > limit:
             raise ValueError(f"Invalid {field}")
@@ -130,6 +125,4 @@ def parse_turn(raw: str, *, contacts: set[str], groups: set[str], previous=None,
         ranks = {"none": 0, "bank": 1, "cfpb": 2}
         if ranks[result["complaint"]] < ranks[previous["complaint"]]:
             raise ValueError("Round two cannot erase a complaint already filed")
-        if previous["app_rating"] is not None and result["app_rating"] is None:
-            raise ValueError("Round two cannot erase a review already submitted")
     return result

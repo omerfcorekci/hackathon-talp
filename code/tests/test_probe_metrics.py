@@ -68,7 +68,7 @@ class ProbeTransport:
     """
 
     def __init__(self, weekly=None, probe=None):
-        self.weekly = weekly or (lambda prompt: answer())
+        self.weekly = weekly or (lambda prompt: answer(app_rating=4))
         self.probe = probe or (lambda data: scores())
         self.requests = []
 
@@ -254,7 +254,7 @@ class ProbeEngineTests(unittest.IsolatedAsyncioTestCase):
         ]
         plan = DecisionPlan(decisions, supplied, targets={"decision-1": ["a"]})
         alpha = decisions[0]["message"]
-        transport = ProbeTransport(weekly=lambda prompt: answer(memory=f"I remember: {alpha}"))
+        transport = ProbeTransport(weekly=lambda prompt: answer(memory=f"I remember: {alpha}", app_rating=4))
         with tempfile.TemporaryDirectory() as output:
             await self.engine(transport, personas=supplied, plan=plan, settings=Settings(weeks=1, attempts=1)).run(
                 output, probe=True)
@@ -317,7 +317,9 @@ class MetricsTests(unittest.TestCase):
         self.assertEqual(result["follow_share"], {"a": 0.25, "b": 0.25, "c": 0.25})
         self.assertEqual(result["goal_1"], 76.19)  # (2.1M - 0.25 × 500k - 0.25 × 1.5M) / 2.1M
         self.assertEqual(result["goal_2"], 85.0)   # (4000 - 0.25 × 1000 × 0.4 - 0.25 × 2000) / 4000
-        self.assertEqual(result["goal_3"], 4.41)   # c's two ratings count once: (966,000 + 1,000 + 30,000) / 226,000
+        # Prompted ratings only (no review action): a at 1 in week 3, c at 2 in weeks 5 and 6, each
+        # p × weight with p = 2,500 / 2.1M / 4.35 a week.
+        self.assertEqual(result["goal_3"], 4.59)
         self.assertEqual(result["goal_3b"], 15_186.7)  # window 2-5: 120 + c once (1% × 1.5M) + a (1% × 100k / 15)
         self.assertEqual(result["weeks_completed"], 10)
         # Window 1-4: b took a complaint to the CFPB, a complained to Cobalt (1/15 of it reaches the CFPB).
@@ -419,7 +421,7 @@ class MetricsTests(unittest.TestCase):
         personas = self.real_personas()
         for person in personas:
             for change, goal, low, high in (({"complaint": "bank"}, "goal_3b", 120.1, 390.0),
-                                            ({"app_rating": 1}, "goal_3", 4.52, 4.6)):
+                                            ({"app_rating": 1, "actions": [metrics.REVIEW_ACTION]}, "goal_3", 4.52, 4.6)):
                 weekly = [row for p in personas for row in week_rows(p["id"])]
                 for row in weekly:
                     if row["persona"] == person["id"] and row["week"] == 6:
@@ -427,20 +429,26 @@ class MetricsTests(unittest.TestCase):
                 value = metrics.compute_metrics(personas, weekly)[goal]
                 self.assertTrue(low <= value <= high, (person["id"], change, value))  # E1 is the extreme
 
-    def test_a_persona_counts_with_its_latest_rating_only(self):
+    def test_prompted_ratings_count_every_week_and_a_written_review_once(self):
         personas = self.real_personas()
+        review = metrics.REVIEW_ACTION
         weekly = [row for p in personas for row in week_rows(p["id"])]
         for row in weekly:
             if row["persona"] == "E1" and row["week"] in (6, 7, 8):
                 row["app_rating"] = {6: 1, 7: 1, 8: 5}[row["week"]]
+                if row["week"] in (6, 8):
+                    row["actions"] = [review]
         result = metrics.compute_metrics(personas, weekly)
-        self.assertEqual(result["goal_3"], 4.61)  # (966,000 + 4,000 × 5) / 214,000: the week-8 5 replaces the 1s
-        self.assertEqual(result["series"]["rated_personas"], 1)
+        # Three prompted weeks (1, 1, 5) plus one review at its latest rating, 5; had the week-6 1-star review
+        # counted instead, goal_3 would be 4.53.
+        self.assertEqual(result["goal_3"], 4.6)
+        self.assertEqual(result["series"]["reviewing_personas"], 1)
+        self.assertEqual(result["series"]["prompted_rating_by_week"]["6"], 1.0)  # only E1 answered in week 6
 
     def test_a_bank_wide_wave_crosses_the_board_lines(self):
         personas = self.real_personas()
         cases = (({"complaint": "bank"}, "goal_3b", lambda v: v > 240),
-                 ({"app_rating": 1}, "goal_3", lambda v: v < 4.3))
+                 ({"app_rating": 1, "actions": [metrics.REVIEW_ACTION]}, "goal_3", lambda v: v < 4.3))
         for change, goal, crosses in cases:
             weekly = [row for p in personas for row in week_rows(p["id"])]
             for row in weekly:
