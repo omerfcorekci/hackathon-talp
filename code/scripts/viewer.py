@@ -10,13 +10,13 @@ JSON API that reads, on every request, from an allowlist under --root:
   <root>/code/config/**                       decisions (plan.json, candidates/), surprises
   <root>/docs/*.md
   <root>/experiments/sweeps/<sweep>/          sweep runs <variant>_s<seed>/ + decisions/<variant>.json
-                                              (Karar önerisi: goals met, then total shortfall to the
+                                              (plan ranking: goals met, then total shortfall to the
                                               board targets, then cost; see api_sweep)
 Runs whose run.json model starts with "fake:" are hidden everywhere unless --show-fake is given.
 Goals are always recomputed from weekly.jsonl + personas.jsonl with the current
 sim.metrics.compute_metrics; cost comes from sim.decisions.DecisionPlan(...).total_cost. The
 "Loglar" page lists every attempt logged in each run's calls.jsonl (valid / attempt / error_type).
-Nothing else is readable (no .env, no traversal). The only LLM call is the Konuşma page's
+Nothing else is readable (no .env, no traversal). The only LLM call is the Interview page's
 POST /api/interview (code/scripts/interview.py, logged to logs/interviews.jsonl): the run's model,
 TALP_KEY from the environment or .env (needs google-genai, i.e. .venv/bin/python). --fake-interview
 gives canned answers instead.
@@ -59,7 +59,7 @@ STATIC_TYPES = {".html": "text/html; charset=utf-8", ".css": "text/css; charset=
 
 ROOT: Path = CODE_DIR.parent
 SHOW_FAKE = False
-FAKE_INTERVIEW = False   # --fake-interview: canned answers on the Konuşma page instead of the real model
+FAKE_INTERVIEW = False   # --fake-interview: canned answers on the Interview page instead of the real model
 SIM = {"metrics": None, "decisions": None, "error": None, "from": None}
 
 
@@ -316,9 +316,9 @@ def feed_by_week(calls_path: Path, weekly: list[dict]) -> list[dict]:
                 for line in mt.group(1).splitlines():
                     line = line.strip()
                     if line.startswith("- ") and (key == "experience" or f"week {w})" in line):
-                        weeks[w][("" if key == "experience" else "[haber] ") + line[2:]] += 1
+                        weeks[w][("" if key == "experience" else "[news] ") + line[2:]] += 1
         for d in SECTION_RE["official"].findall(prompt):
-            weeks[w][f"[karar] {d} mesajı gelen kutusunda"] += 1
+            weeks[w][f"[decision] {d} message in the inbox"] += 1
     wom = Counter()
     for r in weekly:
         if isinstance(r.get("week"), int):
@@ -494,7 +494,7 @@ def api_sweep(q) -> dict:
                "weeks": [x.get("week") for x in decs]}
         tm = TIMING.match(v)
         row["plan"] = tm["plan"] if tm else v
-        row["label"] = "Kararsız (baz)" if v == "nodecision" else plan_label(row["plan"])
+        row["label"] = "No decision (baseline)" if v == "nodecision" else plan_label(row["plan"])
         row["varied"] = {"decision": int(tm["k"]), "week": int(tm["week"])} if tm else None
         row["goals"] = {k: stats([x.get(k) for x in g.values()]) for k in GOAL_KEYS}
         row["met"] = {k: met(k, row["goals"][k]["mean"]) for k in GOAL_KEYS}
@@ -569,9 +569,10 @@ def api_sweep(q) -> dict:
     return {"name": d.name, "targets": targets(), "variants": ranked + ([baseline] if baseline else []),
             "announcements": announcements,
             "baseline": baseline is not None, "recommendation": rec, "matrix": matrix,
-            "score": "önce tutan hedef sayısı (4 üzerinden), sonra toplam hedef açığı "
-                     "(1 puan = 1 yüzde puan aktif/mevduat, 0.1 App Store puanı, 24 CFPB şikayeti), sonra maliyet; "
-                     "açık farkı seed oynamasından küçükse eşdeğer sayılır ve ucuz olan önerilir",
+            "score": "first the number of goals met (out of 4), then the total shortfall to the targets "
+                     "(1 point = 1 percentage point of active customers or deposits, 0.1 App Store stars, "
+                     "24 CFPB complaints), then cost; when shortfalls differ by less than the seed spread, "
+                     "the plans count as equal and the cheaper one is recommended",
             "sim_from": SIM["from"]}
 
 
@@ -759,7 +760,7 @@ def api_network(q) -> dict:
     }
 
 
-# ---------------------------------------------------------------- interview (Konuşma page)
+# ---------------------------------------------------------------- interview (Interview page)
 
 def interview_mod():
     sys.path.insert(0, str(HERE))
@@ -771,22 +772,22 @@ def interview_mod():
 
 
 def live_problem(model) -> str | None:
-    """Why the real model cannot answer right now, in Turkish for the page; None when it can."""
+    """Why the real model cannot answer right now, shown on the page; None when it can."""
     if FAKE_INTERVIEW:
         return None
     if not model or str(model).startswith("fake:"):
-        return f"bu run'ın modeli {model!r}; gerçek bir run seçin"
+        return f"this run's model is {model!r}; pick a real run"
     try:
         import google.genai  # noqa: F401
     except ImportError:
-        return "bu Python'da google-genai yok; görüntüleyiciyi .venv/bin/python ile başlatın"
+        return "google-genai is not installed in this Python; start the viewer with .venv/bin/python"
     if not interview_mod().load_key(ROOT):
-        return "TALP_KEY bulunamadı (ortam değişkeni ya da .env)"
+        return "TALP_KEY not found (environment variable or .env)"
     return None
 
 
 def api_interview(q) -> dict:
-    """Personas of a run, for the Konuşma page, and whether the real model can answer."""
+    """Personas of a run, for the Interview page, and whether the real model can answer."""
     p = run_path(q.get("run", [""])[0])
     rj = read_json(p / "run.json", {}) or {}
     last = {}
@@ -915,7 +916,7 @@ def main() -> None:
     ap.add_argument("--port", type=int, default=8765)
     ap.add_argument("--show-fake", action="store_true", help="also list runs whose model starts with fake:")
     ap.add_argument("--fake-interview", action="store_true",
-                    help="Konuşma page gives canned answers instead of calling the run's model")
+                    help="Interview page gives canned answers instead of calling the run's model")
     a = ap.parse_args()
     FAKE_INTERVIEW = a.fake_interview
     ROOT = Path(a.root).expanduser().resolve()

@@ -4,10 +4,10 @@
 (() => {
   "use strict";
   const PAGES = [
-    ["/", "Panorama"],
-    ["/interview.html", "Konuşma"],
-    ["/network.html", "Haberleşme"],
-    ["/algorithms.html", "Algoritma"],
+    ["/", "Overview"],
+    ["/interview.html", "Interview"],
+    ["/network.html", "Network"],
+    ["/algorithms.html", "Algorithm"],
   ];
   const KEY = "talp.run";
   const store = {
@@ -20,7 +20,7 @@
   bar.innerHTML = `<span class="brand">TALP <span>· Cobalt</span></span>
     <nav>${PAGES.map(([h, t]) => `<a href="${h}" class="${h === here ? "on" : ""}">${t}</a>`).join("")}</nav>
     <span class="spacer"></span>
-    <select id="runpick" title="Hangi run gösterilsin"><option>Yükleniyor…</option></select>`;
+    <select id="runpick" title="Which run to show"><option>Loading…</option></select>`;
   document.body.prepend(bar);
 
   const TALP = { run: null, runs: [] };
@@ -38,13 +38,13 @@
     const other = TALP.runs.filter((r) => !r.id.startsWith("runs/"));
     const opt = (r) => `<option value="${r.id}">${label(r)}</option>`;
     pick.innerHTML = TALP.runs.length
-      ? (official.length ? `<optgroup label="Resmî run'lar">${official.map(opt).join("")}</optgroup>` : "")
-        + (other.length ? `<optgroup label="Deneyler">${other.map(opt).join("")}</optgroup>` : "")
-      : `<option value="">Run yok</option>`;
+      ? (official.length ? `<optgroup label="Official runs">${official.map(opt).join("")}</optgroup>` : "")
+        + (other.length ? `<optgroup label="Experiments">${other.map(opt).join("")}</optgroup>` : "")
+      : `<option value="">No runs</option>`;
     const want = new URLSearchParams(location.search).get("run") || store.get();
     const first = (official.find((r) => r.type === "plan") || official[0] || TALP.runs[TALP.runs.length - 1] || {}).id || "";
     TALP.setRun(TALP.runs.some((r) => r.id === want) ? want : first, true);
     return { run: TALP.run, runs: TALP.runs };
-  }).catch(() => { pick.innerHTML = `<option value="">API yok</option>`; return { run: null, runs: [] }; });
+  }).catch(() => { pick.innerHTML = `<option value="">API unavailable</option>`; return { run: null, runs: [] }; });
   pick.addEventListener("change", () => TALP.setRun(pick.value));
 })();

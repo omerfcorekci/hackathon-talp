@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="tr">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>TALP Panorama</title>
+<title>TALP Overview</title>
 <link rel="stylesheet" href="/shell.css">
 <style>
 :root {
@@ -187,11 +187,11 @@ table.pg tr.grp td span.gh { position: sticky; left: 14px; }
 </head>
 <body>
 <main>
-  <div class="toprow"><div class="seg" id="nav"></div><span class="spacer"></span><button class="ghost" data-act="refresh" title="Dosyaları yeniden oku">↻<span class="t"> Yenile</span></button></div>
-  <div id="body"><div class="loading">Yükleniyor…</div></div>
+  <div class="toprow"><div class="seg" id="nav"></div><span class="spacer"></span><button class="ghost" data-act="refresh" title="Reload the files">↻<span class="t"> Refresh</span></button></div>
+  <div id="body"><div class="loading">Loading…</div></div>
 </main>
 <div id="scrim" data-act="close"></div>
-<aside id="panel" aria-hidden="true"><div class="phead"><button class="x" data-act="close" title="Kapat (Esc)">✕</button></div><div id="pbody"></div></aside>
+<aside id="panel" aria-hidden="true"><div class="phead"><button class="x" data-act="close" title="Close (Esc)">✕</button></div><div id="pbody"></div></aside>
 <script src="/shell.js"></script>
 <script>
 "use strict";
@@ -219,10 +219,10 @@ const shortId = (id) => String(id || "").replace(/^(runs|experiments)\//, "");
 
 // key, label, unit, decimals, higher-is-better
 const GOALS = [
-  ["goal_1", "Aktif müşteri", "%", 2, true],
-  ["goal_2", "Mevduat", "%", 2, true],
-  ["goal_3", "App Store puanı", "★", 2, true],
-  ["goal_3b", "CFPB şikayeti / ay", "", 0, false],
+  ["goal_1", "Active customers", "%", 2, true],
+  ["goal_2", "Deposits", "%", 2, true],
+  ["goal_3", "App Store rating", "★", 2, true],
+  ["goal_3b", "CFPB complaints / month", "", 0, false],
 ];
 const DEFAULT_TARGETS = { goal_1: ">= 98", goal_2: ">= 97", goal_3: ">= 4.3", goal_3b: "<= 240" };
 function goalOk(key, v, targets) {
@@ -236,38 +236,38 @@ const tgtNum = (t, k) => { const m = /([\d.]+)/.exec(((t || {})[k] || DEFAULT_TA
 const okCls = (o) => o == null ? "" : o ? "ok" : "no";
 
 const PROBE_Q = {
-  "1a": ["Güven", "How much do you trust Cobalt Bank?"],
-  "1b": ["Bana iyi davranır", "\"I can count on Cobalt Bank to treat me right.\""],
-  "2a": ["Kalma niyeti", "How likely are you to keep using Cobalt Bank over the next three months?"],
-  "2b": ["Ayrılmayı düşünme", "\"I am thinking about leaving Cobalt Bank.\"", true],
-  "3a": ["Tavsiye", "How likely are you to recommend Cobalt Bank to a friend or colleague?"],
-  "3b": ["Arkadaşa ne der", "If a friend asked you about Cobalt Bank today, what would you tell them?"],
-  "4a": ["Adillik", "How fairly has Cobalt Bank treated you?"],
-  "4b": ["Haksızlık", "\"Cobalt Bank takes advantage of people like me.\"", true],
+  "1a": ["Trust", "How much do you trust Cobalt Bank?"],
+  "1b": ["Treats me right", "\"I can count on Cobalt Bank to treat me right.\""],
+  "2a": ["Intent to stay", "How likely are you to keep using Cobalt Bank over the next three months?"],
+  "2b": ["Thinking of leaving", "\"I am thinking about leaving Cobalt Bank.\"", true],
+  "3a": ["Recommend", "How likely are you to recommend Cobalt Bank to a friend or colleague?"],
+  "3b": ["What they would tell a friend", "If a friend asked you about Cobalt Bank today, what would you tell them?"],
+  "4a": ["Fairness", "How fairly has Cobalt Bank treated you?"],
+  "4b": ["Takes advantage", "\"Cobalt Bank takes advantage of people like me.\"", true],
 };
-const GROUP_TR = { "everyday customers": "Günlük müşteriler", "paycheck customers": "Maaş müşterileri", "savers with large balances": "Yüksek bakiyeli tasarrufçular", "small business owners with a Cobalt card reader": "Kart okuyuculu küçük işletmeler", "students": "Öğrenciler" };
+const GROUP_TR = { "everyday customers": "Everyday customers", "paycheck customers": "Paycheck customers", "savers with large balances": "Savers with large balances", "small business owners with a Cobalt card reader": "Small businesses with a card reader", "students": "Students" };
 const groupTr = (g) => GROUP_TR[g] || g || "–";
 const STATUSES = ["main bank", "second bank", "dormant", "left"];
-const STATUS_TR = { "main bank": "ana banka", "second bank": "ikinci banka", dormant: "uykuda", left: "ayrıldı" };
+const STATUS_TR = { "main bank": "main bank", "second bank": "second bank", dormant: "dormant", left: "left" };
 const stc = (s) => ({ "main bank": "s-main", "second bank": "s-second", dormant: "s-dormant", left: "s-left" }[s] || "s-none");
-const MONEY_TR = { kept: "parası yerinde", "moved some": "bir kısmını taşıdı", "moved most": "çoğunu taşıdı" };
+const MONEY_TR = { kept: "kept", "moved some": "moved some", "moved most": "moved most" };
 const MONEY_MARK = { kept: "", "moved some": "↓", "moved most": "↓↓" };
-const NEW_TR = { some: "biraz yeni para", "a lot": "çok yeni para" };
-const MOOD_TR = { calm: "sakin", hopeful: "umutlu", relieved: "rahatlamış", worried: "endişeli", frustrated: "bıkkın", angry: "öfkeli" };
-const TYPE_TR = { plan: "Plan · kararlarımızla", nodecision: "Kararsız · iş her zamanki gibi", plan_nosurprises: "Plan · sürprizsiz" };
+const NEW_TR = { some: "some new money", "a lot": "a lot of new money" };
+const MOOD_TR = { calm: "calm", hopeful: "hopeful", relieved: "relieved", worried: "worried", frustrated: "frustrated", angry: "angry" };
+const TYPE_TR = { plan: "Plan · our decisions", nodecision: "No decision · business as usual", plan_nosurprises: "Plan · no surprises" };
 const groupsOf = (personas) => { const g = []; personas.forEach((p) => { if (!g.includes(p.group)) g.push(p.group); }); return g; };
 const gcol = (i) => `var(--g${(i % 5) + 1})`;
 const indexWeekly = (weekly) => { const m = {}; (weekly || []).forEach((r) => { (m[r.persona] ||= {})[r.week] = r; }); return m; };
-const targetText = (t) => t == null ? "–" : typeof t === "string" ? (t === "everyone" ? "herkes" : t) : JSON.stringify(t);
-const shortAction = (a) => String(a.action || "").replace(" during the migration", "").replace(" to other banks", "").replace(", new money only", " (yeni para)") + (a.level && a.level !== "on" ? ` · ${a.level}` : "");
+const targetText = (t) => t == null ? "–" : typeof t === "string" ? (t === "everyone" ? "everyone" : t) : JSON.stringify(t);
+const shortAction = (a) => String(a.action || "").replace(" during the migration", "").replace(" to other banks", "").replace(", new money only", " (new money)") + (a.level && a.level !== "on" ? ` · ${a.level}` : "");
 const whyLines = (w) => (Array.isArray(w) ? w : String(w || "").split("\n")).map((x) => String(x).trim()).filter(Boolean);
 const lastWeekOf = (weekly) => Math.max(0, ...(weekly || []).map((r) => r.week || 0));
 
 // ------------------------------------------------------------ state + routing
-// Hash = what is on screen: #ozet, #personalar/P1/5, #karsilastir/<a>/<b>, #kayitlar/loglar/<call>.
+// Hash = what is on screen: #overview, #personas/P1/5, #compare/<a>/<b>, #records/calls/<call>.
 // Every change uses replaceState: switching or closing never adds browser history.
-const S = { run: null, sec: "ozet", arg: [], data: null, sweep: null, q: "", lf: { persona: "", week: "", failed: false, q: "" }, panelBase: null, width: 0 };
-const SECTIONS = [["ozet", "Özet"], ["personalar", "Personalar"], ["karsilastir", "Karşılaştır"], ["kayitlar", "Kayıtlar"]];
+const S = { run: null, sec: "overview", arg: [], data: null, sweep: null, q: "", lf: { persona: "", week: "", failed: false, q: "" }, panelBase: null, width: 0 };
+const SECTIONS = [["overview", "Overview"], ["personas", "Personas"], ["compare", "Compare"], ["records", "Records"]];
 const VIEWS = {};
 const readHash = () => { const raw = location.hash.replace(/^#\/?/, ""); return raw ? raw.split("/").map((x) => { try { return decodeURIComponent(x); } catch { return x; } }) : []; };
 function setHash(parts) {
@@ -279,13 +279,13 @@ function go(parts, keepScroll = false) { setHash(parts); render(keepScroll); }
 let renderToken = 0;
 async function render(keepScroll = false) {
   const parts = readHash();
-  S.sec = VIEWS[parts[0]] ? parts[0] : "ozet";
+  S.sec = VIEWS[parts[0]] ? parts[0] : "overview";
   S.arg = parts.slice(1);
   $("#nav").innerHTML = SECTIONS.map(([k, t]) => `<button class="${k === S.sec ? "on" : ""}" data-act="sec" data-sec="${k}">${t}</button>`).join("");
   hidePanel();
   const t = ++renderToken, y = window.scrollY;
   const body = $("#body");
-  const slow = setTimeout(() => { if (t === renderToken) body.innerHTML = `<div class="loading">Yükleniyor…</div>`; }, 160);
+  const slow = setTimeout(() => { if (t === renderToken) body.innerHTML = `<div class="loading">Loading…</div>`; }, 160);
   try {
     let out = await VIEWS[S.sec]();
     if (t !== renderToken) return;
@@ -297,10 +297,10 @@ async function render(keepScroll = false) {
     if (out[1]) out[1]();
   } catch (e) {
     clearTimeout(slow);
-    if (t === renderToken) body.innerHTML = `<div class="err">Hata: ${esc(e.message)}</div>`;
+    if (t === renderToken) body.innerHTML = `<div class="err">Error: ${esc(e.message)}</div>`;
   }
 }
-const noRun = () => `<div class="card empty">Henüz run yok.<br><span class="small">runs/ veya experiments/ altında run.json içeren bir klasör oluşunca burada görünür.</span></div>`;
+const noRun = () => `<div class="card empty">No runs yet.<br><span class="small">A run shows up here once a folder with a run.json exists under runs/ or experiments/.</span></div>`;
 
 // ------------------------------------------------------------ side panel
 let panelToken = 0;
@@ -337,9 +337,9 @@ const chartW = () => Math.round(Math.max(300, Math.min(1060, ($("#body").clientW
 function weekMarkers(announcements, decisions) {
   const m = {};
   const add = (w, label, dec) => { w = +w; if (!(w >= 1 && w <= 10)) return; (m[w] ||= { labels: [], dec: false }).labels.push(label); if (dec) m[w].dec = true; };
-  add(6, "Göç");
+  add(6, "Migration");
   (announcements || []).forEach((a) => add(a.week, annTitle(a)));
-  (decisions || []).forEach((d, i) => add(d.week, `${i + 1}. karar`, true));
+  (decisions || []).forEach((d, i) => add(d.week, `Decision ${i + 1}`, true));
   return m;
 }
 function markerSvg(markers, xs, top, bottom, W) {
@@ -347,7 +347,7 @@ function markerSvg(markers, xs, top, bottom, W) {
   const maxCh = 22, labels = W >= 560;  // narrow charts: lines only, the chips below name the events
   for (const [w, mk] of Object.entries(markers)) {
     const row = k++ % 2, x = xs(+w), end = +w >= 8;
-    g += `<line class="mark ${mk.dec ? "dec" : ""}" x1="${x}" x2="${x}" y1="${top - 4}" y2="${bottom}"><title>${esc(w)}. hafta: ${esc(mk.labels.join(" · "))}</title></line>`;
+    g += `<line class="mark ${mk.dec ? "dec" : ""}" x1="${x}" x2="${x}" y1="${top - 4}" y2="${bottom}"><title>Week ${esc(w)}: ${esc(mk.labels.join(" · "))}</title></line>`;
     if (!labels) continue;
     const lb = mk.labels.join(" · ");
     g += `<text class="ml ${mk.dec ? "dec" : ""}" x="${x + (end ? -4 : 4)}" y="${10 + row * 12}" text-anchor="${end ? "end" : "start"}">${esc(lb.length > maxCh ? lb.slice(0, maxCh - 1) + "…" : lb)}</text>`;
@@ -359,7 +359,7 @@ function lineChart({ series, targets = [], markers = null, unit = "", height = 2
   const H = height, L = 44, R = 14, T = markers && W >= 560 ? 32 : 14, B = 24;
   const xs = (w) => L + (w - 1) * (W - L - R) / 9;
   const all = series.flatMap((s) => s.points.map((p) => p[1])).filter((v) => v != null).concat(targets.map((t) => t.v).filter((v) => v != null));
-  if (!series.some((s) => s.points.some((p) => p[1] != null))) return `<div class="muted small" style="padding:30px 0;text-align:center">Haftalık veri yok.</div>`;
+  if (!series.some((s) => s.points.some((p) => p[1] != null))) return `<div class="muted small" style="padding:30px 0;text-align:center">No weekly data.</div>`;
   let yMin = Math.min(...all), yMax = Math.max(...all);
   if (yMax - yMin < 1e-9) { yMin -= 1; yMax += 1; }
   const step = niceStep((yMax - yMin) / 4);
@@ -374,7 +374,7 @@ function lineChart({ series, targets = [], markers = null, unit = "", height = 2
   for (const s of series) {
     const pts = s.points.filter((p) => p[1] != null);
     g += `<polyline fill="none" stroke="${s.color}" stroke-width="${s.width || 2.25}" stroke-linejoin="round" ${s.dash ? 'stroke-dasharray="6 4"' : ""} points="${pts.map((p) => `${xs(p[0])},${ys(p[1])}`).join(" ")}"/>`;
-    g += pts.map((p) => `<circle cx="${xs(p[0])}" cy="${ys(p[1])}" r="3" fill="${s.color}"><title>${esc(s.name)} · ${p[0]}. hafta: ${fmtNum(p[1], 2)}${unit}</title></circle>`).join("");
+    g += pts.map((p) => `<circle cx="${xs(p[0])}" cy="${ys(p[1])}" r="3" fill="${s.color}"><title>${esc(s.name)} · week ${p[0]}: ${fmtNum(p[1], 2)}${unit}</title></circle>`).join("");
   }
   return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img">${g}</svg>`;
 }
@@ -390,7 +390,7 @@ function statusBars(weekly, W = chartW()) {
   for (let v = 0; v <= max + 1e-9; v += st) g += `<line class="axis" x1="${L}" x2="${W - R}" y1="${ys(v)}" y2="${ys(v)}"/><text x="${L - 6}" y="${ys(v) + 4}" text-anchor="end">${fmtNum(v)}</text>`;
   weeks.forEach((w, i) => {
     let acc = 0; const x = L + i * bw + bw * 0.2;
-    STATUSES.forEach((k, j) => { const v = w[k] || 0; if (!v) return; g += `<rect x="${x}" width="${bw * 0.6}" y="${ys(acc + v)}" height="${Math.max(0, ys(acc) - ys(acc + v) - 1)}" rx="2" fill="${colors[j]}"><title>${i + 1}. hafta · ${STATUS_TR[k]}: ${v}</title></rect>`; acc += v; });
+    STATUSES.forEach((k, j) => { const v = w[k] || 0; if (!v) return; g += `<rect x="${x}" width="${bw * 0.6}" y="${ys(acc + v)}" height="${Math.max(0, ys(acc) - ys(acc + v) - 1)}" rx="2" fill="${colors[j]}"><title>Week ${i + 1} · ${STATUS_TR[k]}: ${v}</title></rect>`; acc += v; });
     g += `<text x="${x + bw * 0.3}" y="${H - 6}" text-anchor="middle">${i + 1}</text>`;
   });
   return legend(STATUSES.map((k, j) => ({ name: STATUS_TR[k], color: colors[j], sq: true }))) + `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img">${g}</svg>`;
@@ -412,56 +412,56 @@ function spark(points, target, ok) {
 function annTitle(a) {
   const m = /\*\*(.+?)\*\*/.exec(a.text || "");
   if (m) return m[1].replace(/[.:]$/, "");
-  if (/update/i.test(a.id || "")) return "Güncelleme";
-  return a.title || a.id || "Duyuru";
+  if (/update/i.test(a.id || "")) return "Update";
+  return a.title || a.id || "Announcement";
 }
 function runHead(rj, d, id) {
   const tags = [`<span class="tag acc">${esc(TYPE_TR[rj.type] || rj.type || "?")}</span>`];
-  if (d.fake) tags.push(`<span class="tag warn">sahte model</span>`);
-  if (rj.complete === false) tags.push(`<span class="tag bad">tamamlanmadı · ${esc(rj.completed_weeks ?? "?")} hafta</span>`);
+  if (d.fake) tags.push(`<span class="tag warn">fake model</span>`);
+  if (rj.complete === false) tags.push(`<span class="tag bad">incomplete · ${esc(rj.completed_weeks ?? "?")} weeks</span>`);
   return `<div class="runhead"><h1>${esc(shortId(id))}</h1>${tags.join("")}</div>
-    <div class="meta">seed ${esc(rj.seed)} · ${esc(rj.model || "?")} · ${d.personas.length} persona · sürprizler ${rj.type === "plan_nosurprises" ? "kapalı" : "açık"}</div>`;
+    <div class="meta">seed ${esc(rj.seed)} · ${esc(rj.model || "?")} · ${d.personas.length} personas · surprises ${rj.type === "plan_nosurprises" ? "off" : "on"}</div>`;
 }
 function goalCards(d) {
   const m = d.metrics || {}, wm = (d.weekly_metrics || {}).weeks || [];
   return `<div class="goals">${GOALS.map(([k, label, unit, dd]) => {
     const v = m[k], ok = goalOk(k, v, d.targets);
-    const pill = ok == null ? "" : `<span class="pill ${ok ? "ok" : "no"}">${ok ? "✓ tuttu" : "✗ tutmadı"}</span>`;
+    const pill = ok == null ? "" : `<span class="pill ${ok ? "ok" : "no"}">${ok ? "✓ met" : "✗ missed"}</span>`;
     return `<div class="goal"><div class="top"><span>${label}</span>${pill}</div>
       <div class="val ${okCls(ok)}">${fmtNum(v, dd)}<small>${unit}</small></div>
-      <div class="tgt">hedef ${esc(tgtText(d.targets, k))}</div>
+      <div class="tgt">target ${esc(tgtText(d.targets, k))}</div>
       ${spark(wm.map((w) => [w.week, w[k] ?? null]), tgtNum(d.targets, k), ok)}</div>`;
   }).join("")}</div>`;
 }
 function decCards(decisions, budget) {
-  if (!decisions || !decisions.length) return `<div class="card muted">Karar yok — iş her zamanki gibi.</div>`;
+  if (!decisions || !decisions.length) return `<div class="card muted">No decisions: business as usual.</div>`;
   const b = budget || {};
   const cards = decisions.map((dec, i) => {
     const bd = (b.decisions || [])[i] || {};
     const why = whyLines(dec.why);
-    return `<div class="card dec"><div class="hd"><span class="eyebrow">${i + 1}. karar</span><b>${esc(dec.week)}. hafta</b><span class="spacer"></span><b class="cost">${fmtUsd(bd.total)}</b></div>
+    return `<div class="card dec"><div class="hd"><span class="eyebrow">Decision ${i + 1}</span><b>Week ${esc(dec.week)}</b><span class="spacer"></span><b class="cost">${fmtUsd(bd.total)}</b></div>
       <div class="chips">${(dec.actions || []).map((a) => `<span class="chip">${esc(shortAction(a))}</span>`).join("")}${bd.sms_sends ? `<span class="chip">SMS × ${bd.sms_sends}</span>` : ""}</div>
-      <div class="small muted">Hedef: ${esc(targetText(dec.target))} · ${esc((dec.channels || []).join(", "))}</div>
-      <details style="margin-top:8px"><summary>Mesaj ve gerekçe</summary><div class="msg">${esc(dec.message)}</div><div class="small faint">${(dec.message || "").length} karakter</div>${why.length ? `<ul class="why">${why.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>` : ""}</details></div>`;
+      <div class="small muted">Target: ${esc(targetText(dec.target))} · ${esc((dec.channels || []).join(", "))}</div>
+      <details style="margin-top:8px"><summary>Message and reasoning</summary><div class="msg">${esc(dec.message)}</div><div class="small faint">${(dec.message || "").length} characters</div>${why.length ? `<ul class="why">${why.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>` : ""}</details></div>`;
   }).join("");
   let foot = "";
   if (b.available && b.total != null) {
     const over = b.total > b.limit;
-    foot = `<div class="budget"><span>Toplam <b class="${over ? "no" : ""}" style="color:var(--text)">${fmtUsd(b.total)}</b> / ${fmtUsd(b.limit)} bütçe</span><div class="bbar"><i class="${over ? "over" : ""}" style="width:${Math.min(100, b.total / b.limit * 100).toFixed(1)}%"></i></div></div>`;
-  } else if (b.error) foot = `<div class="small faint" style="margin-top:8px">Bütçe hesaplanamadı: ${esc(b.error)}</div>`;
+    foot = `<div class="budget"><span>Total <b class="${over ? "no" : ""}" style="color:var(--text)">${fmtUsd(b.total)}</b> / ${fmtUsd(b.limit)} budget</span><div class="bbar"><i class="${over ? "over" : ""}" style="width:${Math.min(100, b.total / b.limit * 100).toFixed(1)}%"></i></div></div>`;
+  } else if (b.error) foot = `<div class="small faint" style="margin-top:8px">Budget could not be computed: ${esc(b.error)}</div>`;
   return `<div class="decs">${cards}</div>${foot}`;
 }
 function eventChips(announcements, decisions) {
-  const items = [{ w: 6, html: `<button class="ev" data-act="crisis"><b>6. hf</b>Göç: uygulama 36 saat salt okunur</button>` }];
-  (announcements || []).forEach((a, i) => items.push({ w: +a.week, html: `<button class="ev" data-act="ann" data-i="${i}"><b>${esc(a.week)}. hf</b>${esc(annTitle(a))}</button>` }));
-  (decisions || []).forEach((d, i) => items.push({ w: +d.week, html: `<span class="ev dec"><b>${esc(d.week)}. hf</b>${i + 1}. karar başlar</span>` }));
+  const items = [{ w: 6, html: `<button class="ev" data-act="crisis"><b>Wk 6</b>Migration: app read-only for 36 hours</button>` }];
+  (announcements || []).forEach((a, i) => items.push({ w: +a.week, html: `<button class="ev" data-act="ann" data-i="${i}"><b>Wk ${esc(a.week)}</b>${esc(annTitle(a))}</button>` }));
+  (decisions || []).forEach((d, i) => items.push({ w: +d.week, html: `<span class="ev dec"><b>Wk ${esc(d.week)}</b>Decision ${i + 1} starts</span>` }));
   items.sort((a, b) => a.w - b.w);
   return `<div class="evs">${items.map((x) => x.html).join("")}</div>`;
 }
-const CRISIS_TEXT = `**Bilinen kriz: çekirdek bankacılık göçü.** Cumartesi 12 Aralık 00:00 → Pazar 13 Aralık 12:00 CT. 36 saat boyunca uygulama salt okunur: bakiye görünür; transfer, P2P ve yeni kart yok. Kart ödemeleri çevrimdışı, ödeme başına $100'a kadar çalışır. Geçiş "birkaç saat" uzayabilir; kimse ne kadar olduğunu bilmiyor. Rakipler tarihi biliyor. Çoğu maaş müşterisi Cuma 11 Aralık'ta maaş alıyor.`;
+const CRISIS_TEXT = `**Known crisis: core banking migration.** Saturday Dec 12 00:00 → Sunday Dec 13 12:00 CT. For 36 hours the app is read-only: balances are visible; no transfers, no P2P, no new cards. Card payments work offline, up to $100 per payment. The switch may overrun by "some hours"; nobody knows how many. Rivals know the date. Many paycheck customers are paid on Friday Dec 11.`;
 
-// ------------------------------------------------------------ Özet
-VIEWS.ozet = async () => {
+// ------------------------------------------------------------ Overview
+VIEWS.overview = async () => {
   if (!S.run) return noRun();
   const d = await runApi(S.run);
   S.data = d;
@@ -470,25 +470,25 @@ VIEWS.ozet = async () => {
   const pts = (k) => (wm.weeks || []).map((w) => [w.week, w[k] ?? null]);
   const markers = weekMarkers(d.announcements, rj.decisions);
   const cA = cssVar("--accent"), cD = cssVar("--g3");
-  const series = [{ name: "Aktif müşteri %", color: cA, points: pts("goal_1") }, { name: "Mevduat %", color: cD, points: pts("goal_2") }];
+  const series = [{ name: "Active customers %", color: cA, points: pts("goal_1") }, { name: "Deposits %", color: cD, points: pts("goal_2") }];
   return `${runHead(rj, d, S.run)}
-    <div class="sec">Yönetim kurulu hedefleri <span class="hint">10 Ocak değerleri · çizgi haftalık seyir</span></div>
+    <div class="sec">Board goals <span class="hint">Jan 10 values · line shows the weekly trend</span></div>
     ${goalCards(d)}
-    <div class="sec">Kararlarımız</div>
+    <div class="sec">Our decisions</div>
     ${decCards(rj.decisions, d.budget)}
-    <div class="sec">Hafta hafta <span class="hint">2 Kasım = 100</span></div>
-    <div class="stack"><div class="card">${legend(series)}${wm.available === false ? `<div class="note">Haftalık metrik hesaplanamadı: ${esc(wm.error)}</div>` : ""}
-      ${lineChart({ series, unit: "%", markers, targets: [{ v: tgtNum(d.targets, "goal_1"), color: cA, label: `aktif hedefi ${tgtNum(d.targets, "goal_1")}` }, { v: tgtNum(d.targets, "goal_2"), color: cD, label: `mevduat hedefi ${tgtNum(d.targets, "goal_2")}` }] })}
+    <div class="sec">Week by week <span class="hint">Nov 2 = 100</span></div>
+    <div class="stack"><div class="card">${legend(series)}${wm.available === false ? `<div class="note">Weekly metrics could not be computed: ${esc(wm.error)}</div>` : ""}
+      ${lineChart({ series, unit: "%", markers, targets: [{ v: tgtNum(d.targets, "goal_1"), color: cA, label: `active target ${tgtNum(d.targets, "goal_1")}` }, { v: tgtNum(d.targets, "goal_2"), color: cD, label: `deposits target ${tgtNum(d.targets, "goal_2")}` }] })}
       ${eventChips(d.announcements, rj.decisions)}</div>
-      <div class="card"><div class="small" style="font-weight:600;margin-bottom:6px">Personalar bankayı nasıl kullanıyor <span class="faint" style="font-weight:400">· kişi sayısı</span></div>${statusBars(d.weekly)}</div></div>`;
+      <div class="card"><div class="small" style="font-weight:600;margin-bottom:6px">How personas use the bank <span class="faint" style="font-weight:400">· number of personas</span></div>${statusBars(d.weekly)}</div></div>`;
 };
 
-// ------------------------------------------------------------ Personalar
-VIEWS.personalar = async () => {
+// ------------------------------------------------------------ Personas
+VIEWS.personas = async () => {
   if (!S.run) return noRun();
   const d = await runApi(S.run);
   S.data = d;
-  if (!d.personas.length) return `<div class="card empty">Bu run'da persona yok.</div>`;
+  if (!d.personas.length) return `<div class="card empty">No personas in this run.</div>`;
   const groups = groupsOf(d.personas), W = indexWeekly(d.weekly);
   const mk = weekMarkers(d.announcements, (d.run || {}).decisions);
   let rows = "";
@@ -500,17 +500,17 @@ VIEWS.personalar = async () => {
       rows += `<tr class="pr" data-g="${gi}" data-s="${esc(hay)}"><td class="pname"><button class="plink" data-act="persona" data-pid="${esc(p.id)}"><span class="nm">${esc(p.name || p.id)}</span> <span class="faint small">${esc(p.id)}</span></button></td>`;
       for (let w = 1; w <= 10; w++) {
         const r = (W[p.id] || {})[w];
-        const tip = r ? `${p.name || p.id} · ${w}. hafta: ${STATUS_TR[r.status] || r.status}, ${MONEY_TR[r.money] || r.money}${r.complaint && r.complaint !== "none" ? ", şikayet: " + r.complaint : ""}${r.mood ? ", " + (MOOD_TR[r.mood] || r.mood) : ""}` : "kayıt yok";
+        const tip = r ? `${p.name || p.id} · week ${w}: ${STATUS_TR[r.status] || r.status}, ${MONEY_TR[r.money] || r.money}${r.complaint && r.complaint !== "none" ? ", complaint: " + r.complaint : ""}${r.mood ? ", " + (MOOD_TR[r.mood] || r.mood) : ""}` : "no record";
         rows += `<td><button class="cell ${r ? stc(r.status) : "s-none"}" data-act="persona" data-pid="${esc(p.id)}" data-w="${w}" title="${esc(tip)}">${r ? (MONEY_MARK[r.money] || "") + (r.complaint === "cfpb" ? "!" : "") : ""}</button></td>`;
       }
       rows += `</tr>`;
     }
   });
-  const html = `<div class="toolbar"><input type="search" id="pq" placeholder="Persona ara: ad, meslek, şehir…" value="${esc(S.q)}">
+  const html = `<div class="toolbar"><input type="search" id="pq" placeholder="Search personas: name, job, city…" value="${esc(S.q)}">
       <span class="spacer"></span>
-      <div class="legend" style="margin:0">${STATUSES.map((s) => `<span><i class="sq ${stc(s)}"></i>${STATUS_TR[s]}</span>`).join("")}<span>↓ / ↓↓ para taşıdı · ! CFPB</span></div></div>
+      <div class="legend" style="margin:0">${STATUSES.map((s) => `<span><i class="sq ${stc(s)}"></i>${STATUS_TR[s]}</span>`).join("")}<span>↓ / ↓↓ moved money · ! CFPB</span></div></div>
     <div class="tw" style="display:inline-block"><table class="pg"><thead><tr><th class="pname">Persona</th>${Array.from({ length: 10 }, (_, i) => { const w = i + 1, m = mk[w]; return `<th class="${m ? "ev" : ""}" ${m ? `title="${esc(m.labels.join(" · "))}"` : ""}>${w}</th>`; }).join("")}</tr></thead><tbody>${rows}</tbody></table></div>
-    <div class="small faint" style="margin-top:10px">Satıra ya da hücreye tıkla: personanın hikâyesi, check-in puanları ve modelin cevabı yan panelde açılır. Noktalı hafta = olay ya da karar.</div>`;
+    <div class="small faint" style="margin-top:10px">Click a row or cell to open the persona's story, check-in scores and the model's answer in the side panel. Dotted week = event or decision.</div>`;
   return [html, () => { filterPersonas(S.q); if (S.arg[0]) openPersona(S.run, S.arg[0], +S.arg[1] || null, true); }];
 };
 function filterPersonas(q) {
@@ -521,7 +521,7 @@ function filterPersonas(q) {
 }
 
 async function openPersona(runId, pid, week, inHash) {
-  const t = showPanel(`<div class="loading">Yükleniyor…</div>`, inHash ? ["personalar", pid, week || ""] : null, inHash ? ["personalar"] : null);
+  const t = showPanel(`<div class="loading">Loading…</div>`, inHash ? ["personas", pid, week || ""] : null, inHash ? ["personas"] : null);
   try {
     const d = await runApi(runId);
     if (!fillPanel(t, personaHtml(d, runId, pid, week))) return;
@@ -531,74 +531,74 @@ async function openPersona(runId, pid, week, inHash) {
 }
 function personaHtml(d, runId, pid, week) {
   const p = d.personas.find((x) => x.id === pid);
-  if (!p) return `<div class="err">Bu run'da persona yok: ${esc(pid)}</div>`;
+  if (!p) return `<div class="err">Persona not in this run: ${esc(pid)}</div>`;
   const gi = groupsOf(d.personas).indexOf(p.group);
   const Wk = indexWeekly(d.weekly)[pid] || {};
   const M = Object.fromEntries((d.messages || []).map((m) => [m.id, m]));
   const nm = (x) => (d.personas.find((q) => q.id === x) || {}).name || x;
-  const sub = [p.age != null ? `${p.age} yaş` : "", p.occupation, [p.city, p.state].filter(Boolean).join(", ")].filter(Boolean).join(" · ");
+  const sub = [p.age != null ? `age ${p.age}` : "", p.occupation, [p.city, p.state].filter(Boolean).join(", ")].filter(Boolean).join(" · ");
   const fact = (k, v) => v == null || v === "–" ? "" : `<div><div class="k">${k}</div><div class="v">${v}</div></div>`;
   let h = `<div class="small muted"><span class="dot" style="background:${gcol(gi)}"></span>${esc(groupTr(p.group))} · ${esc(pid)}${runId !== S.run ? ` · ${esc(shortId(runId))}` : ""}</div>
     <h2>${esc(p.name || pid)}</h2><div class="muted small">${esc(sub)}</div>
-    <div class="pfacts">${fact("Temsil ettiği", p.weight_customers != null ? fmtNum(p.weight_customers) + " müşteri" : null)}${fact("Mevduat payı", p.weight_deposits_usd != null ? fmtUsd(p.weight_deposits_usd) : null)}${fact("Bakiye", p.balance_usd != null ? fmtUsd(p.balance_usd) : null)}${fact("2 Kasım", p.cobalt_role ? esc(STATUS_TR[p.cobalt_role] || p.cobalt_role) : null)}</div>
+    <div class="pfacts">${fact("Represents", p.weight_customers != null ? fmtNum(p.weight_customers) + " customers" : null)}${fact("Deposit share", p.weight_deposits_usd != null ? fmtUsd(p.weight_deposits_usd) : null)}${fact("Balance", p.balance_usd != null ? fmtUsd(p.balance_usd) : null)}${fact("Nov 2", p.cobalt_role ? esc(STATUS_TR[p.cobalt_role] || p.cobalt_role) : null)}</div>
     ${p.narrative ? `<p class="narr">${esc(p.narrative)}</p>` : ""}${p.voice ? `<p class="quote">“${esc(p.voice)}”</p>` : ""}`;
   // check-in probe
   const probe = (d.probe || []).filter((r) => r.persona === pid);
   if (probe.length) {
     const pv = (when, q) => { const r = probe.find((x) => x.when === when && x.question === q); return r ? r.score : null; };
-    h += `<h3>Check-in · başlangıç → bitiş</h3><table class="probe"><tbody>${Object.entries(PROBE_Q).map(([q, [lbl, txt, rev]]) => {
+    h += `<h3>Check-in · start → end</h3><table class="probe"><tbody>${Object.entries(PROBE_Q).map(([q, [lbl, txt, rev]]) => {
       const a = pv("start", q), b = pv("end", q), dl = a != null && b != null ? b - a : null;
       const cls = dl == null || dl === 0 ? "faint" : (dl > 0) !== !!rev ? "ok" : "no";
-      return `<tr><td class="small" title="${esc(txt)}">${esc(lbl)}${rev ? ` <span class="faint">(ters)</span>` : ""}</td><td class="num">${a ?? "–"} → <b>${b ?? "–"}</b></td><td class="num ${cls}" style="width:40px">${dl == null || dl === 0 ? "·" : (dl > 0 ? "+" : "") + dl}</td></tr>`;
-    }).join("")}</tbody></table><div class="small faint" style="margin-top:4px">1–5 puan. Ters sorularda yüksek puan kötü.</div>`;
+      return `<tr><td class="small" title="${esc(txt)}">${esc(lbl)}${rev ? ` <span class="faint">(reversed)</span>` : ""}</td><td class="num">${a ?? "–"} → <b>${b ?? "–"}</b></td><td class="num ${cls}" style="width:40px">${dl == null || dl === 0 ? "·" : (dl > 0 ? "+" : "") + dl}</td></tr>`;
+    }).join("")}</tbody></table><div class="small faint" style="margin-top:4px">Scores 1–5. On reversed questions a high score is bad.</div>`;
   }
   // week by week
-  h += `<h3>Hafta hafta</h3>`;
+  h += `<h3>Week by week</h3>`;
   for (let w = 1; w <= 10; w++) {
     const r = Wk[w];
-    if (!r) { h += `<div class="wk" id="wk-${w}"><div class="n">${w}</div><div class="faint small">kayıt yok</div></div>`; continue; }
+    if (!r) { h += `<div class="wk" id="wk-${w}"><div class="n">${w}</div><div class="faint small">no record</div></div>`; continue; }
     const sent = (d.messages || []).filter((m) => m.author === pid && m.week === w);
     const heard = (r.received_messages || []).map((i) => M[i]).filter(Boolean);
     const ids = [r.round_2_call, r.round_1_call || r.call].filter(Boolean);
     const bits = [`<span class="st ${stc(r.status)}">${esc(STATUS_TR[r.status] || r.status)}</span>`, `<span class="muted">${esc(MONEY_TR[r.money] || r.money || "")}</span>`];
     if (r.new_money && r.new_money !== "none") bits.push(`<span class="tag good">${esc(NEW_TR[r.new_money] || r.new_money)}</span>`);
-    if (r.mood) bits.push(`<span class="tag">${esc(MOOD_TR[r.mood] || r.mood)}${Number.isInteger(r.trust) ? ` · güven ${r.trust}/5` : ""}</span>`);
-    if (r.complaint && r.complaint !== "none") bits.push(`<span class="tag bad">şikayet: ${esc(r.complaint)}</span>`);
+    if (r.mood) bits.push(`<span class="tag">${esc(MOOD_TR[r.mood] || r.mood)}${Number.isInteger(r.trust) ? ` · trust ${r.trust}/5` : ""}</span>`);
+    if (r.complaint && r.complaint !== "none") bits.push(`<span class="tag bad">complaint: ${esc(r.complaint)}</span>`);
     if (r.app_rating) bits.push(`<span class="tag">${esc(r.app_rating)}★</span>`);
     h += `<div class="wk ${w === week ? "focus" : ""}" id="wk-${w}"><div class="n">${w}</div><div>
       <div class="top">${bits.join("")}</div>
       <p>${esc(r.reason)}</p>
       ${heard.map((m) => `<div class="said">← <b>${esc(nm(m.author))}</b>: ${esc(m.text)}</div>`).join("")}
       ${sent.map((m) => `<div class="said">→ <b>${m.target ? esc(nm(m.target)) : esc(m.channel)}</b>: ${esc(m.text)}</div>`).join("")}
-      ${ids.length ? `<button class="linkbtn" data-act="call" data-run="${esc(runId)}" data-ids="${esc(ids.join(","))}">Modelin cevabını göster</button><div class="callbox"></div>` : ""}
+      ${ids.length ? `<button class="linkbtn" data-act="call" data-run="${esc(runId)}" data-ids="${esc(ids.join(","))}">Show model answer</button><div class="callbox"></div>` : ""}
     </div></div>`;
   }
   const skip = new Set(["id", "name", "group", "narrative", "voice"]);
   const other = Object.entries(p).filter(([k]) => !skip.has(k));
-  h += `<details style="margin-top:22px"><summary>Tüm profil alanları (${other.length})</summary><div class="kv" style="margin-top:10px">${other.map(([k, v]) => `<div>${esc(k.replace(/_/g, " "))}</div><div>${esc(typeof v === "object" && v !== null ? JSON.stringify(v) : v)}</div>`).join("")}</div></details>
-    <div style="margin-top:14px"><a href="/interview.html?run=${enc(runId)}#${enc(pid)}">Bu personayla konuş →</a></div>`;
+  h += `<details style="margin-top:22px"><summary>All profile fields (${other.length})</summary><div class="kv" style="margin-top:10px">${other.map(([k, v]) => `<div>${esc(k.replace(/_/g, " "))}</div><div>${esc(typeof v === "object" && v !== null ? JSON.stringify(v) : v)}</div>`).join("")}</div></details>
+    <div style="margin-top:14px"><a href="/interview.html?run=${enc(runId)}#${enc(pid)}">Talk to this persona →</a></div>`;
   return h;
 }
 function callHtml(c, title) {
   const fails = c.failed_attempts || [];
-  return `<div class="callh">${esc(title)} <span class="faint mono" style="font-weight:400">${esc(c.model)} · deneme ${esc(c.attempt ?? 1)}</span></div>
-    ${fails.length ? `<div class="note small">Önceki geçersiz denemeler: ${fails.map((f) => `${esc(f.attempt)}. ${esc(f.error_type)}`).join(", ")}</div>` : ""}
+  return `<div class="callh">${esc(title)} <span class="faint mono" style="font-weight:400">${esc(c.model)} · attempt ${esc(c.attempt ?? 1)}</span></div>
+    ${fails.length ? `<div class="note small">Earlier invalid attempts: ${fails.map((f) => `${esc(f.attempt)}. ${esc(f.error_type)}`).join(", ")}</div>` : ""}
     <pre>${esc(c.response)}</pre>
-    <details><summary>Gönderilen prompt (${fmtNum((c.prompt || "").length)} karakter)</summary><pre>${esc(c.prompt)}</pre></details>`;
+    <details><summary>Prompt sent (${fmtNum((c.prompt || "").length)} characters)</summary><pre>${esc(c.prompt)}</pre></details>`;
 }
 async function toggleCall(btn) {
   const box = btn.nextElementSibling;
-  if (box.innerHTML) { box.innerHTML = ""; btn.textContent = "Modelin cevabını göster"; return; }
-  btn.textContent = "Gizle";
-  box.innerHTML = `<div class="faint small">Yükleniyor…</div>`;
+  if (box.innerHTML) { box.innerHTML = ""; btn.textContent = "Show model answer"; return; }
+  btn.textContent = "Hide";
+  box.innerHTML = `<div class="faint small">Loading…</div>`;
   const ids = btn.dataset.ids.split(",");
   try {
     const cs = await Promise.all(ids.map((id) => api(`/api/call?run=${enc(btn.dataset.run)}&id=${enc(id)}`)));
-    box.innerHTML = cs.map((c, i) => callHtml(c, ids.length > 1 ? (i === 0 ? "2. tur (son karar)" : "1. tur") : "Model cevabı")).join("");
+    box.innerHTML = cs.map((c, i) => callHtml(c, ids.length > 1 ? (i === 0 ? "Round 2 (final decision)" : "Round 1") : "Model answer")).join("");
   } catch (e) { box.innerHTML = `<div class="err small">${esc(e.message)}</div>`; }
 }
 
-// ------------------------------------------------------------ Karşılaştır
+// ------------------------------------------------------------ Compare
 function defaultPair() {
   const runs = (window.TALP && TALP.runs) || [];
   const has = (id) => runs.some((r) => r.id === id);
@@ -620,29 +620,29 @@ function defaultPair() {
 function fmtDelta(k, v) {
   if (v == null) return "–";
   const d = k === "goal_3b" ? 0 : 2;
-  return (v > 0 ? "+" : v < 0 ? "−" : "±") + fmtNum(Math.abs(v), d) + (k === "goal_1" || k === "goal_2" ? " puan" : "");
+  return (v > 0 ? "+" : v < 0 ? "−" : "±") + fmtNum(Math.abs(v), d) + (k === "goal_1" || k === "goal_2" ? " pts" : "");
 }
-VIEWS.karsilastir = async () => {
+VIEWS.compare = async () => {
   const runs = (window.TALP && TALP.runs) || [];
   if (!runs.length) return noRun();
   let [a, b] = S.arg.length >= 2 ? S.arg : defaultPair();
-  const opts = (sel) => `<option value="">— seç —</option>` + runs.map((r) => `<option value="${esc(r.id)}" ${r.id === sel ? "selected" : ""}>${esc(shortId(r.id))}${r.type ? " · " + esc(r.type) : ""}</option>`).join("");
+  const opts = (sel) => `<option value="">— select —</option>` + runs.map((r) => `<option value="${esc(r.id)}" ${r.id === sel ? "selected" : ""}>${esc(shortId(r.id))}${r.type ? " · " + esc(r.type) : ""}</option>`).join("");
   const pick = `<div class="toolbar"><label class="small muted">A <select data-cmp="a" style="max-width:300px">${opts(a)}</select></label><span class="faint">vs</span><label class="small muted">B <select data-cmp="b" style="max-width:300px">${opts(b)}</select></label></div>`;
-  const sweepHtml = await sweepBlock().catch((e) => `<div class="err small">Sweep okunamadı: ${esc(e.message)}</div>`);
-  if (!a || !b) return pick + `<div class="card empty">Karşılaştırmak için iki run seç.</div>` + sweepHtml;
+  const sweepHtml = await sweepBlock().catch((e) => `<div class="err small">Could not read sweep: ${esc(e.message)}</div>`);
+  if (!a || !b) return pick + `<div class="card empty">Select two runs to compare.</div>` + sweepHtml;
   const [A, B] = await Promise.all([runApi(a), runApi(b)]);
   const ma = A.metrics || {}, mb = B.metrics || {};
   const rowsG = GOALS.map(([k, lbl, unit, dd, up]) => {
     const x = ma[k], y = mb[k], dl = x != null && y != null ? x - y : null;
     const better = dl == null || Math.abs(dl) < 1e-9 ? "faint" : (dl > 0) === up ? "ok" : "no";
-    return `<tr><td>${lbl}<div class="small faint">hedef ${esc(tgtText(A.targets, k))}</div></td><td class="num ${okCls(goalOk(k, x, A.targets))}">${fmtNum(x, dd)}${unit}</td><td class="num ${okCls(goalOk(k, y, B.targets))}">${fmtNum(y, dd)}${unit}</td><td class="num ${better}"><b>${fmtDelta(k, dl)}</b></td></tr>`;
+    return `<tr><td>${lbl}<div class="small faint">target ${esc(tgtText(A.targets, k))}</div></td><td class="num ${okCls(goalOk(k, x, A.targets))}">${fmtNum(x, dd)}${unit}</td><td class="num ${okCls(goalOk(k, y, B.targets))}">${fmtNum(y, dd)}${unit}</td><td class="num ${better}"><b>${fmtDelta(k, dl)}</b></td></tr>`;
   }).join("");
   const ser = (D, k) => ((D.weekly_metrics || {}).weeks || []).map((w) => [w.week, w[k] ?? null]);
   const cA = cssVar("--accent"), cB = cssVar("--g3");
   const nA = "A · " + shortId(a), nB = "B · " + shortId(b);
   const markers = weekMarkers(A.announcements, (A.run || {}).decisions);
   const chart = (k, title) => `<div class="card"><div class="small" style="font-weight:600;margin-bottom:6px">${title}</div>${legend([{ name: nA, color: cA }, { name: nB, color: cB, dash: true }])}
-    ${lineChart({ series: [{ name: nA, color: cA, points: ser(A, k) }, { name: nB, color: cB, dash: true, points: ser(B, k) }], unit: "%", markers, height: 230, targets: [{ v: tgtNum(A.targets, k), color: cssVar("--faint"), label: `hedef ${tgtNum(A.targets, k)}` }] })}</div>`;
+    ${lineChart({ series: [{ name: nA, color: cA, points: ser(A, k) }, { name: nB, color: cB, dash: true, points: ser(B, k) }], unit: "%", markers, height: 230, targets: [{ v: tgtNum(A.targets, k), color: cssVar("--faint"), label: `target ${tgtNum(A.targets, k)}` }] })}</div>`;
   // personas that end the run differently
   const WA = indexWeekly(A.weekly), WB = indexWeekly(B.weekly), la = lastWeekOf(A.weekly), lb = lastWeekOf(B.weekly);
   const common = A.personas.filter((p) => B.personas.some((q) => q.id === p.id));
@@ -653,16 +653,16 @@ VIEWS.karsilastir = async () => {
   const lab = (r) => r ? `<span class="st ${stc(r.status)}">${esc(STATUS_TR[r.status] || r.status)}</span> <span class="muted small">${esc(MONEY_TR[r.money] || r.money)}</span>` : `<span class="faint">–</span>`;
   const costA = (A.budget || {}).total, costB = (B.budget || {}).total;
   return `${pick}
-    <div class="sec">Hedefler <span class="hint">A − B · yeşil = A daha iyi</span></div>
-    <div class="tw"><table><thead><tr><th>Hedef</th><th class="num">A</th><th class="num">B</th><th class="num">Fark</th></tr></thead><tbody>${rowsG}
-      <tr><td>Karar maliyeti</td><td class="num">${(A.run.decisions || []).length ? fmtUsd(costA) : "karar yok"}</td><td class="num">${(B.run.decisions || []).length ? fmtUsd(costB) : "karar yok"}</td><td></td></tr></tbody></table></div>
-    <div class="sec">Hafta hafta</div>
-    <div class="stack">${chart("goal_1", "Aktif müşteri %")}${chart("goal_2", "Mevduat %")}</div>
-    <div class="sec">Son haftada farklı olan personalar <span class="hint">${diffs.length} / ${common.length}</span></div>
-    ${!common.length ? `<div class="card muted small">İki run farklı persona setleri kullanıyor; persona bazında karşılaştırılamaz.</div>` : diffs.length ? `<div class="tw"><table><thead><tr><th>Persona</th><th>A</th><th>B</th></tr></thead><tbody>${diffs.map((r) => `<tr class="click" data-act="persona" data-run="${esc(a)}" data-pid="${esc(r.p.id)}"><td><b>${esc(r.p.name || r.p.id)}</b> <span class="faint small">${esc(r.p.id)}</span></td><td>${lab(r.x)}</td><td>${lab(r.y)}</td></tr>`).join("")}</tbody></table></div>` : `<div class="card muted small">Son haftada bütün personalar iki run'da aynı yerde.</div>`}
+    <div class="sec">Goals <span class="hint">A − B · green = A is better</span></div>
+    <div class="tw"><table><thead><tr><th>Goal</th><th class="num">A</th><th class="num">B</th><th class="num">Difference</th></tr></thead><tbody>${rowsG}
+      <tr><td>Decision cost</td><td class="num">${(A.run.decisions || []).length ? fmtUsd(costA) : "no decisions"}</td><td class="num">${(B.run.decisions || []).length ? fmtUsd(costB) : "no decisions"}</td><td></td></tr></tbody></table></div>
+    <div class="sec">Week by week</div>
+    <div class="stack">${chart("goal_1", "Active customers %")}${chart("goal_2", "Deposits %")}</div>
+    <div class="sec">Personas that differ in the last week <span class="hint">${diffs.length} / ${common.length}</span></div>
+    ${!common.length ? `<div class="card muted small">The two runs use different persona sets; they cannot be compared persona by persona.</div>` : diffs.length ? `<div class="tw"><table><thead><tr><th>Persona</th><th>A</th><th>B</th></tr></thead><tbody>${diffs.map((r) => `<tr class="click" data-act="persona" data-run="${esc(a)}" data-pid="${esc(r.p.id)}"><td><b>${esc(r.p.name || r.p.id)}</b> <span class="faint small">${esc(r.p.id)}</span></td><td>${lab(r.x)}</td><td>${lab(r.y)}</td></tr>`).join("")}</tbody></table></div>` : `<div class="card muted small">In the last week every persona is in the same place in both runs.</div>`}
     ${sweepHtml}`;
 };
-function ticks(met) { return GOALS.map(([k, l]) => met[k] == null ? `<span class="faint" title="${l}">·</span>` : met[k] ? `<span class="ok" title="${l}: tuttu">✓</span>` : `<span class="no" title="${l}: tutmadı">✗</span>`).join(""); }
+function ticks(met) { return GOALS.map(([k, l]) => met[k] == null ? `<span class="faint" title="${l}">·</span>` : met[k] ? `<span class="ok" title="${l}: met">✓</span>` : `<span class="no" title="${l}: missed">✗</span>`).join(""); }
 async function sweepBlock() {
   const L = await api("/api/sweeps");
   if (!L.sweeps.length) return "";
@@ -672,42 +672,42 @@ async function sweepBlock() {
   const recV = rec && SW.variants.find((v) => v.variant === rec.variant);
   const picker = L.sweeps.length > 1 ? `<select data-sweep style="max-width:240px">${L.sweeps.map((s) => `<option value="${esc(s.name)}" ${s.name === name ? "selected" : ""}>${esc(s.name)}</option>`).join("")}</select>` : `<span class="hint">${esc(name)}</span>`;
   const notes = [];
-  if (rec && rec.no_gain) notes.push("Karar vermek kararsız kalmaktan daha iyi görünmüyor.");
-  if (rec && rec.equivalent.length > 1) notes.push(`${rec.equivalent.length} plan seed gürültüsü (${fmtNum(rec.noise, 1)} puan) içinde eşdeğer; ucuz olan öneriliyor.`);
-  if (rec && rec.single_seed) notes.push("Tek seed'li varyant var, temkinli oku.");
+  if (rec && rec.no_gain) notes.push("Making decisions does not look better than making none.");
+  if (rec && rec.equivalent.length > 1) notes.push(`${rec.equivalent.length} plans are equivalent within seed noise (${fmtNum(rec.noise, 1)} pts); the cheapest is recommended.`);
+  if (rec && rec.single_seed) notes.push("Some variants have a single seed; read with care.");
   const rows = SW.variants.map((v) => `<tr class="click ${recV && v.variant === recV.variant ? "hl" : ""}" data-act="variant" data-v="${esc(v.variant)}">
     <td class="num faint">${v.rank ?? ""}</td>
-    <td><b>${esc(v.label)}</b>${recV && v.variant === recV.variant ? ` <span class="tag acc">öneri</span>` : ""}${v.baseline ? ` <span class="tag">baz</span>` : ""}<div class="small faint">${v.decisions.length ? v.decisions.map((x) => `${esc(x.week)}. hf`).join(" · ") : "karar yok"} · ${v.seeds.length} seed</div></td>
+    <td><b>${esc(v.label)}</b>${recV && v.variant === recV.variant ? ` <span class="tag acc">recommended</span>` : ""}${v.baseline ? ` <span class="tag">baseline</span>` : ""}<div class="small faint">${v.decisions.length ? v.decisions.map((x) => `wk ${esc(x.week)}`).join(" · ") : "no decisions"} · ${v.seeds.length} seed</div></td>
     <td style="letter-spacing:2px;white-space:nowrap">${ticks(v.met || {})}</td>
     <td class="num">${v.baseline ? "–" : fmtUsd(v.cost)}</td>
     <td class="num ${okCls((v.met || {}).goal_1)}">${fmtNum((v.goals.goal_1 || {}).mean, 1)}</td>
     <td class="num ${okCls((v.met || {}).goal_2)}">${fmtNum((v.goals.goal_2 || {}).mean, 1)}</td>
     <td class="num"><b>${fmtNum(v.gap_total, 1)}</b></td></tr>`).join("");
   S.sweepData = SW;
-  return `<div class="sec">Plan taraması ${picker}</div>
-    ${recV ? `<div class="card" style="margin-bottom:12px"><span class="eyebrow">Öneri</span> <b>${esc(recV.label)}</b> <span class="muted">· ${recV.met_count}/4 hedef · ${fmtUsd(recV.cost)}</span>${notes.length ? `<div class="small muted" style="margin-top:4px">${notes.map(esc).join(" ")}</div>` : ""}</div>` : ""}
-    <div class="tw"><table><thead><tr><th></th><th>Plan</th><th>Hedefler</th><th class="num">Maliyet</th><th class="num">Aktif %</th><th class="num">Mevduat %</th><th class="num" title="Hedeflere toplam uzaklık, 0 = hepsi tuttu">Açık</th></tr></thead><tbody>${rows}</tbody></table></div>
-    <div class="small faint" style="margin-top:8px">Seed ortalaması. Sıralama: önce tutan hedef sayısı, sonra toplam açık, sonra maliyet. Satıra tıkla: kararlar ve run'lar.</div>`;
+  return `<div class="sec">Plan sweep ${picker}</div>
+    ${recV ? `<div class="card" style="margin-bottom:12px"><span class="eyebrow">Recommendation</span> <b>${esc(recV.label)}</b> <span class="muted">· ${recV.met_count}/4 goals · ${fmtUsd(recV.cost)}</span>${notes.length ? `<div class="small muted" style="margin-top:4px">${notes.map(esc).join(" ")}</div>` : ""}</div>` : ""}
+    <div class="tw"><table><thead><tr><th></th><th>Plan</th><th>Goals</th><th class="num">Cost</th><th class="num">Active %</th><th class="num">Deposits %</th><th class="num" title="Total distance to the goals, 0 = all met">Gap</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="small faint" style="margin-top:8px">Mean over seeds. Ranked by goals met, then total gap, then cost. Click a row for its decisions and runs.</div>`;
 }
 function variantPanel(vname) {
   const SW = S.sweepData; if (!SW) return;
   const v = SW.variants.find((x) => x.variant === vname); if (!v) return;
-  showPanel(`<div class="small muted">Plan taraması · ${esc(SW.name)}</div><h2>${esc(v.label)}</h2>
-    <div class="muted small">${v.met_count}/4 hedef · açık ${fmtNum(v.gap_total, 1)} puan · ${v.baseline ? "kararsız baz" : fmtUsd(v.cost)}</div>
-    <h3>Hedefler (seed ortalaması, min–maks)</h3>
+  showPanel(`<div class="small muted">Plan sweep · ${esc(SW.name)}</div><h2>${esc(v.label)}</h2>
+    <div class="muted small">${v.met_count}/4 goals · gap ${fmtNum(v.gap_total, 1)} pts · ${v.baseline ? "no-decision baseline" : fmtUsd(v.cost)}</div>
+    <h3>Goals (mean over seeds, min–max)</h3>
     <table class="probe"><tbody>${GOALS.map(([k, l, u, dd]) => { const g = v.goals[k] || {}; return `<tr><td>${l}</td><td class="num ${okCls((v.met || {})[k])}"><b>${fmtNum(g.mean, dd)}${u}</b></td><td class="num faint">${g.n > 1 ? `${fmtNum(g.min, dd)}–${fmtNum(g.max, dd)}` : ""}</td></tr>`; }).join("")}</tbody></table>
-    <h3>Kararlar</h3>${decCards(v.decisions, null)}
-    <h3>Run'lar</h3><div class="evs">${Object.entries(v.runs).map(([s, id]) => `<button class="ev" data-act="setrun" data-id="${esc(id)}">seed ${esc(s)} → Özet'te aç</button>`).join("")}</div>`);
+    <h3>Decisions</h3>${decCards(v.decisions, null)}
+    <h3>Runs</h3><div class="evs">${Object.entries(v.runs).map(([s, id]) => `<button class="ev" data-act="setrun" data-id="${esc(id)}">seed ${esc(s)} → open in Overview</button>`).join("")}</div>`);
 }
 
-// ------------------------------------------------------------ Kayıtlar (logs, docs, files)
-const SUBS = [["loglar", "LLM çağrıları"], ["belgeler", "Belgeler"], ["dosyalar", "Run dosyaları"]];
-VIEWS.kayitlar = async () => {
-  const sub = SUBS.some(([k]) => k === S.arg[0]) ? S.arg[0] : "loglar";
+// ------------------------------------------------------------ Records (logs, docs, files)
+const SUBS = [["calls", "LLM calls"], ["docs", "Documents"], ["files", "Run files"]];
+VIEWS.records = async () => {
+  const sub = SUBS.some(([k]) => k === S.arg[0]) ? S.arg[0] : "calls";
   const tabs = `<div class="seg sm" style="margin-bottom:18px">${SUBS.map(([k, t]) => `<button class="${k === sub ? "on" : ""}" data-act="sub" data-sub="${k}">${t}</button>`).join("")}</div>`;
-  if (sub === "belgeler") return tabs + await docsBody(S.arg[1] || "plan");
+  if (sub === "docs") return tabs + await docsBody(S.arg[1] || "plan");
   if (!S.run) return tabs + noRun();
-  if (sub === "dosyalar") return tabs + await filesBody();
+  if (sub === "files") return tabs + await filesBody();
   const html = tabs + await logsBody();
   return [html, () => { if (S.arg[1]) callPanel(S.run, S.arg[1]); }];
 };
@@ -715,37 +715,37 @@ async function logsBody() {
   const lf = S.lf;
   const L = await api(`/api/log?run=${enc(S.run)}&q=${enc(lf.q)}`);
   const calls = L.calls.filter((c) => (!lf.persona || String(c.persona) === lf.persona) && (!lf.week || String(c.week) === lf.week) && (!lf.failed || c.valid === false));
-  const uniq = (k) => [...new Set(L.calls.map((c) => c[k]).filter((x) => x != null))].sort((x, y) => typeof x === "number" ? x - y : String(x).localeCompare(String(y), "tr", { numeric: true }));
-  const sel = (k, lbl) => `<select data-lf="${k}"><option value="">${lbl}: hepsi</option>${uniq(k).map((o) => `<option value="${esc(o)}" ${String(o) === lf[k] ? "selected" : ""}>${lbl}: ${esc(o)}</option>`).join("")}</select>`;
+  const uniq = (k) => [...new Set(L.calls.map((c) => c[k]).filter((x) => x != null))].sort((x, y) => typeof x === "number" ? x - y : String(x).localeCompare(String(y), "en", { numeric: true }));
+  const sel = (k, lbl) => `<select data-lf="${k}"><option value="">${lbl}: all</option>${uniq(k).map((o) => `<option value="${esc(o)}" ${String(o) === lf[k] ? "selected" : ""}>${lbl}: ${esc(o)}</option>`).join("")}</select>`;
   const fail = L.calls.filter((c) => c.valid === false).length, LIM = 400;
-  return `<div class="toolbar">${sel("persona", "Persona")}${sel("week", "Hafta")}
-      <label class="small"><input type="checkbox" data-lf="failed" ${lf.failed ? "checked" : ""}> yalnız geçersiz</label>
-      <input type="search" id="lq" placeholder="Prompt/cevapta ara (Enter)" value="${esc(lf.q)}">
-      <span class="spacer"></span><span class="small muted">${fmtNum(calls.length)} / ${fmtNum(L.calls.length)} deneme · <span class="${fail ? "no" : ""}">${fail} geçersiz</span></span></div>
-    <div class="tw tall"><table><thead><tr><th>Persona</th><th class="num">Hafta</th><th class="num">Tur</th><th>Durum</th><th>Model</th><th class="num">sn</th></tr></thead><tbody>
-    ${calls.slice(0, LIM).map((c) => `<tr class="click" data-act="logcall" data-id="${esc(c.id)}"><td>${esc(c.persona ?? "–")}</td><td class="num">${esc(c.week ?? "–")}</td><td class="num">${esc(c.round ?? "–")}</td><td>${c.valid !== false ? `<span class="tag good">ok</span>${(c.attempt || 1) > 1 ? ` <span class="faint small">${c.attempt}. deneme</span>` : ""}` : `<span class="tag bad">${esc(c.error_type || "hata")}</span>`}</td><td class="small muted">${esc(c.model)}</td><td class="num">${fmtNum(c.elapsed_seconds, 1)}</td></tr>`).join("") || `<tr><td colspan="6" class="empty">Kayıt yok.</td></tr>`}
-    </tbody></table></div>${calls.length > LIM ? `<div class="small faint" style="margin-top:6px">İlk ${LIM} gösteriliyor; filtreyle daralt.</div>` : ""}`;
+  return `<div class="toolbar">${sel("persona", "Persona")}${sel("week", "Week")}
+      <label class="small"><input type="checkbox" data-lf="failed" ${lf.failed ? "checked" : ""}> invalid only</label>
+      <input type="search" id="lq" placeholder="Search prompts/answers (Enter)" value="${esc(lf.q)}">
+      <span class="spacer"></span><span class="small muted">${fmtNum(calls.length)} / ${fmtNum(L.calls.length)} attempts · <span class="${fail ? "no" : ""}">${fail} invalid</span></span></div>
+    <div class="tw tall"><table><thead><tr><th>Persona</th><th class="num">Week</th><th class="num">Round</th><th>Status</th><th>Model</th><th class="num">s</th></tr></thead><tbody>
+    ${calls.slice(0, LIM).map((c) => `<tr class="click" data-act="logcall" data-id="${esc(c.id)}"><td>${esc(c.persona ?? "–")}</td><td class="num">${esc(c.week ?? "–")}</td><td class="num">${esc(c.round ?? "–")}</td><td>${c.valid !== false ? `<span class="tag good">ok</span>${(c.attempt || 1) > 1 ? ` <span class="faint small">attempt ${c.attempt}</span>` : ""}` : `<span class="tag bad">${esc(c.error_type || "error")}</span>`}</td><td class="small muted">${esc(c.model)}</td><td class="num">${fmtNum(c.elapsed_seconds, 1)}</td></tr>`).join("") || `<tr><td colspan="6" class="empty">No records.</td></tr>`}
+    </tbody></table></div>${calls.length > LIM ? `<div class="small faint" style="margin-top:6px">Showing the first ${LIM}; use the filters to narrow down.</div>` : ""}`;
 }
 async function callPanel(runId, id) {
-  const t = showPanel(`<div class="loading">Yükleniyor…</div>`, ["kayitlar", "loglar", id], ["kayitlar", "loglar"]);
+  const t = showPanel(`<div class="loading">Loading…</div>`, ["records", "calls", id], ["records", "calls"]);
   try {
     const c = await api(`/api/call?run=${enc(runId)}&id=${enc(id)}`);
-    const meta = [["persona", c.persona], ["hafta", c.week], ["tur", c.round], ["deneme", c.attempt], ["geçerli", c.valid === false ? "hayır" : "evet"], ["hata", c.error_type ? `${c.error_type} (${c.error_stage || ""})` : null], ["model", c.model], ["seed", c.seed], ["süre", c.elapsed_seconds != null ? fmtNum(c.elapsed_seconds, 2) + " sn" : null]].filter(([, v]) => v != null);
-    fillPanel(t, `<div class="small muted">LLM çağrısı · ${esc(shortId(runId))}</div><h2 class="mono" style="font-size:15px">${esc(c.id)}</h2>
+    const meta = [["persona", c.persona], ["week", c.week], ["round", c.round], ["attempt", c.attempt], ["valid", c.valid === false ? "no" : "yes"], ["error", c.error_type ? `${c.error_type} (${c.error_stage || ""})` : null], ["model", c.model], ["seed", c.seed], ["time", c.elapsed_seconds != null ? fmtNum(c.elapsed_seconds, 2) + " s" : null]].filter(([, v]) => v != null);
+    fillPanel(t, `<div class="small muted">LLM call · ${esc(shortId(runId))}</div><h2 class="mono" style="font-size:15px">${esc(c.id)}</h2>
       <div class="kv" style="margin:12px 0">${meta.map(([k, v]) => `<div>${k}</div><div>${esc(v)}</div>`).join("")}</div>
-      <h3>Cevap</h3><pre>${esc(c.response)}</pre>
-      <h3>Prompt <span class="faint" style="text-transform:none;letter-spacing:0;font-weight:400">${fmtNum((c.prompt || "").length)} karakter</span></h3><pre>${esc(c.prompt)}</pre>`);
+      <h3>Answer</h3><pre>${esc(c.response)}</pre>
+      <h3>Prompt <span class="faint" style="text-transform:none;letter-spacing:0;font-weight:400">${fmtNum((c.prompt || "").length)} characters</span></h3><pre>${esc(c.prompt)}</pre>`);
   } catch (e) { fillPanel(t, `<div class="err">${esc(e.message)}</div>`); }
 }
 async function docsBody(name) {
   const [C, D] = await Promise.all([api("/api/config"), api("/api/docs")]);
   const docs = Object.keys(D.docs || {}).filter((n) => D.docs[n] != null);
-  const items = [["plan", "plan.json"], ["surprises", "Sürprizler"], ...docs.map((n) => [n, n.replace(/\.md$/, "")])];
+  const items = [["plan", "plan.json"], ["surprises", "Surprises"], ...docs.map((n) => [n, n.replace(/\.md$/, "")])];
   if (!items.some(([k]) => k === name)) name = "plan";
   const chips = `<div class="evs" style="margin:0 0 16px">${items.map(([k, t]) => `<button class="ev ${k === name ? "dec" : ""}" data-act="doc" data-doc="${esc(k)}">${esc(t)}</button>`).join("")}</div>`;
   let body;
-  if (name === "plan") body = C.plan == null ? `<div class="note">code/config/decisions/plan.json yok veya okunamadı.</div>` : `${decCards(C.plan, C.plan_budget)}<details style="margin-top:12px"><summary>Ham JSON</summary><pre>${esc(JSON.stringify(C.plan, null, 2))}</pre></details>`;
-  else if (name === "surprises") body = (C.surprises || []).length ? `<div class="stack">${C.surprises.map((s) => { const x = s.data || {}; return `<div class="card"><div class="runhead"><b>${esc(annTitle(x))}</b><span class="tag">${esc(x.week)}. hafta</span></div><div class="md small" style="margin-top:6px">${md(x.text)}</div>${x.update ? `<div class="small muted">Güncelleme · ${esc(x.update.week)}. hafta</div><div class="md small">${md(x.update.text)}</div>` : ""}<div class="small faint mono">${esc(s.file)}</div></div>`; }).join("")}</div>` : `<div class="card empty">Henüz dashboard duyurusu yok.</div>`;
+  if (name === "plan") body = C.plan == null ? `<div class="note">code/config/decisions/plan.json is missing or unreadable.</div>` : `${decCards(C.plan, C.plan_budget)}<details style="margin-top:12px"><summary>Raw JSON</summary><pre>${esc(JSON.stringify(C.plan, null, 2))}</pre></details>`;
+  else if (name === "surprises") body = (C.surprises || []).length ? `<div class="stack">${C.surprises.map((s) => { const x = s.data || {}; return `<div class="card"><div class="runhead"><b>${esc(annTitle(x))}</b><span class="tag">Week ${esc(x.week)}</span></div><div class="md small" style="margin-top:6px">${md(x.text)}</div>${x.update ? `<div class="small muted">Update · week ${esc(x.update.week)}</div><div class="md small">${md(x.update.text)}</div>` : ""}<div class="small faint mono">${esc(s.file)}</div></div>`; }).join("")}</div>` : `<div class="card empty">No dashboard announcements yet.</div>`;
   else body = `<div class="card md">${md(D.docs[name])}</div>`;
   return chips + body;
 }
@@ -755,16 +755,16 @@ async function filesBody() {
   const nm = (x) => (d.personas.find((q) => q.id === x) || {}).name || x;
   const dt = d.decision_targets || {};
   return `<div class="evs" style="margin-top:0">${d.files.map((f) => `<a class="ev" href="/api/raw?run=${enc(S.run)}&file=${enc(f.name)}" target="_blank" rel="noopener">${esc(f.name)} <span class="faint">${fmtNum(f.size / 1024, 0)} KB</span></a>`).join("")}</div>
-    <div class="sec">Ağızdan ağıza <span class="hint">${ms.length} persona mesajı</span></div>
-    ${ms.length ? `<div class="tw tall"><table><thead><tr><th class="num">Hf</th><th>Kimden → kime</th><th>Metin</th></tr></thead><tbody>${ms.map((x) => `<tr><td class="num">${x.week}</td><td class="small" style="white-space:nowrap">${esc(nm(x.author))} → ${x.target ? esc(nm(x.target)) : esc(x.channel)}</td><td class="small">${esc(x.text)}</td></tr>`).join("")}</tbody></table></div>` : `<div class="muted small">Bu run'da persona mesajı yok.</div>`}
-    <div class="sec">Personalara ulaşan haftalık bilgi</div>
-    ${(d.feed || []).length ? `<div class="tw tall"><table><thead><tr><th class="num">Hf</th><th>Satır <span class="faint">(kaç persona gördü)</span></th></tr></thead><tbody>${d.feed.map((w) => `<tr><td class="num">${w.week}</td><td class="small"><div class="faint">${esc(w.title)}${w.word_of_mouth ? ` · ${w.word_of_mouth} ağızdan ağıza mesaj` : ""}</div>${w.lines.map((l) => `<div style="margin-top:3px">${esc(l.text)} <span class="faint">(${l.personas})</span></div>`).join("")}</td></tr>`).join("")}</tbody></table></div>` : `<div class="muted small">Prompt'lardan akış okunamadı.</div>`}
-    ${Object.keys(dt).length ? `<div class="sec">Karar hedefleri</div><div class="card kv">${Object.entries(dt).map(([k, v]) => `<div>${esc(k)}</div><div>${esc((v || []).join(", "))} <span class="faint">(${(v || []).length})</span></div>`).join("")}</div>` : ""}
-    <div class="sec">Metrik notları</div>
+    <div class="sec">Word of mouth <span class="hint">${ms.length} persona messages</span></div>
+    ${ms.length ? `<div class="tw tall"><table><thead><tr><th class="num">Wk</th><th>From → to</th><th>Text</th></tr></thead><tbody>${ms.map((x) => `<tr><td class="num">${x.week}</td><td class="small" style="white-space:nowrap">${esc(nm(x.author))} → ${x.target ? esc(nm(x.target)) : esc(x.channel)}</td><td class="small">${esc(x.text)}</td></tr>`).join("")}</tbody></table></div>` : `<div class="muted small">No persona messages in this run.</div>`}
+    <div class="sec">Weekly information reaching personas</div>
+    ${(d.feed || []).length ? `<div class="tw tall"><table><thead><tr><th class="num">Wk</th><th>Line <span class="faint">(personas who saw it)</span></th></tr></thead><tbody>${d.feed.map((w) => `<tr><td class="num">${w.week}</td><td class="small"><div class="faint">${esc(w.title)}${w.word_of_mouth ? ` · ${w.word_of_mouth} word-of-mouth messages` : ""}</div>${w.lines.map((l) => `<div style="margin-top:3px">${esc(l.text)} <span class="faint">(${l.personas})</span></div>`).join("")}</td></tr>`).join("")}</tbody></table></div>` : `<div class="muted small">Could not read the feed from the prompts.</div>`}
+    ${Object.keys(dt).length ? `<div class="sec">Decision targets</div><div class="card kv">${Object.entries(dt).map(([k, v]) => `<div>${esc(k)}</div><div>${esc((v || []).join(", "))} <span class="faint">(${(v || []).length})</span></div>`).join("")}</div>` : ""}
+    <div class="sec">Metric notes</div>
     <div class="card small">${(m.units ? Object.entries(m.units).map(([k, v]) => `<div><b>${esc(k)}</b> <span class="muted">${esc(v)}</span></div>`).join("") : "")}
-      ${(m.assumptions || []).length ? `<details style="margin-top:8px"><summary>Varsayımlar (${m.assumptions.length})</summary><pre>${esc(m.assumptions.join("\n\n"))}</pre></details>` : ""}
-      ${(m.notes || []).length ? `<details><summary>Notlar (${m.notes.length})</summary><pre>${esc(m.notes.join("\n"))}</pre></details>` : ""}
-      <div class="faint" style="margin-top:6px">${fmtNum((d.call_stats || {}).calls)} model denemesi · ${fmtNum((d.call_stats || {}).failed)} geçersiz · ${fmtNum((d.call_stats || {}).retries)} tekrar</div></div>`;
+      ${(m.assumptions || []).length ? `<details style="margin-top:8px"><summary>Assumptions (${m.assumptions.length})</summary><pre>${esc(m.assumptions.join("\n\n"))}</pre></details>` : ""}
+      ${(m.notes || []).length ? `<details><summary>Notes (${m.notes.length})</summary><pre>${esc(m.notes.join("\n"))}</pre></details>` : ""}
+      <div class="faint" style="margin-top:6px">${fmtNum((d.call_stats || {}).calls)} model attempts · ${fmtNum((d.call_stats || {}).failed)} invalid · ${fmtNum((d.call_stats || {}).retries)} retries</div></div>`;
 }
 
 // ------------------------------------------------------------ markdown (docs)
@@ -821,24 +821,24 @@ document.addEventListener("click", (e) => {
   if (act === "close") closePanel();
   else if (act === "sec") go([el.dataset.sec]);
   else if (act === "refresh") { cache.clear(); render(true); }
-  else if (act === "persona") openPersona(el.dataset.run || S.run, el.dataset.pid, +el.dataset.w || null, S.sec === "personalar" && !el.dataset.run);
+  else if (act === "persona") openPersona(el.dataset.run || S.run, el.dataset.pid, +el.dataset.w || null, S.sec === "personas" && !el.dataset.run);
   else if (act === "call") toggleCall(el);
-  else if (act === "crisis") showPanel(`<div class="small muted">6. hafta · 7–13 Aralık</div><div class="md">${md(CRISIS_TEXT)}</div>`);
+  else if (act === "crisis") showPanel(`<div class="small muted">Week 6 · Dec 7–13</div><div class="md">${md(CRISIS_TEXT)}</div>`);
   else if (act === "ann") {
     const a = ((S.data || {}).announcements || [])[+el.dataset.i]; if (!a) return;
-    showPanel(`<div class="small muted">${esc(a.week)}. hafta · dashboard duyurusu</div><h2>${esc(annTitle(a))}</h2><div class="md">${md(a.text)}</div>${a.published_at ? `<div class="small faint">Yayın: ${esc(a.published_at)}</div>` : ""}`);
+    showPanel(`<div class="small muted">Week ${esc(a.week)} · dashboard announcement</div><h2>${esc(annTitle(a))}</h2><div class="md">${md(a.text)}</div>${a.published_at ? `<div class="small faint">Published: ${esc(a.published_at)}</div>` : ""}`);
   }
   else if (act === "variant") variantPanel(el.dataset.v);
-  else if (act === "setrun") { hidePanel(); setHash(["ozet"]); if (window.TALP) TALP.setRun(el.dataset.id); }
-  else if (act === "sub") go(["kayitlar", el.dataset.sub]);
-  else if (act === "doc") go(["kayitlar", "belgeler", el.dataset.doc], true);
+  else if (act === "setrun") { hidePanel(); setHash(["overview"]); if (window.TALP) TALP.setRun(el.dataset.id); }
+  else if (act === "sub") go(["records", el.dataset.sub]);
+  else if (act === "doc") go(["records", "docs", el.dataset.doc], true);
   else if (act === "logcall") callPanel(S.run, el.dataset.id);
 });
 document.addEventListener("change", (e) => {
   const t = e.target;
   if (t.dataset.cmp) {
     const a = $('[data-cmp="a"]').value, b = $('[data-cmp="b"]').value;
-    if (a && b) go(["karsilastir", a, b], true);
+    if (a && b) go(["compare", a, b], true);
   } else if (t.dataset.sweep != null && t.matches("select[data-sweep]")) { S.sweep = t.value; render(true); }
   else if (t.dataset.lf) { S.lf[t.dataset.lf] = t.type === "checkbox" ? t.checked : t.value; render(true); }
 });
@@ -853,14 +853,14 @@ window.addEventListener("resize", () => {
   clearTimeout(resizeT);
   resizeT = setTimeout(() => {
     const w = $("#body").clientWidth;
-    if ((S.sec === "ozet" || S.sec === "karsilastir") && Math.abs(w - S.width) > 60) render(true);
+    if ((S.sec === "overview" || S.sec === "compare") && Math.abs(w - S.width) > 60) render(true);
   }, 200);
 });
 window.addEventListener("talp:run", (e) => {
   S.run = e.detail.run;
   S.lf = { persona: "", week: "", failed: false, q: "" };
-  if (S.sec === "karsilastir" || S.sec === "personalar") setHash([S.sec]);
-  else if (S.sec === "kayitlar") setHash(["kayitlar", S.arg[0] || "loglar"]);
+  if (S.sec === "compare" || S.sec === "personas") setHash([S.sec]);
+  else if (S.sec === "records") setHash(["records", S.arg[0] || "calls"]);
   render();
 });
 (window.TALP ? TALP.ready : Promise.resolve({ run: null })).then(({ run }) => { S.run = run; render(); });

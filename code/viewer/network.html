@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="tr">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Haberleşme</title>
+<title>Network</title>
 <link rel="stylesheet" href="/shell.css">
 <style>
   .wrap { max-width: 1240px; margin: 0 auto; padding: 22px 16px 48px; }
@@ -159,23 +159,23 @@
 </head>
 <body>
 <main class="wrap">
-  <h1>Kim kime, neye göre?</h1>
-  <p class="sub" id="sub">Kimin kimi duyabileceğini ağ, gerçekten duyup duymadığını seed'li bir zar belirler.</p>
+  <h1>Who tells whom, and why</h1>
+  <p class="sub" id="sub">The network decides who can hear whom; a seeded dice roll decides who actually hears it.</p>
 
   <section class="chans" id="chans"></section>
   <div class="rules" id="rules"></div>
 
   <section class="stage">
     <div class="bar">
-      <button class="play" id="play" title="Oynat / durdur (boşluk)" aria-label="Oynat"></button>
+      <button class="play" id="play" title="Play / pause (space)" aria-label="Play"></button>
       <div class="when" id="when">—</div>
-      <div class="seg" id="seg"><button data-r="1" class="on">1. tur</button><button data-r="2">2. tur</button></div>
-      <div class="timeline"><div class="bars" id="bars"></div><input type="range" id="wk" min="1" max="10" value="1" aria-label="Hafta"></div>
+      <div class="seg" id="seg"><button data-r="1" class="on">Round 1</button><button data-r="2">Round 2</button></div>
+      <div class="timeline"><div class="bars" id="bars"></div><input type="range" id="wk" min="1" max="10" value="1" aria-label="Week"></div>
       <div class="counts" id="counts"></div>
     </div>
     <div class="body">
       <div class="gwrap" id="gwrap">
-        <svg id="g" viewBox="0 0 900 620" role="img" aria-label="Personaların iletişim ağı"></svg>
+        <svg id="g" viewBox="0 0 900 620" role="img" aria-label="Persona communication network"></svg>
         <div id="card" hidden></div>
       </div>
       <aside id="feed"></aside>
@@ -190,11 +190,11 @@
 "use strict";
 const NET = (() => {
   const GROUPS = [
-    ["everyday customers", "Günlük müşteriler", "var(--g1)", "#2f6fde"],
-    ["paycheck customers", "Maaş müşterileri", "var(--g2)", "#1a9a8a"],
-    ["savers with large balances", "Yüksek bakiyeli tasarrufçular", "var(--g3)", "#d08a1e"],
-    ["small business owners with a Cobalt card reader", "Kart okuyuculu küçük işletmeler", "var(--g4)", "#a04fc4"],
-    ["students", "Öğrenciler", "var(--g5)", "#d4506a"],
+    ["everyday customers", "Everyday customers", "var(--g1)", "#2f6fde"],
+    ["paycheck customers", "Paycheck customers", "var(--g2)", "#1a9a8a"],
+    ["savers with large balances", "Savers with large balances", "var(--g3)", "#d08a1e"],
+    ["small business owners with a Cobalt card reader", "Small businesses with a card reader", "var(--g4)", "#a04fc4"],
+    ["students", "Students", "var(--g5)", "#d4506a"],
   ];
   const EXTRA = ["#4a7d8c", "#7a6a3a", "#5c5ca8"];
   const INF_R = { leader: 15, independent: 12, follower: 10 };
@@ -414,7 +414,7 @@ if (typeof module !== "undefined") module.exports = NET;
   let W = 900, H = 620;
   const narrow = () => (document.getElementById("gwrap").clientWidth || 900) < 640;
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-  const pct = (p) => "%" + Math.round(p * 100);
+  const pct = (p) => Math.round(p * 100) + "%";
   const reduced = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   const ICON = {
@@ -425,15 +425,15 @@ if (typeof module !== "undefined") module.exports = NET;
     play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l13-7.5z"/></svg>',
     pause: '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4.5" width="4" height="15" rx="1"/><rect x="14" y="4.5" width="4" height="15" rx="1"/></svg>',
   };
-  const CH = { social: "Sosyal medya", whatsapp: "WhatsApp", direct: "Direkt mesaj", phone: "Telefon" };
+  const CH = { social: "Social media", whatsapp: "WhatsApp", direct: "Direct message", phone: "Phone" };
   const RES = {
-    delivered: { tr: "ulaştı", c: "#1a7f37" },
-    not_seen: { tr: "görülmedi", c: "#aab2bb" },
-    inbox_limit: { tr: "kota dolu", c: "#d08a1e" },
-    bank_message_quote: { tr: "banka alıntısı", c: "#c62f2f" },
+    delivered: { tr: "delivered", c: "#1a7f37" },
+    not_seen: { tr: "unseen", c: "#aab2bb" },
+    inbox_limit: { tr: "inbox full", c: "#d08a1e" },
+    bank_message_quote: { tr: "bank quote", c: "#c62f2f" },
   };
-  const INF = { leader: "fikir lideri", follower: "takipçi", independent: "bağımsız" };
-  const CIRC = { small: "küçük çevre", medium: "orta çevre", large: "geniş çevre", "large online": "geniş · online" };
+  const INF = { leader: "opinion leader", follower: "follower", independent: "independent" };
+  const CIRC = { small: "small circle", medium: "medium circle", large: "large circle", "large online": "large · online" };
 
   let M = null;               // prepared model
   const S = { week: 1, round: 1, playing: false, sel: null, focus: null, msg: null, token: 0 };
@@ -446,16 +446,16 @@ if (typeof module !== "undefined") module.exports = NET;
     const card = (ch, who, odds) => `<article class="chan"><div class="hd"><span class="ic">${ICON[ch]}</span>
       <div><h3>${CH[ch]}</h3><div class="who">${who}</div></div></div><div class="odds">${odds}</div></article>`;
     $("#chans").innerHTML =
-      card("social", "Herkese açık gönderi", odd("yakın arkadaş", s.friend) + odd("takipçi", s.follower) + odd("yabancı", s.stranger)) +
-      card("whatsapp", "Bir grup sohbetine", odd("her üye", s.whatsapp)) +
-      card("direct", "Rehberden tek kişiye", odd("her zaman okunur", 1)) +
-      card("phone", "Rehberden tek kişiyi arar", odd("her zaman duyulur", 1));
+      card("social", "Public post", odd("close friend", s.friend) + odd("follower", s.follower) + odd("stranger", s.stranger)) +
+      card("whatsapp", "To a group chat", odd("each member", s.whatsapp)) +
+      card("direct", "To one contact", odd("always read", 1)) +
+      card("phone", "Calls one contact", odd("always heard", 1));
     $("#rules").innerHTML =
       (M && M.privateCapped
-        ? `<span>Kişi başı haftada en çok <b>${s.max_peer_messages}</b> mesaj okunur. Bu run eski kuralla koştu: direkt mesaj da bu sayıya girdi.</span>`
-        : `<span>Grup ve sosyal medya mesajlarından kişi başı haftada en çok <b>${s.max_peer_messages}</b> tanesi okunur. Direkt mesaj ve telefon bu sayıya girmez.</span>`) +
-      `<span>Bankanın karar mesajını aynen aktaran mesaj <b>iletilmez</b>.</span>` +
-      `<span>1. turda yazılan mesaj aynı hafta, 2. turda yazılan ertesi hafta okunur.</span>`;
+        ? `<span>Each person reads at most <b>${s.max_peer_messages}</b> messages a week. This run used the old rule: direct messages counted toward the cap too.</span>`
+        : `<span>Each person reads at most <b>${s.max_peer_messages}</b> group and social media messages a week. Direct messages and calls do not count toward this cap.</span>`) +
+      `<span>A message that quotes the bank's decision message word for word is <b>not passed on</b>.</span>` +
+      `<span>Messages written in round 1 are read the same week; messages written in round 2 are read the next week.</span>`;
   }
 
   // ---------- graph ----------
@@ -537,23 +537,23 @@ if (typeof module !== "undefined") module.exports = NET;
     const row = (k, p, ids, extra = "") => `<div class="row"><div class="k">${k}<b>${p}</b></div><div class="pp">${ids.map(pill).join("")}${extra}</div></div>`;
     let reachHtml = "";
     if (r.social) {
-      if (r.social.friend.length) reachHtml += row("Sosyal · yakın", pct(s.friend), r.social.friend);
-      if (r.social.follower.length) reachHtml += row("Sosyal · takipçi", pct(s.follower), r.social.follower);
-      if (r.social.stranger.length) reachHtml += row("Sosyal · yabancı", pct(s.stranger), [], `<span class="muted">${r.social.stranger.length} kişi</span>`);
-    } else reachHtml += `<div class="row"><div class="k">Sosyal</div><div class="muted">kullanmıyor</div></div>`;
+      if (r.social.friend.length) reachHtml += row("Social · friend", pct(s.friend), r.social.friend);
+      if (r.social.follower.length) reachHtml += row("Social · follower", pct(s.follower), r.social.follower);
+      if (r.social.stranger.length) reachHtml += row("Social · stranger", pct(s.stranger), [], `<span class="muted">${r.social.stranger.length} people</span>`);
+    } else reachHtml += `<div class="row"><div class="k">Social</div><div class="muted">not used</div></div>`;
     for (const g of r.whatsapp) reachHtml += row("WA · " + esc(g.name.replace(/-chat$/, "")), pct(s.whatsapp), g.members);
-    if (r.private.length) reachHtml += row("Direkt / tel.", "%100", r.private);
+    if (r.private.length) reachHtml += row("Direct / phone", "100%", r.private);
     const sent = Object.values(M.steps).flat().filter((m) => m.author === id);
     const got = Object.values(M.steps).flat().flatMap((m) => m.exposures).filter((e) => e.recipient === id && e.result === "delivered");
     const chans = ["social", "whatsapp", "direct", "phone"].map((c) => `<span class="tag${NET.enabled(M, id, c) ? "" : " no"}">${CH[c]}</span>`).join("");
     const card = $("#card");
-    card.innerHTML = `<button class="x" aria-label="Kapat" data-close>✕</button>
+    card.innerHTML = `<button class="x" aria-label="Close" data-close>✕</button>
       <div class="who-hd"><span class="av" style="background:${n.g.hex}">${esc(n.id)}</span><div><b>${esc(n.name || n.id)}</b><span>${esc(n.g.tr)}</span></div></div>
-      <div class="tags">${n.influence ? `<span class="tag">${INF[n.influence] || esc(n.influence)}</span>` : ""}${n.circle_size ? `<span class="tag">${CIRC[n.circle_size] || esc(n.circle_size)}</span>` : ""}${n.sways_easily ? `<span class="tag">etkilenme: ${esc(n.sways_easily)}</span>` : ""}${n.checks_rumors != null ? `<span class="tag">${n.checks_rumors ? "söylentiyi doğrular" : "söylentiyi doğrulamaz"}</span>` : ""}</div>
-      ${(n.news_sources || []).length ? `<div class="muted">Haber: ${n.news_sources.map(esc).join(" · ")}</div>` : ""}
-      <div class="sec"><h4>Kanallar</h4><div class="tags" style="margin:0">${chans}</div></div>
-      <div class="sec"><h4>Kime ulaşır</h4>${reachHtml}</div>
-      ${M.hasMessages ? `<div class="sec"><h4>Bu run'da</h4><div class="muted"><b style="color:var(--text)">${sent.length}</b> mesaj yazdı · <b style="color:var(--text)">${got.length}</b> mesaj ona ulaştı</div></div>` : ""}`;
+      <div class="tags">${n.influence ? `<span class="tag">${INF[n.influence] || esc(n.influence)}</span>` : ""}${n.circle_size ? `<span class="tag">${CIRC[n.circle_size] || esc(n.circle_size)}</span>` : ""}${n.sways_easily ? `<span class="tag">sways: ${esc(n.sways_easily)}</span>` : ""}${n.checks_rumors != null ? `<span class="tag">${n.checks_rumors ? "checks rumors" : "doesn't check rumors"}</span>` : ""}</div>
+      ${(n.news_sources || []).length ? `<div class="muted">News: ${n.news_sources.map(esc).join(" · ")}</div>` : ""}
+      <div class="sec"><h4>Channels</h4><div class="tags" style="margin:0">${chans}</div></div>
+      <div class="sec"><h4>Who it reaches</h4>${reachHtml}</div>
+      ${M.hasMessages ? `<div class="sec"><h4>In this run</h4><div class="muted"><b style="color:var(--text)">${sent.length}</b> messages written · <b style="color:var(--text)">${got.length}</b> messages received</div></div>` : ""}`;
     card.hidden = false;
     card.scrollTop = 0;
   }
@@ -675,8 +675,8 @@ if (typeof module !== "undefined") module.exports = NET;
     const btn = $("#play");
     btn.disabled = !has;
     btn.innerHTML = S.playing ? ICON.pause : ICON.play;
-    btn.setAttribute("aria-label", S.playing ? "Durdur" : "Oynat");
-    $("#when").innerHTML = `Hafta ${S.week}<small>${S.round === 1 ? "1. tur · herkes yazar" : "2. tur · tepkiler"}</small>`;
+    btn.setAttribute("aria-label", S.playing ? "Pause" : "Play");
+    $("#when").innerHTML = `Week ${S.week}<small>${S.round === 1 ? "Round 1 · everyone writes" : "Round 2 · replies"}</small>`;
     document.querySelectorAll("#seg button").forEach((b) => b.classList.toggle("on", +b.dataset.r === S.round));
     const n = M ? M.maxWeek : 10;
     const wk = $("#wk"); wk.max = n; wk.value = S.week;
@@ -688,14 +688,14 @@ if (typeof module !== "undefined") module.exports = NET;
     for (let w = 1; w <= n; w++) {
       const c1 = M ? NET.stepOf(M, w, 1).length : 0, c2 = M ? NET.stepOf(M, w, 2).length : 0;
       const ht = (c) => Math.max(8, (c / max) * 100);
-      h += `<button data-w="${w}" class="${w === S.week ? "on" : ""}" title="Hafta ${w}: ${c1} + ${c2} mesaj">
+      h += `<button data-w="${w}" class="${w === S.week ? "on" : ""}" title="Week ${w}: ${c1} + ${c2} messages">
         <i style="height:${c1 ? ht(c1) : 8}%" class="${w === S.week && S.round === 1 ? "cur" : ""}"></i><i class="r2 ${w === S.week && S.round === 2 ? "cur" : ""}" style="height:${c2 ? ht(c2) : 8}%"></i></button>`;
     }
     bars.innerHTML = h;
     const list = M ? NET.stepOf(M, S.week, S.round) : [];
     const t = NET.tally(list);
     $("#counts").innerHTML = has
-      ? `<span class="cnt"><b>${t.sent}</b> mesaj</span><span class="cnt ok"><b>${t.delivered}</b> ulaştı</span><span class="cnt"><b>${t.not_seen}</b> görülmedi</span><span class="cnt lim"><b>${t.inbox_limit}</b> kota dolu</span>${t.bank_message_quote ? `<span class="cnt" style="background:var(--bad-bg)"><b style="color:var(--bad)">${t.bank_message_quote}</b> engellendi</span>` : ""}`
+      ? `<span class="cnt"><b>${t.sent}</b> sent</span><span class="cnt ok"><b>${t.delivered}</b> delivered</span><span class="cnt"><b>${t.not_seen}</b> unseen</span><span class="cnt lim"><b>${t.inbox_limit}</b> inbox full</span>${t.bank_message_quote ? `<span class="cnt" style="background:var(--bad-bg)"><b style="color:var(--bad)">${t.bank_message_quote}</b> blocked</span>` : ""}`
       : "";
   }
 
@@ -709,16 +709,16 @@ if (typeof module !== "undefined") module.exports = NET;
     const feed = $("#feed");
     if (!M) { feed.innerHTML = ""; return; }
     if (!M.hasMessages) {
-      feed.innerHTML = `<div class="fhd">Mesajlar</div><div class="none">Bu run'da mesaj kaydı yok.<br>Sadece ağ gösteriliyor.</div>`;
+      feed.innerHTML = `<div class="fhd">Messages</div><div class="none">This run has no message log.<br>Showing the network only.</div>`;
       return;
     }
     const list = NET.stepOf(M, S.week, S.round);
-    let h = `<div class="fhd">Hafta ${S.week} · ${S.round}. tur <span>· ${list.length} mesaj</span></div>`;
-    if (!list.length) h += `<div class="none">Bu turda kimse yazmadı.</div>`;
+    let h = `<div class="fhd">Week ${S.week} · round ${S.round} <span>· ${list.length} messages</span></div>`;
+    if (!list.length) h += `<div class="none">Nobody wrote in this round.</div>`;
     for (const m of list) {
       const a = M.byId[m.author];
-      const tgt = m.channel === "whatsapp" ? esc(String(m.target || "").replace(/-chat$/, "")) : m.target ? esc(m.target) + (M.byId[m.target] ? " · " + esc(M.byId[m.target].name) : "") : "herkes";
-      const next = m.round === 2 ? `<span class="nx">${m.week < M.maxWeek ? `H${m.week + 1}'de okunur` : "okunmadı · sim bitti"}</span>` : "";
+      const tgt = m.channel === "whatsapp" ? esc(String(m.target || "").replace(/-chat$/, "")) : m.target ? esc(m.target) + (M.byId[m.target] ? " · " + esc(M.byId[m.target].name) : "") : "everyone";
+      const next = m.round === 2 ? `<span class="nx">${m.week < M.maxWeek ? `read in week ${m.week + 1}` : "never read · sim ended"}</span>` : "";
       h += `<div class="msg${S.msg === m.id ? " on" : ""}" data-m="${esc(m.id)}">
         <div class="mh"><span class="lg-dot" style="background:${a.g.hex}"></span><b>${esc(m.author)}</b> ${esc(a.name || "")}<span class="ci">${ICON[m.channel] || ""}</span>${tgt}${next}</div>
         <div class="mt">“${esc(m.text)}”</div>${resultBar(m.exposures)}
@@ -732,13 +732,13 @@ if (typeof module !== "undefined") module.exports = NET;
     const ex = [...m.exposures].sort((x, y) => order[x.result] - order[y.result] || (x.recipient < y.recipient ? -1 : 1));
     const chips = ex.map((e) => {
       const n = M.byId[e.recipient], r = RES[e.result] || { tr: e.result, c: "#999" };
-      return `<span class="p" style="--c:${r.c}" title="${esc(n ? n.name : e.recipient)} · şans ${pct(e.probability)} · zar ${(+e.draw).toFixed(2)}">${esc(e.recipient)} <small>${r.tr} · ${pct(e.probability)}</small></span>`;
+      return `<span class="p" style="--c:${r.c}" title="${esc(n ? n.name : e.recipient)} · chance ${pct(e.probability)} · roll ${(+e.draw).toFixed(2)}">${esc(e.recipient)} <small>${r.tr} · ${pct(e.probability)}</small></span>`;
     }).join("");
     const c = calls[m.call];
     return `<div class="det" data-stop>
-      ${ex.length ? `<div class="rc">${chips}</div>` : `<div class="muted">Kimseye yönlendirilmedi.</div>`}
-      ${m.call ? `<button class="llm" data-call="${esc(m.call)}">${c && c.open ? "LLM çağrısını gizle" : "LLM çağrısını göster"}</button>` : ""}
-      ${c && c.open ? `<div class="call">${c.err ? `<div class="muted">${esc(c.err)}</div>` : c.data ? `<h5>Yanıt</h5><pre>${esc(pretty(c.data.response))}</pre><h5>Prompt</h5><pre>${esc(c.data.prompt)}</pre>` : `<div class="muted">Yükleniyor…</div>`}</div>` : ""}
+      ${ex.length ? `<div class="rc">${chips}</div>` : `<div class="muted">Not sent to anyone.</div>`}
+      ${m.call ? `<button class="llm" data-call="${esc(m.call)}">${c && c.open ? "Hide LLM call" : "Show LLM call"}</button>` : ""}
+      ${c && c.open ? `<div class="call">${c.err ? `<div class="muted">${esc(c.err)}</div>` : c.data ? `<h5>Response</h5><pre>${esc(pretty(c.data.response))}</pre><h5>Prompt</h5><pre>${esc(c.data.prompt)}</pre>` : `<div class="muted">Loading…</div>`}</div>` : ""}
     </div>`;
   }
   const pretty = (s) => { try { return JSON.stringify(JSON.parse(s), null, 2); } catch { return s ?? ""; } };
@@ -750,9 +750,9 @@ if (typeof module !== "undefined") module.exports = NET;
     if (c.open && !c.data && !c.err) {
       try {
         const r = await fetch(`/api/call?run=${encodeURIComponent(M.run || "")}&id=${encodeURIComponent(id)}`);
-        if (!r.ok) throw new Error("Çağrı bulunamadı");
+        if (!r.ok) throw new Error("Call not found");
         c.data = await r.json();
-      } catch (e) { c.err = e.message || "Hata"; }
+      } catch (e) { c.err = e.message || "Error"; }
       renderFeed();
     }
   }
@@ -761,7 +761,7 @@ if (typeof module !== "undefined") module.exports = NET;
     if (!M) return;
     const gs = [...new Map(M.nodes.map((n) => [n.group, n.g])).values()].sort((a, b) => a.order - b.order);
     $("#legend").innerHTML = gs.map((g) => `<span><i class="lg-dot" style="background:${g.hex}"></i>${esc(g.tr)}</span>`).join("") +
-      `<span><i class="lg-dot" style="border:1.5px dashed #888"></i>sosyal medyası yok</span><span><i class="lg-line"></i>yakın arkadaş</span><span><i class="lg-line thin"></i>takip (ok: gönderi kime düşer)</span><span><i class="lg-hull"></i>WhatsApp grubu</span>` +
+      `<span><i class="lg-dot" style="border:1.5px dashed #888"></i>no social media</span><span><i class="lg-line"></i>close friend</span><span><i class="lg-line thin"></i>follows (arrow: whose feed the post lands in)</span><span><i class="lg-hull"></i>WhatsApp group</span>` +
       Object.values(RES).map((r) => `<span><i class="lg-dot" style="background:${r.c}"></i>${r.tr}</span>`).join("");
   }
 
@@ -782,8 +782,8 @@ if (typeof module !== "undefined") module.exports = NET;
     S.week = first ? first[0] : 1; S.round = first ? first[1] : 1; S.msg = null;
     renderChannels(); renderGraph(); renderLegend(); renderBar(); renderFeed();
     const empty = $("#gwrap .empty"); if (empty) empty.remove();
-    if (!M.nodes.length) $("#gwrap").insertAdjacentHTML("beforeend", `<div class="empty">Persona bulunamadı</div>`);
-    else if (!M.hasMessages) $("#gwrap").insertAdjacentHTML("beforeend", `<div class="empty">Bu run'da mesaj kaydı yok</div>`);
+    if (!M.nodes.length) $("#gwrap").insertAdjacentHTML("beforeend", `<div class="empty">No personas found</div>`);
+    else if (!M.hasMessages) $("#gwrap").insertAdjacentHTML("beforeend", `<div class="empty">This run has no message log</div>`);
     drawRays(NET.stepOf(M, S.week, S.round));
   }
 

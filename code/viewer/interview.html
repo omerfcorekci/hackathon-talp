@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="tr">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Konuşma</title>
+<title>Interview</title>
 <link rel="stylesheet" href="/shell.css">
 <style>
   .wrap { max-width: 1180px; margin: 0 auto; padding: 24px 24px 40px; display: grid; grid-template-columns: 290px minmax(0, 1fr); gap: 18px; }
@@ -89,9 +89,9 @@
 </head>
 <body>
 <main class="wrap">
-  <aside class="panel list"><input id="q" type="search" placeholder="İsim, meslek, şehir…" aria-label="Persona ara"><div class="scroll" id="people"></div></aside>
+  <aside class="panel list"><input id="q" type="search" placeholder="Name, job, city…" aria-label="Search personas"><div class="scroll" id="people"></div></aside>
   <div>
-    <select class="pick" id="pick" aria-label="Persona seç"></select>
+    <select class="pick" id="pick" aria-label="Choose a persona"></select>
     <section class="panel chat" id="chat"></section>
   </div>
 </main>
@@ -101,15 +101,15 @@
 const $ = (s) => document.querySelector(s);
 const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const GROUPS = [
-  ["everyday customers", "Günlük müşteriler", "var(--g1)"],
-  ["paycheck customers", "Maaş müşterileri", "var(--g2)"],
-  ["savers with large balances", "Yüksek bakiyeli tasarrufçular", "var(--g3)"],
-  ["small business owners with a Cobalt card reader", "Kart okuyuculu küçük işletmeler", "var(--g4)"],
-  ["students", "Öğrenciler", "var(--g5)"],
+  ["everyday customers", "Everyday customers", "var(--g1)"],
+  ["paycheck customers", "Paycheck customers", "var(--g2)"],
+  ["savers with large balances", "Savers with large balances", "var(--g3)"],
+  ["small business owners with a Cobalt card reader", "Small businesses with a card reader", "var(--g4)"],
+  ["students", "Students", "var(--g5)"],
 ];
-const grp = (g) => GROUPS.find((x) => x[0] === g) || [g, g || "Diğer", "var(--faint)"];
-const STATUS = { "main bank": ["ana banka", "main"], "second bank": ["ikinci banka", "second"], "dormant": ["uykuda", "dormant"], "left": ["ayrıldı", "left"] };
-const MONEY = { "kept": "parası duruyor", "moved some": "bir kısmını taşıdı", "moved most": "çoğunu taşıdı" };
+const grp = (g) => GROUPS.find((x) => x[0] === g) || [g, g || "Other", "var(--faint)"];
+const STATUS = { "main bank": ["main bank", "main"], "second bank": ["second bank", "second"], "dormant": ["dormant", "dormant"], "left": ["left", "left"] };
+const MONEY = { "kept": "money kept", "moved some": "moved some money", "moved most": "moved most money" };
 const SUGGEST = [
   "How did the migration weekend go for you?",
   "Do you trust Cobalt Bank today? Why?",
@@ -125,12 +125,12 @@ const S = { run: null, data: null, pid: null, chats: {}, busy: false };
 
 async function load(run) {
   S.run = run; S.chats = {}; S.data = null;
-  if (!run) { $("#chat").innerHTML = `<div class="msgs"><div class="empty"><h2>Run yok</h2>Önce bir run seçin.</div></div>`; return; }
+  if (!run) { $("#chat").innerHTML = `<div class="msgs"><div class="empty"><h2>No run</h2>Pick a run first.</div></div>`; return; }
   try {
     const r = await fetch("/api/interview?run=" + encodeURIComponent(run), { cache: "no-store" });
     S.data = await r.json();
     if (!r.ok) throw new Error(S.data.error || r.status);
-  } catch (e) { $("#chat").innerHTML = `<div class="msgs"><div class="empty"><h2>Yüklenemedi</h2>${esc(e.message)}</div></div>`; return; }
+  } catch (e) { $("#chat").innerHTML = `<div class="msgs"><div class="empty"><h2>Could not load</h2>${esc(e.message)}</div></div>`; return; }
   const ids = S.data.personas.map((p) => p.id);
   const want = decodeURIComponent(location.hash.slice(1));
   S.pid = ids.includes(want) ? want : ids.includes(S.pid) ? S.pid : ids[0] || null;
@@ -152,7 +152,7 @@ function renderList() {
     html += `<button class="who ${p.id === S.pid ? "on" : ""}" data-id="${esc(p.id)}">${avatar(p)}
       <span class="t"><b>${esc(p.name || p.id)}</b><small>${esc([p.occupation, p.city].filter(Boolean).join(" · "))}</small></span>${stChip(p.last.status)}</button>`;
   }
-  $("#people").innerHTML = html || `<div class="grp">Sonuç yok</div>`;
+  $("#people").innerHTML = html || `<div class="grp">No matches</div>`;
   $("#pick").innerHTML = sorted().map((p) => `<option value="${esc(p.id)}" ${p.id === S.pid ? "selected" : ""}>${esc(p.name || p.id)} · ${esc(grp(p.group)[1])}</option>`).join("");
 }
 
@@ -160,25 +160,25 @@ function persona() { return S.data && S.data.personas.find((p) => p.id === S.pid
 
 function renderChat() {
   const p = persona();
-  if (!p) { $("#chat").innerHTML = `<div class="msgs"><div class="empty"><h2>Persona yok</h2></div></div>`; return; }
+  if (!p) { $("#chat").innerHTML = `<div class="msgs"><div class="empty"><h2>No persona</h2></div></div>`; return; }
   const pr = p.probe || {};
-  const trust = pr.start_1a != null && pr.end_1a != null ? `<span class="fact">güven <b>${pr.start_1a} → ${pr.end_1a}</b> / 5</span>` : "";
+  const trust = pr.start_1a != null && pr.end_1a != null ? `<span class="fact">trust <b>${pr.start_1a} → ${pr.end_1a}</b> / 5</span>` : "";
   const last = p.last || {};
   $("#chat").innerHTML = `
     <div class="head">${avatar(p, "lg")}
-      <div class="t"><h1>${esc(p.name || p.id)}</h1><div class="meta">${esc([p.age && p.age + " yaş", p.occupation, [p.city, p.state].filter(Boolean).join(", ")].filter(Boolean).join(" · "))}</div></div>
+      <div class="t"><h1>${esc(p.name || p.id)}</h1><div class="meta">${esc([p.age && "age " + p.age, p.occupation, [p.city, p.state].filter(Boolean).join(", ")].filter(Boolean).join(" · "))}</div></div>
       <div class="facts"><span class="fact">${esc(grp(p.group)[1])}</span>
-        ${last.status ? `<span class="fact">${last.week}. hafta sonunda <b>${esc((STATUS[last.status] || [last.status])[0])}</b></span>` : ""}
+        ${last.status ? `<span class="fact">end of week ${last.week}: <b>${esc((STATUS[last.status] || [last.status])[0])}</b></span>` : ""}
         ${last.money ? `<span class="fact"><b>${esc(MONEY[last.money] || last.money)}</b></span>` : ""}${trust}</div>
     </div>
-    ${p.narrative ? `<details class="story"><summary>Hikâyesi</summary><p>${esc(p.narrative)}</p></details>` : ""}
+    ${p.narrative ? `<details class="story"><summary>Background</summary><p>${esc(p.narrative)}</p></details>` : ""}
     <div class="mode ${S.data.fake || S.data.problem ? "" : "live"}">${S.data.fake
-      ? `Test modu (--fake-interview): model çağrılmıyor, cevaplar sabit bir örnek.`
-      : S.data.problem ? `Canlı model şu an cevap veremez: ${esc(S.data.problem)}.`
-      : `Cevaplar ${esc(S.data.model)} modelinden gelir. Persona yalnız bu run'daki kendi geçmişini bilir.`}</div>
+      ? `Test mode (--fake-interview): no model call, every answer is the same canned text.`
+      : S.data.problem ? `The live model cannot answer: ${esc(S.data.problem)}.`
+      : `Answers come from ${esc(S.data.model)}. The persona knows only its own history in this run.`}</div>
     <div class="msgs" id="msgs"></div>
-    <form class="ask" id="ask"><textarea id="text" rows="1" placeholder="Bir soru sorun… (Enter gönderir)" maxlength="600"></textarea>
-      <button type="button" id="reset" title="Konuşmayı sıfırla">Sıfırla</button><button id="send">Sor</button></form>`;
+    <form class="ask" id="ask"><textarea id="text" rows="1" placeholder="Ask a question… (Enter sends)" maxlength="600"></textarea>
+      <button type="button" id="reset" title="Clear this conversation">Clear</button><button id="send">Ask</button></form>`;
   renderMsgs();
 }
 
@@ -186,13 +186,13 @@ function renderMsgs() {
   const p = persona(), turns = S.chats[S.pid] || [];
   const box = $("#msgs");
   if (!turns.length) {
-    box.innerHTML = `<div class="empty"><h2>${esc((p.name || p.id).split(" ")[0])} ile konuşun</h2>Sorunuzu yazın ya da birini seçin. Persona İngilizce düşünür; Türkçe sorarsanız Türkçe cevap verebilir.
+    box.innerHTML = `<div class="empty"><h2>Talk to ${esc((p.name || p.id).split(" ")[0])}</h2>Type a question or pick one below.
       <div class="sugs">${SUGGEST.map((q) => `<button class="sug" type="button">${esc(q)}</button>`).join("")}</div></div>`;
   } else {
     box.innerHTML = turns.map((t, i) => `<div class="q">${esc(t.q)}</div>
       ${t.pending ? `<div class="row">${avatar(p)}<div class="a"><span class="dots"><i></i><i></i><i></i></span></div></div>`
-        : `<div><div class="row">${avatar(p)}<div class="a ${t.error ? "err" : ""}">${esc(t.error ? "Model cevap veremedi: " + t.error : t.a)}</div></div>
-           <div class="under">${t.fake ? `<span class="tag">örnek</span>` : ""}${t.prompt ? `<button type="button" data-prompt="${i}">${t.open ? "Prompt'u gizle" : "Prompt'u göster"}</button>` : ""}</div>
+        : `<div><div class="row">${avatar(p)}<div class="a ${t.error ? "err" : ""}">${esc(t.error ? "The model did not answer: " + t.error : t.a)}</div></div>
+           <div class="under">${t.fake ? `<span class="tag">canned</span>` : ""}${t.prompt ? `<button type="button" data-prompt="${i}">${t.open ? "Hide prompt" : "Show prompt"}</button>` : ""}</div>
            ${t.open ? `<pre class="prompt">${esc(t.prompt)}</pre>` : ""}</div>`}`).join("");
   }
   $("#send").disabled = S.busy || !!S.data.problem;
