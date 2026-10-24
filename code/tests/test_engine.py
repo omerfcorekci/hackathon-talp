@@ -198,6 +198,18 @@ class WorldTests(unittest.TestCase):
             self.assertIn("migration-window", prompt)
             self.assertNotIn("early_pay_days", prompt)
 
+    def test_last_week_s_trust_and_mood_carry_into_the_prompt(self):
+        world = World(WORLD, self.plan, decisions_enabled=False)
+
+        def prompt(prior):
+            return build_prompt(persona=self.people[0], week=3, round_number=1, prior_state=prior, ledger=[],
+                                world=world, network=self.network, inbox=[])
+
+        self.assertIn("Last week you trusted Cobalt 2/5 and felt worried about it",
+                      prompt(answer(trust=2, mood="worried")))
+        self.assertNotIn("Last week you trusted", prompt(None))
+        self.assertNotIn("Last week you trusted", prompt({"memory": "m", "reason": "r"}))  # an older state without them
+
     def test_history_shows_stretches_of_status_not_a_column_of_weeks(self):
         world = World(WORLD, self.plan, decisions_enabled=False)
         ledger = [{"week": w, "status": s, "money": m, "balance": None, "actions": ["UNIQUE_ACTION"], "call": "x"}

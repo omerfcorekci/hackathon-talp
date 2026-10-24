@@ -222,6 +222,10 @@ def render_history(prior_state, ledger, world=None, week=None, persona_id=None):
             lines.append(f'Your memory from last week: "{prior_state["memory"]}"')
         if prior_state.get("reason"):
             lines.append(f'Why you did what you did last week: "{prior_state["reason"]}"')
+        # Only last week's values, not the series: a repeated column of past answers gets copied.
+        if type(prior_state.get("trust")) is int and isinstance(prior_state.get("mood"), str):
+            lines.append(f"Last week you trusted Cobalt {prior_state['trust']}/5 and felt {prior_state['mood']} about it; "
+                         "give this week's trust and mood as they are now.")
     return "\n".join(lines)
 
 
