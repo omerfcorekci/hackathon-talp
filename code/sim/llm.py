@@ -98,7 +98,8 @@ class FakeTransport:
         statuses, weights = zip(*self.STATUS_WEIGHTS)
         status = rng.choices(statuses, weights)[0]
         data["status"] = status
-        data["money"] = ("moved most" if status == "left" else
+        # money is cumulative and may not go down; a retry answers "moved most", which never does.
+        data["money"] = ("moved most" if status == "left" or retried else
                          rng.choices(("kept", "moved some", "moved most"), (85, 12, 3))[0])
         if "new_money" in data:
             data["new_money"] = rng.choices(("none", "some", "a lot"), (85, 12, 3))[0]
