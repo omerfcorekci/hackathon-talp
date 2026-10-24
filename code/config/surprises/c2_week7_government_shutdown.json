@@ -6,6 +6,15 @@
   "dashboard_id": "dcd0721e6145582d1add2c800752e114",
   "published_at": "2026-10-24T16:00:00+03:00",
   "effects": {
+    "pay_paused": [
+      {
+        "from_week": 8,
+        "if": {
+          "id": "P2"
+        },
+        "text": "No pay landed in your Cobalt account this week: your contractor's federal jobs are still paused by the shutdown, so there was no paycheck."
+      }
+    ],
     "experience": [
       {
         "week": 7,
