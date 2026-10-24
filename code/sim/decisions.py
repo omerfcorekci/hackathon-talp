@@ -76,6 +76,7 @@ ACTION_KEYWORDS = [
     ("zero_interest_advance", [["advance"]]),
     ("extra_support_staff", [["support"]]),
     ("security_pack", [["security"]]),
+    ("security_pack", [["replacement card"]]),
     ("higher_offline_card_limit", [["offline"]]),
     ("higher_offline_card_limit", [["card limit"]]),
 ]
@@ -171,7 +172,9 @@ class DecisionPlan:
             message = decision.get("message")
             if not isinstance(message, str) or not message.strip() or len(message) > 600:
                 raise ValueError("Decision message must be nonempty and at most 600 characters")
-            if not isinstance(decision.get("why"), str) or not decision["why"].strip():
+            why = decision.get("why")  # the dashboard exports why as a list of three lines
+            if not (isinstance(why, str) and why.strip()) and not (
+                    isinstance(why, list) and why and all(isinstance(x, str) and x.strip() for x in why)):
                 raise ValueError("Decision why is required")
             target = decision.get("target")
             if not isinstance(target, str) or not target:
