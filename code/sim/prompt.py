@@ -25,7 +25,8 @@ Answer with the JSON requested by the API:
   If you list "post on social media" or "tell friends or family", the words you said must be in messages.
 - heard_from: where this week's news about Cobalt reached you: only these words: "bank", "friend", "rival",
   "news", "social media", "none".
-- app_rating: the 1-5 rating you submitted in the App Store this week, or null if you did not rate.
+- app_rating: the 1-5 rating you submitted in the App Store this week, or null if you did not rate. If you
+  rated, "post a review (App Store / Google / Trustpilot)" is in actions.
 - complaint: the highest step you took this week: "none", "bank" (complained to Cobalt) or "cfpb".
 - reason: one or two sentences, in your own voice, on why you did what you did.
 - memory: at most three first-person sentences you will carry into next week.

@@ -290,6 +290,21 @@ class SchemaTests(unittest.TestCase):
             with self.subTest(value=value), self.assertRaises(ValueError):
                 self.parse(value)
 
+    def test_a_rating_needs_the_review_action(self):
+        review = "post a review (App Store / Google / Trustpilot)"
+        allowed = [review, "wait and see"]
+
+        def parse(value, previous=None):
+            return parse_turn(json.dumps(value), contacts=set(), groups=set(), previous=previous, allowed_actions=allowed)
+
+        with self.assertRaises(ValueError):
+            parse(answer(actions=["wait and see"], app_rating=5))
+        self.assertEqual(parse(answer(actions=[review], app_rating=5))["app_rating"], 5)
+        self.assertIsNone(parse(answer(actions=[review], app_rating=None))["app_rating"])  # a review elsewhere
+        # Round two keeps a round-one rating without repeating the action.
+        self.assertEqual(parse(answer(actions=["wait and see"], app_rating=2),
+                               previous=answer(actions=[review], app_rating=2))["app_rating"], 2)
+
     def test_money_moved_out_cannot_come_back_as_kept(self):
         for so_far, ok, refused in (("moved some", ("moved some", "moved most"), ("kept",)),
                                     ("moved most", ("moved most",), ("kept", "moved some")),
