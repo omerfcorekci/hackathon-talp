@@ -224,7 +224,7 @@ class World:
 
     def weekend_outcome(self, item, limit, back):
         """What the migration window did to one persona's own weekend commitment (see generate.py), as
-        (fact, went_wrong) pairs: a delayed, failed or declined payment went wrong; a sale that went through did not."""
+        (fact, went_wrong) pairs: a delayed, queued or declined payment went wrong; a sale that went through did not."""
         if not item or item.get("type") in (None, "none"):
             return []
         back_text = f"Sunday {back[0]:02d}:{back[1]:02d}"  # back: (hour, minute) on Sunday when the system returned
@@ -239,8 +239,10 @@ class World:
         elif kind in ("p2p", "transfer"):
             hour = int(item["scheduled"].split()[1].split(":")[0]) + (24 if item["scheduled"].startswith("Sunday") else 0)
             late = round(back[0] + back[1] / 60 + 24 - hour)
-            lines.append((f"{item['what'][0].upper() + item['what'][1:]} ({_money(item['amount'])}) failed at {item['scheduled']} with "
-                          f"'service unavailable'; you could only send it at {back_text}, {'about ' if back[1] else ''}{late} hours later.", True))
+            # The week-7 outcome: "Transfers queued on Saturday went through by Sunday night."
+            lines.append((f"{item['what'][0].upper() + item['what'][1:]} ({_money(item['amount'])}), sent {item['scheduled']}, was queued "
+                          f"while the app was read-only and went through only after the system came back at {back_text}: "
+                          f"{'about ' if back[1] else ''}{late} hours late.", True))
         elif kind == "card_sales":
             count = item.get("tickets_over_100", 0) if limit <= 100 else item.get("tickets_over_250", 0)
             avg = item.get("over_100_avg", 0) if limit <= 100 else item.get("over_250_avg", 0)
@@ -312,7 +314,7 @@ class World:
             lines += self.weekend_outcome(p.get("migration_weekend"), limit, back)
             if not p.get("migration_weekend"):
                 if p.get("uses_p2p"):
-                    add("Any P2P payment or transfer you tried during that window failed with 'service unavailable'; it could only go out after the system returned.")
+                    add("Any P2P payment or transfer you tried during that window was queued and went out only after the system returned.")
                 if "card reader" in str(p.get("group", "")):
                     add(f"Your Cobalt card reader accepted payments up to {_money(limit)} each during the window; a larger ticket could not be charged to a card.")
             add(self.migration.get("scheduled_payments", "Payments due during the window were processed once the system returned."))
