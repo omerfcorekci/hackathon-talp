@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Council Report — Cobalt Sim Architecture</title>
+<style>
+  :root { --ink:#111; --muted:#666; --line:#e4e4e4; --soft:#f6f6f6; --ok:#1f7a3a; --warn:#b3261e; --accent:#1d4ed8; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:#fff; color:var(--ink); font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
+  main { max-width:880px; margin:0 auto; padding:32px 16px 64px; }
+  h1 { font-size:28px; margin:0 0 4px; }
+  h2 { font-size:20px; margin:36px 0 12px; padding-bottom:6px; border-bottom:1px solid var(--line); }
+  h3 { font-size:16px; margin:20px 0 8px; }
+  .meta { color:var(--muted); font-size:14px; margin-bottom:24px; }
+  blockquote { margin:0; padding:10px 14px; background:var(--soft); border-left:3px solid var(--accent); }
+  .box { border:1px solid var(--line); border-radius:8px; padding:14px 16px; margin:12px 0; }
+  .verdict h3 { color:var(--accent); margin-top:18px; }
+  table { width:100%; border-collapse:collapse; font-size:14px; margin:8px 0 16px; }
+  th, td { text-align:left; vertical-align:top; padding:8px 8px; border-bottom:1px solid var(--line); }
+  th { background:var(--soft); font-weight:600; }
+  .pos { display:inline-block; min-width:74px; padding:2px 8px; border-radius:999px; font-size:12px; font-weight:600; }
+  .agree { background:#e6f4ea; color:var(--ok); }
+  .clash { background:#fdecea; color:var(--warn); }
+  details { border:1px solid var(--line); border-radius:8px; margin:10px 0; padding:0 14px; }
+  summary { cursor:pointer; padding:12px 0; font-weight:600; }
+  details p { margin:0 0 12px; }
+  code, pre { font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:13px; }
+  pre { background:var(--soft); padding:12px; border-radius:6px; overflow:auto; }
+  ol li, ul li { margin:4px 0; }
+  footer { margin-top:48px; color:var(--muted); font-size:13px; border-top:1px solid var(--line); padding-top:12px; }
+  @media (max-width:600px){ table{font-size:13px;} th,td{padding:6px 4px;} }
+</style>
+</head>
+<body>
+<main>
+<h1>LLM Council: simulation architecture, persona communication, roadmap</h1>
+<div class="meta">TALP Simulation Lab · client Cobalt Bank · session 11:43–12:02, Oct 24 2026 · 5 advisors → anonymized peer review → chairman</div>
+
+<h2>Question</h2>
+<p><strong>Raw (user, Turkish):</strong></p>
+<blockquote>bu hackathon için nasıl sistemler kurulmalı personalar nasıl iletişime geçmeli ve genel roadmapimiz ne olmalı teknik ayrıntılarıyla çıkar</blockquote>
+<p><strong>Framed:</strong> With no code at 11:43 and hand-in at 18:00, which architecture does the team commit to? (1) How personas are built and whether they talk: none / one-week-lag feed over a fixed graph / plus a trending digest / pairwise dialogues. (2) An LLM "game master" or deterministic weekly facts. (3) One structured call per persona-week vs several; rolling vs full memory; caching. (4) Build order, cuts, lock timing, surviving a late announcement. Every advisor had the full rules, checker behavior, clock, model timings, jury criteria and prior-art findings.</p>
+
+<h2>Chairman's verdict</h2>
+<div class="box verdict">
+
+<h3>Where the council agrees</h3>
+<p>Four of five advisors (Executor, Contrarian, Outsider, First Principles) and all five reviewers converge on the same core, and it is correct: one JSON-schema call per persona per week; interaction is the lagged feed only — a fixed seeded graph with a one-week post lag and zero extra calls; the world engine is a deterministic per-week facts table, not an LLM; memory is the persona's own short diary carried forward; no dialogues, no digest; gemini-3.5-flash-lite or 3.6-flash with thinking off, 30-wide parallel, so all five runs regenerate in minutes; report deltas versus nodecision, never levels; the live interview is <code>build_prompt</code> plus a question, not a separate system; lock early, replace freely; cut UI, slides, Census, and persona counts above 30. The lagged feed is the "idea of our own": who told you first — bank, rival, or friend.</p>
+
+<h3>Where the council clashes</h3>
+<ol>
+<li><strong>Expansionist vs everyone on the digest and LLM game master.</strong> The instinct is right (support wait should respond to load; the rumor should visibly spread) but the mechanism is wrong: an LLM authoring world facts can contradict dashboard announcements, makes plan-minus-nodecision unattributable, and a digest everyone reads is the homogenizing contagion engine that produces "half leave in a week". Resolution: keep the feedback loop as deterministic bookkeeping (next week's support wait is a function of how many personas reported calling), keep <code>heard_from</code> as a schema field.</li>
+<li><strong>Memory: full own-history (Contrarian) vs diary.</strong> The Contrarian's reason is the best given: the board question will expose a persona contradicting its own week-6 status. The others are right that full transcripts homogenize and bloat. Resolution: a three-sentence diary plus a deterministic ledger of the persona's own prior (week, status, money) rows injected as hard facts.</li>
+<li><strong>Cache.</strong> A prompt-hash disk cache fails the plan_1/plan_2 seed check outright. No cache on the hot path; a three-minute re-run is cheaper than a correct cache.</li>
+<li><strong>Lock both early vs keep a reserve.</strong> Reserve wins, with the correction that a reserve is still a decision that must be locked before its week starts, and nothing locks after 17:30.</li>
+<li><strong>Six branches vs three agents vs one vertical slice.</strong> A six-way merge at 12:30 from zero code will not happen. Slice first; the three-agent split is the widening step.</li>
+</ol>
+
+<h3>Blind spots the council caught</h3>
+<ol>
+<li><strong>goal_3 and goal_3b have no LLM source.</strong> App Store rating and CFPB complaints would be scripted. Fix: add <code>app_rating</code> (1–5 or null) and <code>complaint</code> ∈ {none, bank, cfpb} to the weekly schema; goal_3 = weight-averaged rating of raters; goal_3b = weighted CFPB intent in the plan run ÷ quiet-week nodecision rate × 120/month.</li>
+<li><strong>nodecision is not silence.</strong> Business as usual sends the migration email in week 5 and a holding statement within 24h. Fix: <code>bau_notices</code> per week in <code>weeks.json</code>, present in every run; <code>validate.py</code> refuses a decision message that is a substring of a BAU notice.</li>
+<li><strong>No invalid-call policy.</strong> Retries and model fallback, never a scripted default.</li>
+<li><strong>Nobody validates the $4M cap, menu levels, SMS per-send cost, recipient caps.</strong> Fix: <code>validate.py</code> with the menu table.</li>
+<li><strong>probe.jsonl undesigned</strong> and omitted from call math. Fix: the organizers' eight questions in one schema call at week 0 and 11, plan_1 and nodecision_1 only.</li>
+<li><strong>"Left" personas still need weekly rows through week 10.</strong> Everyone is called every week.</li>
+<li><strong>Posts rebroadcasting the decision message.</strong> Cap at 140 chars, "your own words, don't quote the bank", drop any post containing six consecutive words of a decision message.</li>
+</ol>
+
+<h3>The recommendation</h3>
+<p><strong>Build the First Principles function with the Executor's clock, the Contrarian's traps, the Outsider's diary-first, and the Expansionist's <code>heard_from</code>.</strong></p>
+<p><strong>Modules</strong> in <code>code/sim/</code>: <code>llm.py</code> (async google-genai, semaphore 30, JSON schema output, seed + temperature 0.8, every attempt appended to <code>calls.jsonl</code>); <code>network.py</code> (seeded graph, k=4 in-group + one cross-group edge, three bridge nodes, stored as <code>neighbors[]</code> in <code>personas.jsonl</code>); <code>world/weeks.json</code> + <code>apply_decisions()</code> (deterministic overlay: rate boost, support wait with/without extra staff, offline limit, migration state incl. overrun, rival email in week 5, surprises from the dashboard); <code>prompt.py</code>; <code>engine.py</code> (week loop, one barrier per week); <code>probe.py</code>; <code>metrics.py</code>; <code>validate.py</code>; <code>run_all.sh</code>; <code>interview.py</code>.</p>
+<p><strong>Personas:</strong> 30, six per group, all five groups. Each: id, group, <code>weight_customers</code>, <code>weight_deposits</code> (sum to 2.1M and $6.0B, top 5% holding half), one narrative paragraph, and the attributes that couple to this crisis: paid Friday Dec 11, balance band and above-FDIC flag, second bank, checks app daily, info sources, reaction to bank SMS, financial literacy, P2P use, fraud victim. Prompt encodes friction: moving direct deposit takes a pay cycle.</p>
+<p><strong>Per-persona-week schema:</strong></p>
+<pre>{ "status": "main bank|second bank|dormant|left",
+  "money": "kept|moved some|moved most",
+  "actions": ["logged_in","called_support","moved_direct_deposit","opened_rival_account","withdrew_cash","nothing"],
+  "heard_from": "bank|friend|rival|news|none",
+  "app_rating": "1-5 or null",
+  "complaint": "none|bank|cfpb",
+  "feel": "&lt;=20 words", "reason": "1 sentence",
+  "post": "&lt;=140 chars or null",
+  "diary": "&lt;=3 sentences, first person" }</pre>
+<p><strong>Prompt:</strong> system = narrative + attributes + "small movements, this is one week". User = week facts, BAU notices, decision message verbatim in its own block if targeted and week ≥ W, up to four neighbor posts from week−1, own diary, own ledger of prior (week, status, money) rows, schema. Attention is an attribute; delivery is always verbatim.</p>
+<p><strong>Failure policy:</strong> schema-enforced; accept only if the raw text contains the status literal; retry up to three times with seed+attempt, then fall back to 3.1-flash-lite; every attempt logged; if still failing the run aborts. No defaults, ever. <strong>Caching:</strong> none; per-run output directories. <strong>Concurrency:</strong> 30 per run; 1,620 calls ≈ three minutes if the quota allows 30-wide.</p>
+<p><strong>Roadmap (from 11:58):</strong></p>
+<table>
+<tr><th>Clock</th><th>Step</th></tr>
+<tr><td>11:58–12:15</td><td>Human: <code>llm.py</code>, the 30-wide quota test, <code>schema.py</code>, <code>prompt.md</code></td></tr>
+<tr><td>12:15–12:50</td><td>Agent 1: vertical slice (engine, prompt, network, world, run.py) in one process · Agent 2: 30 personas + <code>spec.md</code> · Agent 3: validate / metrics / probe / run_all, loops check.py on fixtures</td></tr>
+<tr><td>12:50–13:20</td><td>Merge, smoke 8×3, quiet-world test (nodecision weeks 1–4: if more than one persona leaves, the prompt is the crisis)</td></tr>
+<tr><td>13:20–13:45</td><td>Five timed runs, check.py clean, placeholder decision 1 locked (week 5, everyone, honest migration message, offline limit $250, support +50)</td></tr>
+<tr><td>13:45–15:00</td><td>Four candidate bundles × two seeds + feed-off ablation; final decision 1 locked by 14:50 (week 5 starts 15:00)</td></tr>
+<tr><td>15:00–16:00</td><td><code>interview.py</code>, deltas table, contagion summary from <code>heard_from</code>, both three-line whys drafted</td></tr>
+<tr><td>15:30 / 16:25</td><td>Decision 2 drafted as a week-8 response to the migration weekend (dispute credit, goodwill to affected paycheck customers); locked by 16:25; replaced only if a surprise justifies it (last replacement 17:29 for week 10)</td></tr>
+<tr><td>16:00–16:30</td><td>Dress rehearsal with a fake surprise file; cold re-run timed</td></tr>
+<tr><td>17:32 / 17:45</td><td>Final runs · upload</td></tr>
+<tr><td>18:00</td><td>The talk: two lines, four colours, a finger on week 6, and Rosa</td></tr>
+</table>
+<p><strong>Cut:</strong> dialogues, digest, LLM game master, full-history memory, cache, more than 30 personas, UI, slides beyond one chart.</p>
+<p><strong>Tell the board the sim cannot tell:</strong> levels (LLM personas over-predict by ~20 points; only deltas and rankings are defensible); resolution (30 personas cannot resolve a 2% goal); network topology is assumed, not measured; ratings and complaints are stated intent, not behavior; rivals are scripted; two seeds give variance, not confidence. Next: calibrate against real churn and complaint data, more seeds, a real A/B before scaling any decision.</p>
+
+<h3>The one thing to do first</h3>
+<p>Write <code>llm.py</code> as a 40-line async client and fire 30 identical schema calls in parallel at gemini-3.5-flash-lite with seed set, logging wall time and any 429s. If 30-wide works, the whole plan holds; if the quota is 60 RPM, every clock time above is wrong and you need to know by 12:10, not 17:30.</p>
+</div>
+
+<h2>Where each advisor stood</h2>
+<table>
+<tr><th>Advisor</th><th>Position in one line</th><th>vs. verdict</th></tr>
+<tr><td>Contrarian</td><td>No code exists; build one vertical slice, test the concurrency quota now, respect three checker traps, full own-history memory, keep decision 2 in reserve.</td><td><span class="pos agree">adopted</span></td></tr>
+<tr><td>First Principles</td><td>Architecture isn't scored; the smallest f(persona, week, seed) → {status, money, post, memory}; deterministic world dict; feed-only; attributes by mechanism; deltas not levels.</td><td><span class="pos agree">adopted</span></td></tr>
+<tr><td>Expansionist</td><td>Information network as the idea; add a trending digest and an LLM game master; prompt-hash cache; four bundles tested before locking; contagion map.</td><td><span class="pos clash">mostly rejected</span> — <code>heard_from</code> and bundle testing kept</td></tr>
+<tr><td>Outsider</td><td>Board wants two lines, four colours, a finger on week 6, and one persona who can tell her own December 12; diary first; game master is a table, not an LLM.</td><td><span class="pos agree">adopted</span></td></tr>
+<tr><td>Executor</td><td>One JSON call per persona-week, feed with lag, three agents not six, placeholder decision locked early, 17:00 cold re-run rehearsal, final runs 17:32.</td><td><span class="pos agree">adopted</span> (as the clock)</td></tr>
+</table>
+
+<h2>Advisor responses</h2>
+<details><summary>The Contrarian</summary>
+<p>What kills you is not persona design; it is that at 11:43 no code exists and the roadmap has six branches merging at 12:30. That merge will not happen. Build one vertical slice first in a single process — client, prompt builder, 24 stub personas, five runs, check.py green — then widen. And measure 24-wide parallel throughput on the key now: per-call latency was tested, concurrency quota was not. A crisis announced at 17:30 forces a cold five-run re-run inside 30 minutes; at a 60 RPM quota, ~1,500 calls take 25 minutes and the ZIP is late.</p>
+<p>The checker bites in three places. One: any "realistic delivery" modeling (persona ignored the push) removes the message from a targeted prompt and fails word-for-word. The message always goes in verbatim; attention is a persona attribute. Two: a social feed whose posts quote the message makes check.py print "reaches 24 personas" on a targeted decision — cap posts at ~140 chars of the persona's own words. Three: a TinyTroupe-style cache keyed on prompt hash returns identical plan_1/plan_2 answers and fails the seed check; key on (run, seed, prompt) and isolate each run's memory by directory, or nodecision inherits the message.</p>
+<p>Third: the feed is the contagion engine that produces "half leave in a week," which the organizers call a broken sim. Run nodecision in a quiet world first; if more than one persona leaves, your prompts are the crisis. Encode switching friction in the prompt (moving direct deposit takes a pay cycle). Skip digest and dialogues — identical text to all 24 homogenizes — and skip the game master; it hallucinates facts that contradict announcements.</p>
+<p>Last: 24 personas cannot resolve a 2% goal; one persona is 4%. Weight personas by segment, report deltas versus nodecision, and admit it under "what the sim cannot tell." Keep decision two as an unlocked reserve. Use full own-history, not a rolling summary, and inject the persona's own weekly.jsonl rows as hard facts — the live board question will expose any contradiction.</p>
+</details>
+<details><summary>The First Principles Thinker</summary>
+<p>Strip the framing: architecture is not scored. check.py scores the ZIP; the board scores a five-minute argument plus one live persona. So the real decision is: what is the smallest function f(persona, week facts, seed) → {status, money, post, memory} that passes check.py, yields a plan-minus-nodecision delta we can defend, and answers a live question with the same prompt? Everything else is decoration bought with the one scarce resource — minutes before 13:00. Compute is free: 24×10×5 = 1,200 calls at ~1 s, 24-wide parallel, one barrier per week, roughly 3 minutes for all five runs.</p>
+<p>Therefore: one JSON-schema call per persona-week on gemini-3.6-flash with thinking off (fallback 3.5-flash-lite), fields status, money, post ≤140 chars, reason, memory ≤3 lines. Memory is the persona's own output carried forward — no summarizer call, no full history (which homogenizes). The world engine is deterministic bookkeeping, not an LLM game master: a per-week dict (rate, support wait with/without +150, offline card limit, migration state including overrun, rival emails) rendered into the prompt. Interaction is the feed only: a fixed small-world graph, k≈4 within group plus one cross-group edge, last week's neighbor posts pasted in. Zero extra calls — and it is the idea of our own: trust depends on who told you first, bank, rival, or friend. Dialogues and digests cost calls and earn nothing.</p>
+<p>Attributes by mechanism, not catalog: only three couple to this crisis — balance above the FDIC limit, paid Friday Dec 11, has a second bank. The rest is one generated narrative paragraph. Report deltas, never levels.</p>
+<p>Roadmap: 11:45–12:30 vertical slice, check.py green on one run. 12:30–13:00 five timed runs plus a feed-on/off ablation — that is the "approaches compared" criterion. Lock a week-5 targeted message and week-6 offline limit plus support early, replace freely. The interview tool is the runner with a question appended; done by 15:00. Cut digest, dialogues, more than 30 personas, slides.</p>
+</details>
+<details><summary>The Expansionist</summary>
+<p>Build the information network. It is the only part of this task that can become "an idea of our own," and it costs zero extra LLM calls. Each persona's weekly JSON call already has to return status and money; add two fields: <code>post</code> (optional, ≤280 chars) and <code>diary</code> (three self-written sentences, the rolling memory). Route posts over a fixed graph built at persona-creation time: dense cliques for students, hub-and-spoke for small-business owners, sparse ties for savers, plus three or four deliberate bridge nodes. Next week's prompt carries the neighbors' posts and the persona's own diary. That turns a questionnaire into a contagion model: the board watches the migration rumor reach people who never open the app.</p>
+<p>Add two cheap null-persona calls per week: a "trending" digest (one call turning all posts into three headlines everyone sees) and a game master that converts aggregate outputs into next week's world facts: support wait rising from 4 to 11 minutes when 30% say they called, a rival's "switch before Dec 12" post injected in week 5 because rivals know the date. Eleven extra calls per run. Nothing.</p>
+<p>The real ceiling is using the sim before locking. At 13:30 run four candidate decision bundles as extra runs (flash-lite, 32 personas, concurrency 24, about 90 s per run, disk-cached by prompt hash) plus a no-network ablation, and show the board the comparison table. That is "approaches compared" and "what we learned" in one artifact. Then the live Q&A: an interview tool that loads the persona's week-10 diary and the posts it saw, so when asked why it moved money it names the neighbor who told it.</p>
+<p>Roadmap: feed in the core by 12:30, digest and game master by 13:00, decision experiments 13:30–15:00, interview tool and contagion map by 16:00.</p>
+</details>
+<details><summary>The Outsider</summary>
+<p>Read the brief as a stranger and one thing jumps out: the deliverable is two decisions, a five-minute talk, and one persona answering a board member live. Nothing in the jury list says "feed topology" or "game master". The insiders are arguing about plumbing nobody will see.</p>
+<p>What a board member wants the simulation to show is embarrassingly simple: a picture of ten weeks, two lines (with our plan, without it), four colours (main, second, dormant, left), and a finger on week 6 saying "this is the migration weekend, this is what we did, this is the gap it bought." Then one face: "This is Rosa, a nurse paid Friday Dec 11, rent due Saturday, app read-only. Ask her what happened." If Rosa cannot describe her own December 12 in concrete words, the whole thing collapses on stage. So the one piece of memory that must exist is a short per-persona diary she carries into every week and into the live Q&A. Build that before anything else.</p>
+<p>On talking to each other: any normal person knows the neighbour says "the bank app is down" before the bank does. That is the lagged feed, and it explains itself in one sentence: "each week, every persona sees three things people they know said last week." Dialogues are invisible to a jury and unexplainable in five minutes; the trending digest is a feature you add at 15:00 if bored. Cut them now.</p>
+<p>The "game master" sounds mysterious; what it actually means is "someone must say what happened to each person this week: paycheck landed, migration overran." That is a table of facts per week, not another LLM.</p>
+<p>Missing: write the three-line "why" for both decisions by week 3 and keep improving it; do not leave the story for 17:50. And the organizers already told you the answer shape: small movements. Show differences between options, not dramatic numbers.</p>
+</details>
+<details><summary>The Executor</summary>
+<p>Commit now to the thing that runs: one JSON call per persona per week, feed with one-week lag, no LLM game master, no dialogues, no digest. Math: 30 personas × 12 calls (weeks 1–10 + two probes) × 5 runs = 1,800 calls on gemini-3.5-flash-lite at ~1s, concurrency 30, runs in parallel → the whole hand-in regenerates in ~3 minutes. That is your late-announcement insurance; nothing else is.</p>
+<p>Next 20 minutes, human only: write <code>schema.py</code> (persona record; weekly output JSON) and <code>prompt.md</code> (system = narrative + attributes; user = week N facts + decision message verbatim if targeted and week ≥ W + up to 4 neighbor posts from week N‑1 + own memory). Then launch three agents, not six: core (llm.py, world.py, network.py, run.py), personas (30 personas, 6/group, weights summing to 2.1M/$6.0B), metrics (metrics.py, run_all.sh, loop check.py on fixtures until clean).</p>
+<p>12:05–12:35 merge, smoke 8×3. 12:35–13:00 full five runs, make_submission.sh → "Nothing to fix", and at 12:55 lock a placeholder decision (week 5, everyone, honest pre-migration message + offline limit $250) so no deadline is ever missed. 13:00–15:30 experiments by swapping plan.json, two seeds each. 15:30 interview.py = build_prompt + one call with the persona's week‑10 memory; that is the live demo. 17:00 dress rehearsal with a fake week‑10 surprise file to time the re-run. 17:32 final runs, 17:45 upload.</p>
+<p>Cut: pairwise dialogues, trending call, LLM game master, full-history memory, caching layer, Census grounding beyond one sentence, any UI, more than 30 personas.</p>
+</details>
+
+<h2>Peer-review highlights</h2>
+<p class="meta">Reviewers saw responses as A–E only (A = Executor, B = Contrarian, C = Outsider, D = Expansionist, E = First Principles).</p>
+<details><summary>Who was judged strongest, and why</summary>
+<ul>
+<li>Executor ×2: the only complete, clock-shaped plan (probes counted, placeholder lock, 17:00 cold re-run rehearsal, no cache).</li>
+<li>First Principles ×2: derives the architecture from what is scored; feed-on/off ablation covers "approaches compared".</li>
+<li>Contrarian ×1: the only one that tests the consensus design against the checker's failure modes and the untested concurrency quota.</li>
+</ul>
+</details>
+<details><summary>Biggest blind spot (unanimous: the Expansionist)</summary>
+<ul>
+<li>Prompt-hash disk cache returns identical plan_1/plan_2 answers and fails the seed check outright.</li>
+<li>LLM game master and digest push the same invented facts to every persona: homogenization, possible contradiction of dashboard announcements, unattributable deltas.</li>
+<li>280-char posts can carry the verbatim message into non-targeted prompts.</li>
+<li>Schedules digest + game master for 13:00 with no check.py-green milestone from zero code; "eleven extra calls" is really twenty.</li>
+</ul>
+</details>
+<details><summary>What all five missed</summary>
+<ul>
+<li>goal_3 / goal_3b (App Store rating, CFPB complaints) have no LLM-produced source in any proposed schema.</li>
+<li>nodecision is not silence: business as usual still sends the week-5 migration email and a holding statement; without them the plan delta is inflated.</li>
+<li>No policy for invalid or failed calls.</li>
+<li>Nobody validates the $4M joint cap, menu levels, SMS per-send cost, recipient caps.</li>
+<li>probe.jsonl is undesigned and omitted from call math.</li>
+<li>A "reserve" decision still has to be locked before its week starts, and nothing locks after 17:30.</li>
+<li>"Left" personas still need weekly rows through week 10.</li>
+</ul>
+</details>
+
+<footer>Generated 2026-10-24 12:05 · LLM Council (adapted from Karpathy's LLM Council) · transcript: <code>docs/council/council-20261024-architecture.md</code></footer>
+</main>
+</body>
+</html>
