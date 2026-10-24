@@ -162,5 +162,7 @@ reaching personas by the seeded reach draw. None of our 24 personas is a federal
 make one of them hit: P2 Marcus Bell (HVAC technician at a contractor, paycheck to paycheck) is sent
 home without pay from federal jobs in week 7, marked as something that went wrong. P2 stands for
 55,000 customers, about four times our estimate of those affected; the follow share brings his
-weight in the metrics closer. With surprises off, the text and the effect vanish.
+weight in the metrics closer. His pay weeks 8 and 10 (Dec 25, Jan 8) then read "no pay landed" instead
+of his usual paycheck (`pay_paused` from week 8; no end week, since nobody knows how long the shutdown
+lasts). With surprises off, the text and the effects vanish.
 
